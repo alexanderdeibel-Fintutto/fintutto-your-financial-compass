@@ -1,9 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, Upload, FolderOpen } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useAIAnalysis, ReceiptAnalysisResult } from '@/hooks/useAIAnalysis';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
 interface Receipt {
   id: string;
@@ -19,6 +30,11 @@ export default function Receipts() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<ReceiptAnalysisResult | null>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const { analyzeReceipt, isAnalyzing } = useAIAnalysis();
 
   useEffect(() => {
     if (currentCompany) {
@@ -54,6 +70,75 @@ export default function Receipts() {
     return new Date(dateString).toLocaleDateString('de-DE');
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const validFile = files.find(f => 
+      f.type === 'image/jpeg' || 
+      f.type === 'image/png' || 
+      f.type === 'application/pdf'
+    );
+
+    if (validFile) {
+      await processFile(validFile);
+    } else {
+      toast.error('Bitte laden Sie eine JPG, PNG oder PDF Datei hoch.');
+    }
+  }, []);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const processFile = async (file: File) => {
+    setCurrentFile(file);
+    setShowAnalysisDialog(true);
+    setAnalysisResult(null);
+
+    const result = await analyzeReceipt(file);
+    setAnalysisResult(result);
+  };
+
+  const handleSaveReceipt = async () => {
+    if (!currentCompany || !analysisResult || !currentFile) return;
+
+    const { error } = await supabase.from('receipts').insert({
+      company_id: currentCompany.id,
+      file_name: currentFile.name,
+      file_type: currentFile.type,
+      amount: analysisResult.grossAmount,
+      date: analysisResult.date,
+      description: `${analysisResult.vendor} - ${analysisResult.category}`,
+    });
+
+    if (error) {
+      toast.error('Fehler beim Speichern des Belegs');
+      console.error(error);
+    } else {
+      toast.success('Beleg erfolgreich gespeichert');
+      setShowAnalysisDialog(false);
+      setAnalysisResult(null);
+      setCurrentFile(null);
+      fetchReceipts();
+    }
+  };
+
   const filteredReceipts = receipts.filter(
     (r) =>
       r.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,10 +160,45 @@ export default function Receipts() {
           <h1 className="text-3xl font-bold mb-2">Belege</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Belege und Dokumente</p>
         </div>
-        <Button>
-          <Upload className="mr-2 h-4 w-4" />
-          Beleg hochladen
-        </Button>
+      </div>
+
+      {/* Drag & Drop Upload Zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`
+          relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300
+          ${isDragging 
+            ? 'border-primary bg-primary/10 scale-[1.02]' 
+            : 'border-border/50 bg-secondary/30 hover:border-primary/50 hover:bg-secondary/50'
+          }
+        `}
+      >
+        <input
+          type="file"
+          id="file-upload"
+          accept="image/jpeg,image/png,application/pdf"
+          onChange={handleFileSelect}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        <div className="flex flex-col items-center gap-3">
+          <div className={`p-4 rounded-full transition-colors ${isDragging ? 'bg-primary/20' : 'bg-secondary'}`}>
+            <Upload className={`h-8 w-8 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+          </div>
+          <div>
+            <p className="font-medium text-lg">
+              {isDragging ? 'Datei hier ablegen' : 'Beleg hochladen oder hierher ziehen'}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              JPG, PNG oder PDF (max. 10MB)
+            </p>
+          </div>
+          <Button variant="outline" className="mt-2" onClick={() => document.getElementById('file-upload')?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Datei auswählen
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -99,10 +219,9 @@ export default function Receipts() {
         <div className="glass rounded-xl p-12 text-center">
           <FolderOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground mb-4">Keine Belege vorhanden</p>
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Ersten Beleg hochladen
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            Laden Sie Ihren ersten Beleg hoch, um loszulegen.
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -113,7 +232,7 @@ export default function Receipts() {
             >
               <div className="flex items-start gap-3">
                 <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <FolderOpen className="h-6 w-6 text-primary" />
+                  <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{receipt.file_name}</p>
@@ -136,6 +255,93 @@ export default function Receipts() {
           ))}
         </div>
       )}
+
+      {/* AI Analysis Dialog */}
+      <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              KI-Beleganalyse
+            </DialogTitle>
+            <DialogDescription>
+              {currentFile?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isAnalyzing ? (
+            <div className="py-8 space-y-4">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="font-medium">KI analysiert Beleg...</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  Erkennung von Lieferant, Betrag und Kategorie
+                </p>
+              </div>
+              <Progress value={66} className="h-2" />
+            </div>
+          ) : analysisResult ? (
+            <div className="space-y-4">
+              {/* Confidence Badge */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
+                <span className="text-sm font-medium">Erkennungsgenauigkeit</span>
+                <span className="flex items-center gap-1 text-primary font-semibold">
+                  <Check className="h-4 w-4" />
+                  {Math.round(analysisResult.confidence * 100)}%
+                </span>
+              </div>
+
+              {/* Extracted Data */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-start p-3 rounded-lg bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">Lieferant/Händler</span>
+                  <span className="font-medium text-right max-w-[60%]">{analysisResult.vendor}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">Datum</span>
+                  <span className="font-medium">{formatDate(analysisResult.date)}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">Betrag (Brutto)</span>
+                  <span className="font-semibold text-primary">
+                    {formatCurrency(analysisResult.grossAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">USt ({analysisResult.vatRate}%)</span>
+                  <span className="font-medium">{formatCurrency(analysisResult.vatAmount)}</span>
+                </div>
+                <div className="flex justify-between items-start p-3 rounded-lg bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">Kategorie</span>
+                  <span className="font-medium text-right">{analysisResult.category}</span>
+                </div>
+                <div className="flex justify-between items-start p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <span className="text-sm text-muted-foreground">Buchungskonto</span>
+                  <span className="font-medium text-right text-primary">{analysisResult.suggestedAccount}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/30 text-warning">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span className="text-sm">Bitte überprüfen Sie die erkannten Daten vor dem Speichern.</span>
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleSaveReceipt} 
+              disabled={isAnalyzing || !analysisResult}
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Als Buchung übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
