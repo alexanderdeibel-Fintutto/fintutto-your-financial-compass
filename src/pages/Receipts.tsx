@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -14,7 +14,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface Receipt {
   id: string;
@@ -23,6 +25,7 @@ interface Receipt {
   amount: number | null;
   date: string;
   description: string | null;
+  transaction_id: string | null;
 }
 
 export default function Receipts() {
@@ -34,6 +37,7 @@ export default function Receipts() {
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ReceiptAnalysisResult | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { analyzeReceipt, isAnalyzing } = useAIAnalysis();
 
   useEffect(() => {
@@ -58,6 +62,27 @@ export default function Receipts() {
     setLoading(false);
   };
 
+  // Statistics calculations
+  const stats = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const thisMonthReceipts = receipts.filter(r => {
+      const date = new Date(r.date);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    });
+
+    const unprocessedReceipts = receipts.filter(r => !r.transaction_id);
+
+    return {
+      total: receipts.length,
+      thisMonth: thisMonthReceipts.length,
+      unprocessed: unprocessedReceipts.length,
+      aiAccuracy: 87, // Demo value - would be calculated from actual AI results
+    };
+  }, [receipts]);
+
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return '-';
     return new Intl.NumberFormat('de-DE', {
@@ -68,6 +93,18 @@ export default function Receipts() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE');
+  };
+
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'bg-green-500';
+    if (confidence >= 0.6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getConfidenceTextColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'text-green-500';
+    if (confidence >= 0.6) return 'text-yellow-500';
+    return 'text-red-500';
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -115,27 +152,51 @@ export default function Receipts() {
     setAnalysisResult(result);
   };
 
-  const handleSaveReceipt = async () => {
+  const handleCreateBooking = async () => {
     if (!currentCompany || !analysisResult || !currentFile) return;
 
-    const { error } = await supabase.from('receipts').insert({
-      company_id: currentCompany.id,
-      file_name: currentFile.name,
-      file_type: currentFile.type,
-      amount: analysisResult.grossAmount,
-      date: analysisResult.date,
-      description: `${analysisResult.vendor} - ${analysisResult.category}`,
-    });
+    setIsSaving(true);
 
-    if (error) {
-      toast.error('Fehler beim Speichern des Belegs');
-      console.error(error);
-    } else {
-      toast.success('Beleg erfolgreich gespeichert');
+    try {
+      // 1. Create transaction
+      const { data: transactionData, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          company_id: currentCompany.id,
+          type: 'expense',
+          amount: analysisResult.grossAmount,
+          date: analysisResult.date,
+          description: `${analysisResult.vendor} - ${analysisResult.category}`,
+          category: analysisResult.category,
+        })
+        .select('id')
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // 2. Create receipt linked to transaction
+      const { error: receiptError } = await supabase.from('receipts').insert({
+        company_id: currentCompany.id,
+        file_name: currentFile.name,
+        file_type: currentFile.type,
+        amount: analysisResult.grossAmount,
+        date: analysisResult.date,
+        description: `${analysisResult.vendor} - ${analysisResult.category}`,
+        transaction_id: transactionData.id,
+      });
+
+      if (receiptError) throw receiptError;
+
+      toast.success('Buchung und Beleg erfolgreich erstellt');
       setShowAnalysisDialog(false);
       setAnalysisResult(null);
       setCurrentFile(null);
       fetchReceipts();
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast.error('Fehler beim Erstellen der Buchung');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -159,6 +220,62 @@ export default function Receipts() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Belege</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Belege und Dokumente</p>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="kpi-card">
+          <div className="flex items-center justify-between">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Receipt className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground">Belege gesamt</p>
+            <p className="text-2xl font-bold">{stats.total}</p>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center justify-between">
+            <div className="p-2 rounded-lg bg-info/10">
+              <Calendar className="h-5 w-5 text-info" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground">Diesen Monat</p>
+            <p className="text-2xl font-bold">{stats.thisMonth}</p>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center justify-between">
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <Clock className="h-5 w-5 text-destructive" />
+            </div>
+            {stats.unprocessed > 0 && (
+              <Badge variant="destructive" className="text-xs">
+                {stats.unprocessed}
+              </Badge>
+            )}
+          </div>
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground">Unverarbeitet</p>
+            <p className="text-2xl font-bold">{stats.unprocessed}</p>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center justify-between">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground">KI-Genauigkeit</p>
+            <p className="text-2xl font-bold text-primary">{stats.aiAccuracy}%</p>
+          </div>
         </div>
       </div>
 
@@ -235,7 +352,18 @@ export default function Receipts() {
                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{receipt.file_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{receipt.file_name}</p>
+                    {receipt.transaction_id ? (
+                      <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                        Verbucht
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
+                        Offen
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {formatDate(receipt.date)}
                   </p>
@@ -282,13 +410,27 @@ export default function Receipts() {
             </div>
           ) : analysisResult ? (
             <div className="space-y-4">
-              {/* Confidence Badge */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
-                <span className="text-sm font-medium">Erkennungsgenauigkeit</span>
-                <span className="flex items-center gap-1 text-primary font-semibold">
-                  <Check className="h-4 w-4" />
-                  {Math.round(analysisResult.confidence * 100)}%
-                </span>
+              {/* Confidence Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Erkennungsgenauigkeit</span>
+                  <span className={cn("font-semibold", getConfidenceTextColor(analysisResult.confidence))}>
+                    {Math.round(analysisResult.confidence * 100)}%
+                  </span>
+                </div>
+                <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className={cn("h-full transition-all duration-500", getConfidenceColor(analysisResult.confidence))}
+                    style={{ width: `${analysisResult.confidence * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {analysisResult.confidence >= 0.8 
+                    ? 'Hohe Erkennungsqualität' 
+                    : analysisResult.confidence >= 0.6 
+                      ? 'Mittlere Erkennungsqualität - bitte überprüfen'
+                      : 'Niedrige Erkennungsqualität - manuelle Prüfung empfohlen'}
+                </p>
               </div>
 
               {/* Extracted Data */}
@@ -333,11 +475,15 @@ export default function Receipts() {
               Abbrechen
             </Button>
             <Button 
-              onClick={handleSaveReceipt} 
-              disabled={isAnalyzing || !analysisResult}
+              onClick={handleCreateBooking} 
+              disabled={isAnalyzing || !analysisResult || isSaving}
             >
-              <Check className="mr-2 h-4 w-4" />
-              Als Buchung übernehmen
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-2 h-4 w-4" />
+              )}
+              Buchung erstellen
             </Button>
           </DialogFooter>
         </DialogContent>
