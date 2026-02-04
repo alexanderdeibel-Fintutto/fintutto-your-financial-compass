@@ -1,9 +1,29 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction {
   id: string;
@@ -14,11 +34,37 @@ interface Transaction {
   category: string | null;
 }
 
+type FilterType = 'all' | 'income' | 'expense';
+
+const categories = [
+  'Einnahmen',
+  'Gehälter',
+  'Miete',
+  'Büromaterial',
+  'Marketing',
+  'Reisekosten',
+  'Versicherungen',
+  'Telekommunikation',
+  'Sonstiges',
+];
+
 export default function Transactions() {
   const { currentCompany } = useCompany();
+  const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Form state
+  const [newTransaction, setNewTransaction] = useState({
+    type: 'expense' as 'income' | 'expense',
+    amount: '',
+    description: '',
+    category: '',
+    date: new Date().toISOString().split('T')[0],
+  });
 
   useEffect(() => {
     if (currentCompany) {
@@ -42,6 +88,24 @@ export default function Transactions() {
     setLoading(false);
   };
 
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const totalIncome = transactions
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const balance = totalIncome - totalExpense;
+
+    return {
+      total: transactions.length,
+      income: totalIncome,
+      expense: totalExpense,
+      balance,
+    };
+  }, [transactions]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
@@ -53,11 +117,58 @@ export default function Transactions() {
     return new Date(dateString).toLocaleDateString('de-DE');
   };
 
-  const filteredTransactions = transactions.filter(
-    (t) =>
+  const handleCreateTransaction = async () => {
+    if (!currentCompany) return;
+
+    const amount = parseFloat(newTransaction.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: 'Fehler',
+        description: 'Bitte geben Sie einen gültigen Betrag ein.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('transactions').insert({
+      company_id: currentCompany.id,
+      type: newTransaction.type,
+      amount: amount,
+      description: newTransaction.description || null,
+      category: newTransaction.category || null,
+      date: newTransaction.date,
+    });
+
+    if (error) {
+      toast({
+        title: 'Fehler',
+        description: 'Buchung konnte nicht erstellt werden.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Erfolg',
+        description: 'Buchung wurde erstellt.',
+      });
+      setDialogOpen(false);
+      setNewTransaction({
+        type: 'expense',
+        amount: '',
+        description: '',
+        category: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      fetchTransactions();
+    }
+  };
+
+  const filteredTransactions = transactions.filter((t) => {
+    const matchesSearch =
       t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      t.category?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filter === 'all' || t.type === filter;
+    return matchesSearch && matchesFilter;
+  });
 
   if (!currentCompany) {
     return (
@@ -74,14 +185,168 @@ export default function Transactions() {
           <h1 className="text-3xl font-bold mb-2">Buchungen</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Transaktionen</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Neue Buchung
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Neue Buchung
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Neue Buchung erstellen</DialogTitle>
+              <DialogDescription>
+                Fügen Sie eine neue Einnahme oder Ausgabe hinzu.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              {/* Income/Expense Toggle */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={newTransaction.type === 'income' ? 'default' : 'outline'}
+                  className={`flex-1 gap-2 ${newTransaction.type === 'income' ? 'bg-success hover:bg-success/90' : ''}`}
+                  onClick={() => setNewTransaction({ ...newTransaction, type: 'income' })}
+                >
+                  <ArrowDownLeft className="h-4 w-4" />
+                  Einnahme
+                </Button>
+                <Button
+                  type="button"
+                  variant={newTransaction.type === 'expense' ? 'default' : 'outline'}
+                  className={`flex-1 gap-2 ${newTransaction.type === 'expense' ? 'bg-destructive hover:bg-destructive/90' : ''}`}
+                  onClick={() => setNewTransaction({ ...newTransaction, type: 'expense' })}
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                  Ausgabe
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Betrag (€)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  value={newTransaction.amount}
+                  onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Beschreibung</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Beschreibung der Buchung..."
+                  value={newTransaction.description}
+                  onChange={(e) => setNewTransaction({ ...newTransaction, description: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Kategorie</Label>
+                <Select
+                  value={newTransaction.category}
+                  onValueChange={(value) => setNewTransaction({ ...newTransaction, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kategorie wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">Datum</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newTransaction.date}
+                  onChange={(e) => setNewTransaction({ ...newTransaction, date: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleCreateTransaction}>Buchung erstellen</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="glass">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Buchungen gesamt</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-primary/10">
+                <Receipt className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Einnahmen</p>
+                <p className="text-2xl font-bold text-success">{formatCurrency(stats.income)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-success/10">
+                <TrendingUp className="h-6 w-6 text-success" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Ausgaben</p>
+                <p className="text-2xl font-bold text-destructive">{formatCurrency(stats.expense)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-destructive/10">
+                <TrendingDown className="h-6 w-6 text-destructive" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Saldo</p>
+                <p className={`text-2xl font-bold ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {formatCurrency(stats.balance)}
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${stats.balance >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                <Wallet className={`h-6 w-6 ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search & Filter */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -91,10 +356,33 @@ export default function Transactions() {
             className="pl-10 bg-secondary/50"
           />
         </div>
-        <Button variant="outline">
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilter('all')}
+            size="sm"
+          >
+            Alle
+          </Button>
+          <Button
+            variant={filter === 'income' ? 'default' : 'outline'}
+            onClick={() => setFilter('income')}
+            size="sm"
+            className={filter === 'income' ? 'bg-success hover:bg-success/90' : ''}
+          >
+            <ArrowDownLeft className="mr-1 h-4 w-4" />
+            Einnahmen
+          </Button>
+          <Button
+            variant={filter === 'expense' ? 'default' : 'outline'}
+            onClick={() => setFilter('expense')}
+            size="sm"
+            className={filter === 'expense' ? 'bg-destructive hover:bg-destructive/90' : ''}
+          >
+            <ArrowUpRight className="mr-1 h-4 w-4" />
+            Ausgaben
+          </Button>
+        </div>
       </div>
 
       {/* Transactions List */}
