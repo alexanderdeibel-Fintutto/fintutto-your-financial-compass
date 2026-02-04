@@ -7,6 +7,7 @@ import {
   Users,
   Building2,
   BarChart3,
+  Settings,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -42,6 +43,7 @@ const navItems = [
   { title: 'Kontakte', url: '/kontakte', icon: Users },
   { title: 'Bankkonten', url: '/bankkonten', icon: Building2 },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
+  { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
 ];
 
 export function AppSidebar() {

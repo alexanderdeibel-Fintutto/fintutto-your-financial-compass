@@ -14,6 +14,7 @@ import Receipts from "./pages/Receipts";
 import Contacts from "./pages/Contacts";
 import BankAccounts from "./pages/BankAccounts";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/kontakte" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
       <Route path="/bankkonten" element={<ProtectedRoute><BankAccounts /></ProtectedRoute>} />
       <Route path="/berichte" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
