@@ -24,6 +24,7 @@ import Calendar from "./pages/Calendar";
 import EmailTemplates from "./pages/EmailTemplates";
 import Notifications from "./pages/Notifications";
 import HelpCenter from "./pages/HelpCenter";
+import BankCallback from "./pages/BankCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ function AppRoutes() {
       <Route path="/vorlagen" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />
       <Route path="/benachrichtigungen" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/hilfe" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+      <Route path="/bank-callback" element={<BankCallback />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

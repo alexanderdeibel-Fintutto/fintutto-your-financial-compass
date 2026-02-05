@@ -283,6 +283,13 @@ export default function Settings() {
             Mietanpassung
           </TabsTrigger>
           <TabsTrigger
+            value="api"
+            className="w-full justify-start gap-3 px-4 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg"
+          >
+            <Key className="h-5 w-5" />
+            API-Schlüssel
+          </TabsTrigger>
+          <TabsTrigger
             value="export"
             className="w-full justify-start gap-3 px-4 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg"
           >
@@ -1068,6 +1075,86 @@ export default function Settings() {
                        revisionssicher aufzubewahren. Wir empfehlen regelmäßige Backups und die Aufbewahrung aller 
                        steuerrelevanten Belege für mindestens 10 Jahre.
                      </p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
+
+           {/* API Keys Tab */}
+           <TabsContent value="api" className="mt-0 space-y-6">
+             <Card className="glass">
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Key className="h-5 w-5" />
+                   API-Konfiguration
+                 </CardTitle>
+                 <CardDescription>
+                   Verwalten Sie Ihre API-Schlüssel für externe Dienste
+                 </CardDescription>
+               </CardHeader>
+               <CardContent className="space-y-6">
+                 {/* FinAPI Configuration */}
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                       <div className="p-2 rounded-lg bg-primary/10">
+                         <CreditCard className="h-5 w-5 text-primary" />
+                       </div>
+                       <div>
+                         <h4 className="font-medium">FinAPI</h4>
+                         <p className="text-sm text-muted-foreground">Bankanbindung für automatischen Transaktionsimport</p>
+                       </div>
+                     </div>
+                     <Badge variant="outline">Sandbox</Badge>
+                   </div>
+                   <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                     Die FinAPI-Konfiguration wird über sichere Server-Secrets verwaltet. 
+                     Kontaktieren Sie den Administrator, um die Bankanbindung zu aktivieren.
+                   </p>
+                 </div>
+
+                 <div className="border-t pt-6">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                       <div className="p-2 rounded-lg bg-primary/10">
+                         <Receipt className="h-5 w-5 text-primary" />
+                       </div>
+                       <div>
+                         <h4 className="font-medium">KI-Belegeerkennung</h4>
+                         <p className="text-sm text-muted-foreground">Automatische Analyse von Belegen und Rechnungen</p>
+                       </div>
+                     </div>
+                     <Badge className="bg-primary/20 text-primary">Aktiviert</Badge>
+                   </div>
+                   <p className="text-sm text-muted-foreground bg-primary/5 p-3 rounded-lg mt-4">
+                     ✓ Die KI-Belegeerkennung ist bereits aktiviert und nutzt das integrierte Lovable AI Gateway.
+                     Keine zusätzliche Konfiguration erforderlich.
+                   </p>
+                 </div>
+               </CardContent>
+             </Card>
+
+             <Card className="glass">
+               <CardHeader>
+                 <CardTitle>API-Status</CardTitle>
+                 <CardDescription>Übersicht der verbundenen Dienste</CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between p-3 rounded-lg border">
+                     <div className="flex items-center gap-3">
+                       <Check className="h-5 w-5 text-primary" />
+                       <span>Lovable AI Gateway</span>
+                     </div>
+                     <Badge className="bg-primary/20 text-primary">Verbunden</Badge>
+                   </div>
+                   <div className="flex items-center justify-between p-3 rounded-lg border">
+                     <div className="flex items-center gap-3">
+                       <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                       <span>FinAPI Bankanbindung</span>
+                     </div>
+                     <Badge variant="outline">Nicht konfiguriert</Badge>
                    </div>
                  </div>
                </CardContent>
