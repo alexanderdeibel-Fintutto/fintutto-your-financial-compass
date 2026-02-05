@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, FileText } from 'lucide-react';
+ import { useState, useEffect, useCallback } from 'react';
+ import { Plus, Search, FileText, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
+ import { CreateInvoiceDialog } from '@/components/invoices/CreateInvoiceDialog';
 
 interface Invoice {
   id: string;
@@ -38,6 +39,7 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     if (currentCompany) {
@@ -45,7 +47,7 @@ export default function Invoices() {
     }
   }, [currentCompany]);
 
-  const fetchInvoices = async () => {
+   const fetchInvoices = useCallback(async () => {
     if (!currentCompany) return;
 
     setLoading(true);
@@ -59,7 +61,7 @@ export default function Invoices() {
       setInvoices(data);
     }
     setLoading(false);
-  };
+   }, [currentCompany]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
@@ -79,6 +81,16 @@ export default function Invoices() {
       inv.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+   // Statistics
+   const totalInvoices = invoices.length;
+   const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+   const paidAmount = invoices
+     .filter((inv) => inv.status === 'paid')
+     .reduce((sum, inv) => sum + inv.amount, 0);
+   const openAmount = invoices
+     .filter((inv) => inv.status !== 'paid' && inv.status !== 'cancelled')
+     .reduce((sum, inv) => sum + inv.amount, 0);
+ 
   if (!currentCompany) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
@@ -94,12 +106,60 @@ export default function Invoices() {
           <h1 className="text-3xl font-bold mb-2">Rechnungen</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Rechnungen</p>
         </div>
-        <Button>
+         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Neue Rechnung
         </Button>
       </div>
 
+       {/* Statistics */}
+       <div className="grid gap-4 md:grid-cols-4">
+         <div className="glass rounded-xl p-4">
+           <div className="flex items-center gap-3">
+             <div className="p-2 rounded-lg bg-primary/10">
+               <FileText className="h-5 w-5 text-primary" />
+             </div>
+             <div>
+               <p className="text-sm text-muted-foreground">Rechnungen gesamt</p>
+               <p className="text-2xl font-bold">{totalInvoices}</p>
+             </div>
+           </div>
+         </div>
+         <div className="glass rounded-xl p-4">
+           <div className="flex items-center gap-3">
+             <div className="p-2 rounded-lg bg-info/10">
+               <TrendingUp className="h-5 w-5 text-info" />
+             </div>
+             <div>
+               <p className="text-sm text-muted-foreground">Gesamtvolumen</p>
+               <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+             </div>
+           </div>
+         </div>
+         <div className="glass rounded-xl p-4">
+           <div className="flex items-center gap-3">
+             <div className="p-2 rounded-lg bg-success/10">
+               <TrendingUp className="h-5 w-5 text-success" />
+             </div>
+             <div>
+               <p className="text-sm text-muted-foreground">Bezahlt</p>
+               <p className="text-2xl font-bold text-success">{formatCurrency(paidAmount)}</p>
+             </div>
+           </div>
+         </div>
+         <div className="glass rounded-xl p-4">
+           <div className="flex items-center gap-3">
+             <div className="p-2 rounded-lg bg-warning/10">
+               <TrendingDown className="h-5 w-5 text-warning" />
+             </div>
+             <div>
+               <p className="text-sm text-muted-foreground">Offen</p>
+               <p className="text-2xl font-bold text-warning">{formatCurrency(openAmount)}</p>
+             </div>
+           </div>
+         </div>
+       </div>
+ 
       {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -145,6 +205,13 @@ export default function Invoices() {
           </div>
         )}
       </div>
+       
+       {/* Create Invoice Dialog */}
+       <CreateInvoiceDialog
+         open={createDialogOpen}
+         onOpenChange={setCreateDialogOpen}
+         onSuccess={fetchInvoices}
+       />
     </div>
   );
 }
