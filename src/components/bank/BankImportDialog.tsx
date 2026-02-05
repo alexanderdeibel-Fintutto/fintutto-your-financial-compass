@@ -134,7 +134,19 @@
  
    const findMatchingInvoice = useCallback((tx: BankTransaction): OpenInvoice | undefined => {
      if (tx.amount <= 0) return undefined;
-     return openInvoices.find(inv => Math.abs(inv.amount - tx.amount) < 0.01);
+    
+    // First check: Exact amount match (±0.01€)
+    const amountMatch = openInvoices.find(inv => Math.abs(inv.amount - tx.amount) < 0.01);
+    if (amountMatch) return amountMatch;
+    
+    // Second check: Reference/description contains invoice number
+    const searchText = `${tx.description || ''} ${tx.reference || ''}`.toLowerCase();
+    const referenceMatch = openInvoices.find(inv => 
+      searchText.includes(inv.invoice_number.toLowerCase())
+    );
+    if (referenceMatch) return referenceMatch;
+    
+    return undefined;
    }, [openInvoices]);
  
    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -491,16 +503,16 @@
                        </TableCell>
                        <TableCell>
                          {transaction.matchingInvoice ? (
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             className="h-6 text-xs px-2"
-                             onClick={() => linkToInvoice(transaction.id, null)}
-                           >
-                             <Link2 className="h-3 w-3 mr-1 text-info" />
-                             {transaction.matchingInvoice.invoice_number}
-                           </Button>
-                         ) : transaction.amount > 0 && openInvoices.some(inv => Math.abs(inv.amount - transaction.amount) < 0.01) ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30 cursor-pointer" onClick={() => linkToInvoice(transaction.id, null)}>
+                                <Link2 className="h-3 w-3 mr-1" />
+                                {transaction.matchingInvoice.invoice_number}
+                              </Badge>
+                              <p className="text-[10px] text-muted-foreground">
+                                Passt zu Rechnung
+                              </p>
+                            </div>
+                          ) : transaction.amount > 0 && openInvoices.length > 0 ? (
                            <Select
                              value=""
                              onValueChange={(invId) => linkToInvoice(transaction.id, invId)}
@@ -509,11 +521,9 @@
                                <SelectValue placeholder="Verknüpfen..." />
                              </SelectTrigger>
                              <SelectContent>
-                               {openInvoices
-                                 .filter(inv => Math.abs(inv.amount - transaction.amount) < 0.01)
-                                 .map((inv) => (
+                                {openInvoices.map((inv) => (
                                    <SelectItem key={inv.id} value={inv.id}>
-                                     {inv.invoice_number}
+                                      {inv.invoice_number} ({new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(inv.amount)})
                                    </SelectItem>
                                  ))}
                              </SelectContent>

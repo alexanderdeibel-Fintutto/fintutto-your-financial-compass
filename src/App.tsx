@@ -59,7 +59,7 @@ function AppRoutes() {
       <Route path="/belege" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
       <Route path="/kontakte" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
       <Route path="/bankkonten" element={<ProtectedRoute><BankAccounts /></ProtectedRoute>} />
-      <Route path="/bank-verbinden" element={<ProtectedRoute><BankConnect /></ProtectedRoute>} />
+      <Route path="/bankverbindung" element={<ProtectedRoute><BankConnect /></ProtectedRoute>} />
       <Route path="/berichte" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />

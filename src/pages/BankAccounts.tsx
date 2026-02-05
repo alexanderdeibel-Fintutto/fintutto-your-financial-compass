@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
- import { Plus, Building2, CreditCard, Upload } from 'lucide-react';
+ import { Plus, Building2, CreditCard, Upload, RefreshCw, Link2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
  import { BankImportDialog } from '@/components/bank/BankImportDialog';
+ import { useNavigate } from 'react-router-dom';
+ import { useToast } from '@/hooks/use-toast';
 
 interface BankAccount {
   id: string;
@@ -18,11 +20,17 @@ export default function BankAccounts() {
   const { currentCompany } = useCompany();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
-   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (currentCompany) {
       fetchAccounts();
+      // Simulate last sync time (in real app, would come from DB/API)
+      setLastSync(new Date(Date.now() - 2 * 60 * 60 * 1000)); // 2 hours ago
     }
   }, [currentCompany]);
 
@@ -56,10 +64,35 @@ export default function BankAccounts() {
 
   const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
-   const handleImportSuccess = () => {
-     fetchAccounts();
-   };
- 
+  const handleImportSuccess = () => {
+    fetchAccounts();
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    // Simulate sync delay
+    await new Promise(r => setTimeout(r, 2000));
+    setLastSync(new Date());
+    setSyncing(false);
+    toast({
+      title: 'Synchronisierung abgeschlossen',
+      description: 'Alle verbundenen Bankkonten wurden aktualisiert',
+    });
+  };
+
+  const formatTimeSince = (date: Date | null) => {
+    if (!date) return 'Noch nie';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    
+    if (diffMins < 1) return 'Gerade eben';
+    if (diffMins < 60) return `vor ${diffMins} Minuten`;
+    if (diffHours < 24) return `vor ${diffHours} Stunde${diffHours > 1 ? 'n' : ''}`;
+    return `vor ${Math.floor(diffHours / 24)} Tagen`;
+  };
+
   if (!currentCompany) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
@@ -75,16 +108,42 @@ export default function BankAccounts() {
           <h1 className="text-3xl font-bold mb-2">Bankkonten</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Bankverbindungen</p>
         </div>
-         <div className="flex gap-2">
-           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-             <Upload className="mr-2 h-4 w-4" />
-             Kontoauszug importieren
-           </Button>
-           <Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => navigate('/bankverbindung')}>
+            <Link2 className="mr-2 h-4 w-4" />
+            Bankverbindung
+          </Button>
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </Button>
+          <Button>
           <Plus className="mr-2 h-4 w-4" />
           Konto hinzufügen
         </Button>
-         </div>
+        </div>
+      </div>
+
+      {/* Sync Status Card */}
+      <div className="glass rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Clock className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Letzte Synchronisation</p>
+            <p className="text-sm text-muted-foreground">{formatTimeSince(lastSync)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-xs text-muted-foreground hidden sm:block">
+            Automatische Sync alle 6 Stunden
+          </p>
+          <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Synchronisiere...' : 'Jetzt synchronisieren'}
+          </Button>
+        </div>
       </div>
 
       {/* Total Balance Card */}
