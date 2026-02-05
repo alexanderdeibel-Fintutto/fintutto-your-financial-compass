@@ -6,6 +6,11 @@ interface Company {
   name: string;
   tax_id?: string;
   address?: string;
+  legal_form?: string;
+  vat_id?: string;
+  zip?: string;
+  city?: string;
+  chart_of_accounts?: string;
 }
 
 interface CompanyContextType {
@@ -33,7 +38,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const companyIds = memberships.map(m => m.company_id);
         const { data: companiesData } = await supabase
           .from('companies')
-          .select('*')
+          .select('id, name, tax_id, address, legal_form, vat_id, zip, city, chart_of_accounts')
           .in('id', companyIds);
 
         if (companiesData) {
