@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CompanyProvider } from "@/contexts/CompanyContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -20,6 +21,9 @@ import Settings from "./pages/Settings";
 import Companies from "./pages/Companies";
 import Handover from "./pages/Handover";
 import Calendar from "./pages/Calendar";
+import EmailTemplates from "./pages/EmailTemplates";
+import Notifications from "./pages/Notifications";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,7 +43,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <CompanyProvider><AppLayout>{children}</AppLayout></CompanyProvider>;
+  return (
+    <CompanyProvider>
+      <NotificationProvider>
+        <AppLayout>{children}</AppLayout>
+      </NotificationProvider>
+    </CompanyProvider>
+  );
 }
 
 function AppRoutes() {
@@ -69,6 +79,9 @@ function AppRoutes() {
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
       <Route path="/kalender" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+      <Route path="/vorlagen" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />
+      <Route path="/benachrichtigungen" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/hilfe" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
