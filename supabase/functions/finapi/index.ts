@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,38 @@ async function getFinAPIToken(): Promise<FinAPIToken> {
   return response.json();
 }
 
+async function authenticateUser(req: Request): Promise<{ userId: string } | Response> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: authError } = await supabaseClient.auth.getClaims(token);
+
+  if (authError || !claimsData?.claims) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  return { userId: claimsData.claims.sub as string };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -47,6 +80,12 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the user first
+    const authResult = await authenticateUser(req);
+    if (authResult instanceof Response) {
+      return authResult; // Return unauthorized response
+    }
+
     const url = new URL(req.url);
     const action = url.pathname.split("/").pop();
 
