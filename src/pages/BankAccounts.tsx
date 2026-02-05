@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Building2, CreditCard } from 'lucide-react';
+ import { Plus, Building2, CreditCard, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
+ import { BankImportDialog } from '@/components/bank/BankImportDialog';
 
 interface BankAccount {
   id: string;
@@ -17,6 +18,7 @@ export default function BankAccounts() {
   const { currentCompany } = useCompany();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
+   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     if (currentCompany) {
@@ -54,6 +56,10 @@ export default function BankAccounts() {
 
   const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
+   const handleImportSuccess = () => {
+     fetchAccounts();
+   };
+ 
   if (!currentCompany) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
@@ -69,10 +75,16 @@ export default function BankAccounts() {
           <h1 className="text-3xl font-bold mb-2">Bankkonten</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre Bankverbindungen</p>
         </div>
-        <Button>
+         <div className="flex gap-2">
+           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+             <Upload className="mr-2 h-4 w-4" />
+             Kontoauszug importieren
+           </Button>
+           <Button>
           <Plus className="mr-2 h-4 w-4" />
           Konto hinzufügen
         </Button>
+         </div>
       </div>
 
       {/* Total Balance Card */}
@@ -136,6 +148,14 @@ export default function BankAccounts() {
           ))}
         </div>
       )}
+       
+       {/* Bank Import Dialog */}
+       <BankImportDialog
+         open={importDialogOpen}
+         onOpenChange={setImportDialogOpen}
+         accounts={accounts}
+         onSuccess={handleImportSuccess}
+       />
     </div>
   );
 }
