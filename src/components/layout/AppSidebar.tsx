@@ -15,6 +15,8 @@ import {
   Link2,
   CreditCard,
   Landmark,
+  ClipboardCheck,
+  Calendar,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,6 +55,8 @@ const navItems = [
   { title: 'Kontakte', url: '/kontakte', icon: Users },
   { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
   { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
+  { title: 'Übergaben', url: '/uebergabe', icon: ClipboardCheck },
+  { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'ELSTER', url: '/elster', icon: Landmark },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   { title: 'Firmen', url: '/firmen', icon: Building2 },

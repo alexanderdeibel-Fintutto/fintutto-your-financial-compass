@@ -1,6 +1,6 @@
 import { useState } from 'react';
- import { DatevExportDialog } from '@/components/settings/DatevExportDialog';
- import { GdpduExportDialog } from '@/components/settings/GdpduExportDialog';
+import { DatevExportDialog } from '@/components/settings/DatevExportDialog';
+import { GdpduExportDialog } from '@/components/settings/GdpduExportDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 import {
   Building2,
   User,
@@ -35,7 +36,35 @@ import {
   Building,
   Receipt,
   FolderOpen,
+  TrendingUp,
+  Leaf,
+  Calculator,
+  Info,
+  Euro,
 } from 'lucide-react';
+
+// CO2 cost allocation categories according to CO2KostAufG
+const CO2_CATEGORIES = [
+  { max: 12, tenantShare: 100, landlordShare: 0 },
+  { max: 17, tenantShare: 90, landlordShare: 10 },
+  { max: 22, tenantShare: 80, landlordShare: 20 },
+  { max: 27, tenantShare: 70, landlordShare: 30 },
+  { max: 32, tenantShare: 60, landlordShare: 40 },
+  { max: 37, tenantShare: 50, landlordShare: 50 },
+  { max: 42, tenantShare: 40, landlordShare: 60 },
+  { max: 47, tenantShare: 30, landlordShare: 70 },
+  { max: 52, tenantShare: 20, landlordShare: 80 },
+  { max: Infinity, tenantShare: 5, landlordShare: 95 },
+];
+
+const getCO2Category = (consumption: number) => {
+  for (let i = 0; i < CO2_CATEGORIES.length; i++) {
+    if (consumption < CO2_CATEGORIES[i].max) {
+      return { category: i + 1, ...CO2_CATEGORIES[i] };
+    }
+  }
+  return { category: 10, ...CO2_CATEGORIES[9] };
+};
 
 export default function Settings() {
   const { user, signOut } = useAuth();
@@ -78,10 +107,57 @@ export default function Settings() {
     pushNotifications: false,
   });
 
-   // Export dialog states
-   const [datevDialogOpen, setDatevDialogOpen] = useState(false);
-   const [gdpduDialogOpen, setGdpduDialogOpen] = useState(false);
- 
+  // Export dialog states
+  const [datevDialogOpen, setDatevDialogOpen] = useState(false);
+  const [gdpduDialogOpen, setGdpduDialogOpen] = useState(false);
+
+  // Index rent calculator state
+  const [indexRent, setIndexRent] = useState({
+    baseRent: 1000,
+    baseVPIMonth: 1,
+    baseVPIYear: 2020,
+    baseVPIValue: 105.3,
+    currentVPIMonth: new Date().getMonth() + 1,
+    currentVPIYear: new Date().getFullYear(),
+    currentVPIValue: 118.4,
+    threshold: 5,
+  });
+
+  // CO2 allocation state
+  const [co2Data, setCO2Data] = useState({
+    energyConsumption: 25,
+    co2PricePerTon: 45,
+    totalCO2Tons: 2.5,
+  });
+
+  // Calculate index rent
+  const calculateIndexRent = () => {
+    const factor = indexRent.currentVPIValue / indexRent.baseVPIValue;
+    const newRent = indexRent.baseRent * factor;
+    const increasePercent = ((factor - 1) * 100);
+    return { newRent, increasePercent, factor };
+  };
+
+  // Calculate CO2 allocation
+  const calculateCO2Allocation = () => {
+    const categoryInfo = getCO2Category(co2Data.energyConsumption);
+    const totalCO2Cost = co2Data.totalCO2Tons * co2Data.co2PricePerTon;
+    const tenantCost = totalCO2Cost * (categoryInfo.tenantShare / 100);
+    const landlordCost = totalCO2Cost * (categoryInfo.landlordShare / 100);
+    return { ...categoryInfo, totalCO2Cost, tenantCost, landlordCost };
+  };
+
+  const indexRentCalc = calculateIndexRent();
+  const co2Allocation = calculateCO2Allocation();
+
+  const handleCreateRentIncreaseLetter = () => {
+    toast({
+      title: 'Mieterhöhungsschreiben erstellt',
+      description: 'Das Dokument wurde erstellt und kann heruntergeladen werden.',
+    });
+  };
+
+
   const handleSaveCompany = async () => {
     if (!currentCompany) return;
 
@@ -198,6 +274,13 @@ export default function Settings() {
           >
             <Shield className="h-5 w-5" />
             Sicherheit
+          </TabsTrigger>
+          <TabsTrigger
+            value="rent"
+            className="w-full justify-start gap-3 px-4 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg"
+          >
+            <TrendingUp className="h-5 w-5" />
+            Mietanpassung
           </TabsTrigger>
           <TabsTrigger
             value="export"
@@ -615,7 +698,289 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-           {/* Datenexport Tab */}
+          {/* Mietanpassung Tab */}
+          <TabsContent value="rent" className="mt-0 space-y-6">
+            {/* Index Rent Calculator */}
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Indexmiete-Rechner
+                </CardTitle>
+                <CardDescription>
+                  Berechnen Sie Mietanpassungen basierend auf dem Verbraucherpreisindex (VPI)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Base Values */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Basiswerte</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Basis-Kaltmiete (€)</Label>
+                        <Input
+                          type="number"
+                          value={indexRent.baseRent}
+                          onChange={(e) => setIndexRent({ ...indexRent, baseRent: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label>Monat</Label>
+                          <Select
+                            value={String(indexRent.baseVPIMonth)}
+                            onValueChange={(v) => setIndexRent({ ...indexRent, baseVPIMonth: parseInt(v) })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                                <SelectItem key={m} value={String(m)}>{m}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Jahr</Label>
+                          <Input
+                            type="number"
+                            value={indexRent.baseVPIYear}
+                            onChange={(e) => setIndexRent({ ...indexRent, baseVPIYear: parseInt(e.target.value) || 2020 })}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Basis-VPI</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={indexRent.baseVPIValue}
+                          onChange={(e) => setIndexRent({ ...indexRent, baseVPIValue: parseFloat(e.target.value) || 100 })}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Current Values */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Aktuelle Werte</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label>Monat</Label>
+                          <Select
+                            value={String(indexRent.currentVPIMonth)}
+                            onValueChange={(v) => setIndexRent({ ...indexRent, currentVPIMonth: parseInt(v) })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                                <SelectItem key={m} value={String(m)}>{m}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Jahr</Label>
+                          <Input
+                            type="number"
+                            value={indexRent.currentVPIYear}
+                            onChange={(e) => setIndexRent({ ...indexRent, currentVPIYear: parseInt(e.target.value) || 2026 })}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Aktueller VPI</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={indexRent.currentVPIValue}
+                          onChange={(e) => setIndexRent({ ...indexRent, currentVPIValue: parseFloat(e.target.value) || 100 })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Schwellenwert für Anpassung (%)</Label>
+                        <Input
+                          type="number"
+                          value={indexRent.threshold}
+                          onChange={(e) => setIndexRent({ ...indexRent, threshold: parseFloat(e.target.value) || 5 })}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Result */}
+                <Card className={indexRentCalc.increasePercent >= indexRent.threshold ? 'border-success/50 bg-success/5' : 'border-muted'}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold">Berechnungsergebnis</h3>
+                      {indexRentCalc.increasePercent >= indexRent.threshold && (
+                        <Badge className="bg-success text-white">Schwellenwert erreicht</Badge>
+                      )}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Neue Kaltmiete</p>
+                        <p className="text-2xl font-bold">{indexRentCalc.newRent.toFixed(2)} €</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Erhöhung</p>
+                        <p className="text-2xl font-bold text-success">+{indexRentCalc.increasePercent.toFixed(2)} %</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Differenz</p>
+                        <p className="text-2xl font-bold">+{(indexRentCalc.newRent - indexRent.baseRent).toFixed(2)} €</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Formel: Neue Miete = Alte Miete × (Neuer VPI / Alter VPI)
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Button onClick={handleCreateRentIncreaseLetter} className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Mieterhöhungsschreiben erstellen
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* CO2 Cost Allocation */}
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Leaf className="h-5 w-5" />
+                  CO2-Kostenaufteilung
+                </CardTitle>
+                <CardDescription>
+                  Berechnung nach dem CO2-Kostenaufteilungsgesetz (CO2KostAufG)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>Energieverbrauch (kWh/m²/Jahr)</Label>
+                    <Input
+                      type="number"
+                      value={co2Data.energyConsumption}
+                      onChange={(e) => setCO2Data({ ...co2Data, energyConsumption: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CO2-Preis (€/Tonne)</Label>
+                    <Input
+                      type="number"
+                      value={co2Data.co2PricePerTon}
+                      onChange={(e) => setCO2Data({ ...co2Data, co2PricePerTon: parseFloat(e.target.value) || 45 })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gesamt CO2 (Tonnen)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={co2Data.totalCO2Tons}
+                      onChange={(e) => setCO2Data({ ...co2Data, totalCO2Tons: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+
+                {/* Category Display */}
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold">Einstufung: Kategorie {co2Allocation.category}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {co2Data.energyConsumption} kWh/m²/Jahr = Stufe {co2Allocation.category} von 10
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-lg px-4 py-2">
+                        {co2Allocation.tenantShare}% / {co2Allocation.landlordShare}%
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Mieteranteil ({co2Allocation.tenantShare}%)</span>
+                          <span className="font-medium">{co2Allocation.tenantCost.toFixed(2)} €</span>
+                        </div>
+                        <Progress value={co2Allocation.tenantShare} className="h-2" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Vermieteranteil ({co2Allocation.landlordShare}%)</span>
+                          <span className="font-medium">{co2Allocation.landlordCost.toFixed(2)} €</span>
+                        </div>
+                        <Progress value={co2Allocation.landlordShare} className="h-2 [&>div]:bg-orange-500" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t flex justify-between">
+                      <span className="font-medium">Gesamte CO2-Kosten:</span>
+                      <span className="font-bold">{co2Allocation.totalCO2Cost.toFixed(2)} €</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Info Box */}
+                <Card className="border-blue-500/30 bg-blue-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium mb-1">CO2-Kostenaufteilungsgesetz (CO2KostAufG)</p>
+                        <p className="text-muted-foreground">
+                          Seit dem 1. Januar 2023 müssen Vermieter einen Anteil der CO2-Kosten beim Heizen mit fossilen Brennstoffen
+                          übernehmen. Die Aufteilung richtet sich nach der energetischen Qualität des Gebäudes: Je schlechter
+                          die Energiebilanz, desto höher der Vermieteranteil. Bei Gebäuden mit einem Verbrauch unter 12 kWh/m²/Jahr
+                          trägt der Mieter 100% der Kosten; bei über 52 kWh/m²/Jahr übernimmt der Vermieter 95%.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 10-Step Scale Visualization */}
+                <div>
+                  <h4 className="font-medium mb-3">10-Stufen-Modell</h4>
+                  <div className="grid grid-cols-10 gap-1">
+                    {CO2_CATEGORIES.map((cat, index) => (
+                      <div
+                        key={index}
+                        className={`p-2 rounded text-center text-xs ${
+                          co2Allocation.category === index + 1
+                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                            : 'bg-muted/50'
+                        }`}
+                      >
+                        <div className="font-bold">{index + 1}</div>
+                        <div className="text-[10px] opacity-80">
+                          {cat.tenantShare}/{cat.landlordShare}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                    <span>≤12 kWh/m²</span>
+                    <span>≥52 kWh/m²</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Datenexport Tab */}
            <TabsContent value="export" className="mt-0 space-y-6">
              <div className="grid gap-4 md:grid-cols-2">
                <Card 

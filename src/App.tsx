@@ -18,6 +18,8 @@ import Elster from "./pages/Elster";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Companies from "./pages/Companies";
+import Handover from "./pages/Handover";
+import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,8 @@ function AppRoutes() {
       <Route path="/berichte" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+      <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
+      <Route path="/kalender" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
