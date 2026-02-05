@@ -1,5 +1,7 @@
- import { useState, useEffect } from 'react';
- import { Plus, Trash2, Eye, Save } from 'lucide-react';
+ import { useState, useEffect, useRef } from 'react';
+ import { Plus, Trash2, Eye, Save, Download, Mail, FileText } from 'lucide-react';
+ import html2canvas from 'html2canvas';
+ import jsPDF from 'jspdf';
  import {
    Dialog,
    DialogContent,
@@ -82,6 +84,9 @@
    ]);
    const [saving, setSaving] = useState(false);
    const [activeTab, setActiveTab] = useState('details');
+   const [exporting, setExporting] = useState(false);
+   const [generatedInvoiceNumber] = useState(generateInvoiceNumber());
+   const invoiceRef = useRef<HTMLDivElement>(null);
  
    useEffect(() => {
      if (open && currentCompany) {
@@ -134,7 +139,7 @@
    const selectedContact = contacts.find((c) => c.id === selectedContactId);
  
    const getPreviewData = (): InvoiceData => ({
-     number: generateInvoiceNumber(),
+     number: generatedInvoiceNumber,
      date: formatDate(invoiceDate),
      dueDate: formatDate(calculateDueDate(invoiceDate, paymentTermDays)),
      servicePeriodFrom: formatDate(servicePeriodFrom),
@@ -158,6 +163,73 @@
      })),
    });
  
+   const exportPDF = async () => {
+     const element = document.getElementById('invoice-pdf');
+     if (!element) {
+       toast({
+         title: 'Fehler',
+         description: 'Bitte wechseln Sie zur Vorschau-Ansicht.',
+         variant: 'destructive',
+       });
+       setActiveTab('preview');
+       return;
+     }
+ 
+     setExporting(true);
+     try {
+       const canvas = await html2canvas(element, {
+         scale: 2,
+         useCORS: true,
+         logging: false,
+         backgroundColor: '#ffffff',
+       });
+ 
+       const imgWidth = 210;
+       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+       
+       const pdf = new jsPDF('p', 'mm', 'a4');
+       const imgData = canvas.toDataURL('image/png');
+       
+       // If content is longer than one page, scale it down
+       if (imgHeight > 297) {
+         const scaleFactor = 297 / imgHeight;
+         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * scaleFactor, 297);
+       } else {
+         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+       }
+       
+       pdf.save(`Rechnung_${generatedInvoiceNumber}.pdf`);
+ 
+       toast({
+         title: 'PDF erstellt',
+         description: `Rechnung_${generatedInvoiceNumber}.pdf wurde heruntergeladen.`,
+       });
+     } catch (error) {
+       console.error('PDF export error:', error);
+       toast({
+         title: 'Fehler',
+         description: 'PDF konnte nicht erstellt werden.',
+         variant: 'destructive',
+       });
+     } finally {
+       setExporting(false);
+     }
+   };
+ 
+   const handleSendEmail = () => {
+     const previewData = getPreviewData();
+     const subject = encodeURIComponent(`Rechnung ${generatedInvoiceNumber}`);
+     const body = encodeURIComponent(
+       `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie unsere Rechnung ${generatedInvoiceNumber} über ${grossTotal.toFixed(2)} €.\n\nBitte überweisen Sie den Betrag bis zum ${previewData.dueDate}.\n\nMit freundlichen Grüßen\n${currentCompany?.name || ''}`
+     );
+     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+     
+     toast({
+       title: 'E-Mail vorbereitet',
+       description: 'Ihr E-Mail-Programm wurde geöffnet. Bitte fügen Sie die PDF als Anhang hinzu.',
+     });
+   };
+ 
    const handleSave = async () => {
      if (!currentCompany || !selectedContactId) {
        toast({
@@ -179,7 +251,7 @@
  
      setSaving(true);
      try {
-       const invoiceNumber = generateInvoiceNumber();
+       const invoiceNumber = generatedInvoiceNumber;
        const dueDate = calculateDueDate(invoiceDate, paymentTermDays);
  
        const { error } = await supabase.from('invoices').insert({
@@ -435,8 +507,26 @@
            </TabsContent>
  
            <TabsContent value="preview" className="mt-4">
-             <div className="bg-muted/50 p-4 rounded-lg overflow-auto max-h-[60vh]">
+             <div className="space-y-4">
+               {/* Action buttons for preview */}
+               <div className="flex gap-2 justify-end">
+                 <Button
+                   variant="outline"
+                   onClick={exportPDF}
+                   disabled={exporting}
+                 >
+                   <Download className="h-4 w-4 mr-2" />
+                   {exporting ? 'Exportiert...' : 'Als PDF speichern'}
+                 </Button>
+                 <Button variant="outline" onClick={handleSendEmail}>
+                   <Mail className="h-4 w-4 mr-2" />
+                   Per E-Mail senden
+                 </Button>
+               </div>
+               
+               <div className="bg-muted/50 p-4 rounded-lg overflow-auto max-h-[55vh]">
                <InvoicePreview invoice={getPreviewData()} />
+             </div>
              </div>
            </TabsContent>
          </Tabs>
@@ -445,9 +535,16 @@
            <Button variant="outline" onClick={() => onOpenChange(false)}>
              Abbrechen
            </Button>
+           <Button
+             variant="outline"
+             onClick={() => setActiveTab('preview')}
+           >
+             <Eye className="h-4 w-4 mr-2" />
+             Vorschau
+           </Button>
            <Button onClick={handleSave} disabled={saving}>
              <Save className="h-4 w-4 mr-2" />
-             {saving ? 'Speichert...' : 'Als Entwurf speichern'}
+             {saving ? 'Speichert...' : 'Speichern'}
            </Button>
          </DialogFooter>
        </DialogContent>
