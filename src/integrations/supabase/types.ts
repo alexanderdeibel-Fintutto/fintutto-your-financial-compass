@@ -61,27 +61,42 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          chart_of_accounts: string | null
+          city: string | null
           created_at: string | null
           id: string
+          legal_form: string | null
           name: string
           tax_id: string | null
           updated_at: string | null
+          vat_id: string | null
+          zip: string | null
         }
         Insert: {
           address?: string | null
+          chart_of_accounts?: string | null
+          city?: string | null
           created_at?: string | null
           id?: string
+          legal_form?: string | null
           name: string
           tax_id?: string | null
           updated_at?: string | null
+          vat_id?: string | null
+          zip?: string | null
         }
         Update: {
           address?: string | null
+          chart_of_accounts?: string | null
+          city?: string | null
           created_at?: string | null
           id?: string
+          legal_form?: string | null
           name?: string
           tax_id?: string | null
           updated_at?: string | null
+          vat_id?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
