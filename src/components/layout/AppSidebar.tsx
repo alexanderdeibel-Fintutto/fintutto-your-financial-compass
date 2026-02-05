@@ -12,6 +12,8 @@ import {
   LogOut,
   ChevronDown,
   Plus,
+  Link2,
+  CreditCard,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,7 +50,8 @@ const navItems = [
   { title: 'Rechnungen', url: '/rechnungen', icon: FileText },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
   { title: 'Kontakte', url: '/kontakte', icon: Users },
-  { title: 'Bankkonten', url: '/bankkonten', icon: Building2 },
+  { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
+  { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
