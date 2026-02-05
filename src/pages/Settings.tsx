@@ -1,4 +1,6 @@
 import { useState } from 'react';
+ import { DatevExportDialog } from '@/components/settings/DatevExportDialog';
+ import { GdpduExportDialog } from '@/components/settings/GdpduExportDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -76,6 +78,10 @@ export default function Settings() {
     pushNotifications: false,
   });
 
+   // Export dialog states
+   const [datevDialogOpen, setDatevDialogOpen] = useState(false);
+   const [gdpduDialogOpen, setGdpduDialogOpen] = useState(false);
+ 
   const handleSaveCompany = async () => {
     if (!currentCompany) return;
 
@@ -609,95 +615,105 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* Datenexport Tab */}
-          <TabsContent value="export" className="mt-0 space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="glass hover:border-primary/50 transition-colors cursor-pointer" onClick={() => handleExport('DATEV')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-blue-500/10">
-                      <FileSpreadsheet className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">DATEV-Export</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Exportieren Sie Ihre Buchungsdaten für den Steuerberater im DATEV-Format.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass hover:border-primary/50 transition-colors cursor-pointer" onClick={() => handleExport('GDPdU')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-purple-500/10">
-                      <Database className="h-6 w-6 text-purple-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">GDPdU-Export</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Steuerprüfungskonformer Export für Betriebsprüfungen.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass hover:border-primary/50 transition-colors cursor-pointer" onClick={() => handleExport('CSV')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-green-500/10">
-                      <FileText className="h-6 w-6 text-green-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">CSV-Export</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Exportieren Sie einzelne Datenbereiche als CSV-Datei.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass hover:border-primary/50 transition-colors cursor-pointer" onClick={() => handleExport('Backup')}>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-orange-500/10">
-                      <HardDrive className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">Kompletter Backup</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Sichern Sie alle Ihre Unternehmensdaten vollständig.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="glass border-warning/30 bg-warning/5">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-warning/10">
-                    <AlertTriangle className="h-6 w-6 text-warning" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">GoBD-Hinweis</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Gemäß den Grundsätzen zur ordnungsmäßigen Führung und Aufbewahrung von Büchern, Aufzeichnungen 
-                      und Unterlagen in elektronischer Form (GoBD) sind Sie verpflichtet, Ihre Buchführungsdaten 
-                      revisionssicher aufzubewahren. Wir empfehlen regelmäßige Backups und die Aufbewahrung aller 
-                      steuerrelevanten Belege für mindestens 10 Jahre.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+           {/* Datenexport Tab */}
+           <TabsContent value="export" className="mt-0 space-y-6">
+             <div className="grid gap-4 md:grid-cols-2">
+               <Card 
+                 className="glass hover:border-blue-500/50 transition-colors cursor-pointer" 
+                 onClick={() => setDatevDialogOpen(true)}
+               >
+                 <CardContent className="p-6">
+                   <div className="flex items-start gap-4">
+                     <div className="p-3 rounded-xl bg-blue-500/10">
+                       <FileSpreadsheet className="h-6 w-6 text-blue-500" />
+                     </div>
+                     <div className="flex-1">
+                       <h3 className="font-semibold mb-1">DATEV-Export</h3>
+                       <p className="text-sm text-muted-foreground">
+                         Exportieren Sie Ihre Buchungsdaten für den Steuerberater im DATEV-Format.
+                       </p>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+ 
+               <Card 
+                 className="glass hover:border-purple-500/50 transition-colors cursor-pointer" 
+                 onClick={() => setGdpduDialogOpen(true)}
+               >
+                 <CardContent className="p-6">
+                   <div className="flex items-start gap-4">
+                     <div className="p-3 rounded-xl bg-purple-500/10">
+                       <Database className="h-6 w-6 text-purple-500" />
+                     </div>
+                     <div className="flex-1">
+                       <h3 className="font-semibold mb-1">GDPdU-Export</h3>
+                       <p className="text-sm text-muted-foreground">
+                         Steuerprüfungskonformer Export für Betriebsprüfungen.
+                       </p>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+ 
+               <Card className="glass hover:border-green-500/50 transition-colors cursor-pointer" onClick={() => handleExport('CSV')}>
+                 <CardContent className="p-6">
+                   <div className="flex items-start gap-4">
+                     <div className="p-3 rounded-xl bg-green-500/10">
+                       <FileText className="h-6 w-6 text-green-500" />
+                     </div>
+                     <div className="flex-1">
+                       <h3 className="font-semibold mb-1">CSV-Export</h3>
+                       <p className="text-sm text-muted-foreground">
+                         Exportieren Sie einzelne Datenbereiche als CSV-Datei.
+                       </p>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+ 
+               <Card className="glass hover:border-orange-500/50 transition-colors cursor-pointer" onClick={() => handleExport('Backup')}>
+                 <CardContent className="p-6">
+                   <div className="flex items-start gap-4">
+                     <div className="p-3 rounded-xl bg-orange-500/10">
+                       <HardDrive className="h-6 w-6 text-orange-500" />
+                     </div>
+                     <div className="flex-1">
+                       <h3 className="font-semibold mb-1">Kompletter Backup</h3>
+                       <p className="text-sm text-muted-foreground">
+                         Sichern Sie alle Ihre Unternehmensdaten vollständig.
+                       </p>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             </div>
+ 
+             <Card className="glass border-warning/30 bg-warning/5">
+               <CardContent className="p-6">
+                 <div className="flex items-start gap-4">
+                   <div className="p-3 rounded-xl bg-warning/10">
+                     <AlertTriangle className="h-6 w-6 text-warning" />
+                   </div>
+                   <div>
+                     <h3 className="font-semibold mb-1">GoBD-Hinweis</h3>
+                     <p className="text-sm text-muted-foreground">
+                       Gemäß den Grundsätzen zur ordnungsmäßigen Führung und Aufbewahrung von Büchern, Aufzeichnungen 
+                       und Unterlagen in elektronischer Form (GoBD) sind Sie verpflichtet, Ihre Buchführungsdaten 
+                       revisionssicher aufzubewahren. Wir empfehlen regelmäßige Backups und die Aufbewahrung aller 
+                       steuerrelevanten Belege für mindestens 10 Jahre.
+                     </p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
         </div>
       </Tabs>
+
+       {/* Export Dialogs */}
+       <DatevExportDialog open={datevDialogOpen} onOpenChange={setDatevDialogOpen} />
+       <GdpduExportDialog open={gdpduDialogOpen} onOpenChange={setGdpduDialogOpen} />
     </div>
   );
 }
