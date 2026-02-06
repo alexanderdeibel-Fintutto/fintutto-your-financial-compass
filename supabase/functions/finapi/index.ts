@@ -60,17 +60,16 @@ async function authenticateUser(req: Request): Promise<{ userId: string } | Resp
     }
   );
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data: claimsData, error: authError } = await supabaseClient.auth.getClaims(token);
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
-  if (authError || !claimsData?.claims) {
+  if (authError || !user) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  return { userId: claimsData.claims.sub as string };
+  return { userId: user.id };
 }
 
 serve(async (req) => {
