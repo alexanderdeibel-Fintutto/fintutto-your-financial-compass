@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
+import {
   BarChart3, TrendingUp, PieChart, Building2, FileText, FileSpreadsheet,
-  Download, Printer, ArrowUp, ArrowDown
+  Download, Printer, ArrowUp, ArrowDown, LineChart, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,11 +19,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import {
+  ComparisonChart,
+  ProfitTrendChart,
+  CashFlowForecastChart,
+  ExpenseBreakdownChart,
+} from '@/components/reports/AdvancedReportCharts';
 
 type ReportType = 'bwa' | 'guv' | 'bilanz' | 'ustva' | 'journal' | 'susa';
+type ViewMode = 'standard' | 'charts' | 'forecast';
 
 interface ReportOption {
   id: ReportType;
@@ -64,6 +72,7 @@ const periods = [
 
 export default function Reports() {
   const { currentCompany } = useCompany();
+  const [viewMode, setViewMode] = useState<ViewMode>('standard');
   const [selectedReport, setSelectedReport] = useState<ReportType>('bwa');
   const [selectedPeriod, setSelectedPeriod] = useState('current-month');
   const [loading, setLoading] = useState(true);
@@ -235,7 +244,7 @@ export default function Reports() {
           <h1 className="text-3xl font-bold mb-2">Berichte</h1>
           <p className="text-muted-foreground">Auswertungen und Analysen Ihrer Buchhaltung</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-[180px] bg-secondary/50">
@@ -249,12 +258,12 @@ export default function Reports() {
               ))}
             </SelectContent>
           </Select>
-          
+
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             PDF Export
           </Button>
-          
+
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />
             Drucken
@@ -262,60 +271,99 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Report Type Selection */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {reportOptions.map((report) => {
-          const Icon = report.icon;
-          const isSelected = selectedReport === report.id;
-          return (
-            <button
-              key={report.id}
-              onClick={() => setSelectedReport(report.id)}
-              className={cn(
-                "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200",
-                isSelected 
-                  ? `${report.bgColor} border-2` 
-                  : "glass hover:bg-secondary/50 border-border/50"
-              )}
-            >
-              <Icon className={cn("h-6 w-6", report.color)} />
-              <span className={cn("text-sm font-medium", isSelected && report.color)}>
-                {report.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* View Mode Tabs */}
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
+        <TabsList className="glass">
+          <TabsTrigger value="standard" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Standardberichte
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="gap-2">
+            <LineChart className="h-4 w-4" />
+            Grafiken & Vergleiche
+          </TabsTrigger>
+          <TabsTrigger value="forecast" className="gap-2">
+            <Wallet className="h-4 w-4" />
+            Cashflow-Prognose
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Report Content */}
-      {loading ? (
-        <div className="glass rounded-xl p-12 text-center text-muted-foreground">
-          Lade Berichtsdaten...
-        </div>
-      ) : (
-        <>
-          {selectedReport === 'bwa' && (
-            <BWAReport data={reportData} formatCurrency={formatCurrency} formatPercent={formatPercent} calculateChange={calculateChange} />
-          )}
-          {selectedReport === 'guv' && (
-            <GuVReport data={reportData} formatCurrency={formatCurrency} />
-          )}
-          {selectedReport === 'bilanz' && (
-            <BilanzReport data={reportData} formatCurrency={formatCurrency} />
-          )}
-          {(selectedReport === 'ustva' || selectedReport === 'journal' || selectedReport === 'susa') && (
-            <div className="glass rounded-xl p-12 text-center">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-lg font-medium mb-2">
-                {reportOptions.find(r => r.id === selectedReport)?.label}
-              </p>
-              <p className="text-muted-foreground">
-                Dieser Bericht wird in einer zukünftigen Version verfügbar sein.
-              </p>
+        {/* Standard Reports Tab */}
+        <TabsContent value="standard" className="space-y-6 mt-6">
+          {/* Report Type Selection */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {reportOptions.map((report) => {
+              const Icon = report.icon;
+              const isSelected = selectedReport === report.id;
+              return (
+                <button
+                  key={report.id}
+                  onClick={() => setSelectedReport(report.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200",
+                    isSelected
+                      ? `${report.bgColor} border-2`
+                      : "glass hover:bg-secondary/50 border-border/50"
+                  )}
+                >
+                  <Icon className={cn("h-6 w-6", report.color)} />
+                  <span className={cn("text-sm font-medium", isSelected && report.color)}>
+                    {report.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Report Content */}
+          {loading ? (
+            <div className="glass rounded-xl p-12 text-center text-muted-foreground">
+              Lade Berichtsdaten...
             </div>
+          ) : (
+            <>
+              {selectedReport === 'bwa' && (
+                <BWAReport data={reportData} formatCurrency={formatCurrency} formatPercent={formatPercent} calculateChange={calculateChange} />
+              )}
+              {selectedReport === 'guv' && (
+                <GuVReport data={reportData} formatCurrency={formatCurrency} />
+              )}
+              {selectedReport === 'bilanz' && (
+                <BilanzReport data={reportData} formatCurrency={formatCurrency} />
+              )}
+              {(selectedReport === 'ustva' || selectedReport === 'journal' || selectedReport === 'susa') && (
+                <div className="glass rounded-xl p-12 text-center">
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-lg font-medium mb-2">
+                    {reportOptions.find(r => r.id === selectedReport)?.label}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Dieser Bericht wird in einer zukünftigen Version verfügbar sein.
+                  </p>
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+        </TabsContent>
+
+        {/* Charts & Comparison Tab */}
+        <TabsContent value="charts" className="space-y-6 mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ComparisonChart />
+            <ProfitTrendChart />
+          </div>
+          <ExpenseBreakdownChart />
+        </TabsContent>
+
+        {/* Cashflow Forecast Tab */}
+        <TabsContent value="forecast" className="space-y-6 mt-6">
+          <CashFlowForecastChart />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ComparisonChart />
+            <ExpenseBreakdownChart />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
