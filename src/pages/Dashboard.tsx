@@ -415,17 +415,17 @@ export default function Dashboard() {
   const profitChange = calculateChange(stats.profit, stats.previousIncome - stats.previousExpenses);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Dashboard</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Übersicht für {currentCompany?.name || 'Ihre Firma'}
         </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards - 2 columns on mobile, 4 on large screens */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-4">
         <KPICard
           title="Bankguthaben"
           value={formatCurrency(stats.bankBalance)}
@@ -433,7 +433,7 @@ export default function Dashboard() {
           sparklineData={sparklineData.balance}
         />
         <KPICard
-          title="Einnahmen (Monat)"
+          title="Einnahmen"
           value={formatCurrency(stats.income)}
           change={incomeChange.value}
           changeType={incomeChange.type}
@@ -441,7 +441,7 @@ export default function Dashboard() {
           sparklineData={sparklineData.income}
         />
         <KPICard
-          title="Ausgaben (Monat)"
+          title="Ausgaben"
           value={formatCurrency(stats.expenses)}
           change={expensesChange.value}
           changeType={stats.expenses <= stats.previousExpenses ? 'positive' : 'negative'}
@@ -449,7 +449,7 @@ export default function Dashboard() {
           sparklineData={sparklineData.expenses}
         />
         <KPICard
-          title="Gewinn (Monat)"
+          title="Gewinn"
           value={formatCurrency(stats.profit)}
           change={profitChange.value}
           changeType={stats.profit >= 0 ? profitChange.type : 'negative'}
@@ -458,21 +458,23 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Charts Row - stack on mobile */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <RevenueExpenseChart data={monthlyData} />
         <ExpenseByCategoryChart data={categoryData} />
       </div>
 
-      {/* Lists Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Lists Row - stack on mobile */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <RecentTransactions transactions={transactions} />
         <DueInvoicesList invoices={dueInvoices} />
         <PendingReceiptsList receipts={pendingReceipts} />
       </div>
 
-      {/* Quick Actions */}
-      <QuickActions />
+      {/* Quick Actions - hidden on mobile as we have FAB */}
+      <div className="hidden sm:block">
+        <QuickActions />
+      </div>
     </div>
   );
 }

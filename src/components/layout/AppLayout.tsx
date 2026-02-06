@@ -2,6 +2,7 @@ import { ReactNode, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { CommandPalette } from '@/components/CommandPalette';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
@@ -74,11 +75,14 @@ export function AppLayout({ children }: AppLayoutProps) {
               <NotificationCenter />
             </div>
           </header>
-          <div className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
       {/* Command Palette */}
       <CommandPalette

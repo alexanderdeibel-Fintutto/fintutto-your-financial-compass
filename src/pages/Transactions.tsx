@@ -179,11 +179,11 @@ export default function Transactions() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Buchungen</h1>
-          <p className="text-muted-foreground">Verwalten Sie Ihre Transaktionen</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Buchungen</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Verwalten Sie Ihre Transaktionen</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -284,61 +284,61 @@ export default function Transactions() {
         </Dialog>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Statistics Cards - 2 columns on mobile */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="glass">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Buchungen gesamt</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Buchungen</p>
+                <p className="text-lg sm:text-2xl font-bold">{stats.total}</p>
               </div>
-              <div className="p-3 rounded-xl bg-primary/10">
-                <Receipt className="h-6 w-6 text-primary" />
+              <div className="p-2 sm:p-3 rounded-xl bg-primary/10 shrink-0 ml-2">
+                <Receipt className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="glass">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Einnahmen</p>
-                <p className="text-2xl font-bold text-success">{formatCurrency(stats.income)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Einnahmen</p>
+                <p className="text-lg sm:text-2xl font-bold text-success truncate">{formatCurrency(stats.income)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-success/10">
-                <TrendingUp className="h-6 w-6 text-success" />
+              <div className="p-2 sm:p-3 rounded-xl bg-success/10 shrink-0 ml-2">
+                <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-success" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="glass">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ausgaben</p>
-                <p className="text-2xl font-bold text-destructive">{formatCurrency(stats.expense)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Ausgaben</p>
+                <p className="text-lg sm:text-2xl font-bold text-destructive truncate">{formatCurrency(stats.expense)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-destructive/10">
-                <TrendingDown className="h-6 w-6 text-destructive" />
+              <div className="p-2 sm:p-3 rounded-xl bg-destructive/10 shrink-0 ml-2">
+                <TrendingDown className="h-4 w-4 sm:h-6 sm:w-6 text-destructive" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="glass">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Saldo</p>
-                <p className={`text-2xl font-bold ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Saldo</p>
+                <p className={`text-lg sm:text-2xl font-bold truncate ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {formatCurrency(stats.balance)}
                 </p>
               </div>
-              <div className={`p-3 rounded-xl ${stats.balance >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                <Wallet className={`h-6 w-6 ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`} />
+              <div className={`p-2 sm:p-3 rounded-xl shrink-0 ml-2 ${stats.balance >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                <Wallet className={`h-4 w-4 sm:h-6 sm:w-6 ${stats.balance >= 0 ? 'text-success' : 'text-destructive'}`} />
               </div>
             </div>
           </CardContent>
@@ -346,8 +346,8 @@ export default function Transactions() {
       </div>
 
       {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="relative w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Suchen..."
@@ -356,11 +356,12 @@ export default function Transactions() {
             className="pl-10 bg-secondary/50"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
             size="sm"
+            className="shrink-0"
           >
             Alle
           </Button>
@@ -368,19 +369,21 @@ export default function Transactions() {
             variant={filter === 'income' ? 'default' : 'outline'}
             onClick={() => setFilter('income')}
             size="sm"
-            className={filter === 'income' ? 'bg-success hover:bg-success/90' : ''}
+            className={`shrink-0 ${filter === 'income' ? 'bg-success hover:bg-success/90' : ''}`}
           >
             <ArrowDownLeft className="mr-1 h-4 w-4" />
-            Einnahmen
+            <span className="hidden xs:inline">Einnahmen</span>
+            <span className="xs:hidden">Ein.</span>
           </Button>
           <Button
             variant={filter === 'expense' ? 'default' : 'outline'}
             onClick={() => setFilter('expense')}
             size="sm"
-            className={filter === 'expense' ? 'bg-destructive hover:bg-destructive/90' : ''}
+            className={`shrink-0 ${filter === 'expense' ? 'bg-destructive hover:bg-destructive/90' : ''}`}
           >
             <ArrowUpRight className="mr-1 h-4 w-4" />
-            Ausgaben
+            <span className="hidden xs:inline">Ausgaben</span>
+            <span className="xs:hidden">Aus.</span>
           </Button>
         </div>
       </div>
@@ -398,31 +401,31 @@ export default function Transactions() {
             {filteredTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center gap-4 p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-secondary/30 transition-colors cursor-pointer active:bg-secondary/40"
               >
                 <div
-                  className={`p-2 rounded-lg ${
+                  className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${
                     transaction.type === 'income'
                       ? 'bg-success/10 text-success'
                       : 'bg-destructive/10 text-destructive'
                   }`}
                 >
                   {transaction.type === 'income' ? (
-                    <ArrowDownLeft className="h-5 w-5" />
+                    <ArrowDownLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                   ) : (
-                    <ArrowUpRight className="h-5 w-5" />
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
+                  <p className="text-sm sm:text-base font-medium truncate">
                     {transaction.description || 'Ohne Beschreibung'}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {transaction.category || 'Sonstiges'} • {formatDate(transaction.date)}
                   </p>
                 </div>
                 <span
-                  className={`font-semibold ${
+                  className={`text-sm sm:text-base font-semibold shrink-0 ${
                     transaction.type === 'income' ? 'text-success' : 'text-destructive'
                   }`}
                 >
