@@ -28,7 +28,9 @@ import {
   Search,
   Moon,
   Sun,
+  Monitor,
 } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -55,6 +57,7 @@ export function CommandPalette({
   onUploadReceipt,
 }: CommandPaletteProps) {
   const navigate = useNavigate();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const navigationCommands: CommandItem[] = [
     {
@@ -170,6 +173,30 @@ export function CommandPalette({
     },
   ];
 
+  const themeCommands: CommandItem[] = [
+    {
+      id: 'theme-light',
+      label: 'Heller Modus',
+      icon: Sun,
+      action: () => setTheme('light'),
+      keywords: ['light mode', 'hell', 'tag'],
+    },
+    {
+      id: 'theme-dark',
+      label: 'Dunkler Modus',
+      icon: Moon,
+      action: () => setTheme('dark'),
+      keywords: ['dark mode', 'dunkel', 'nacht'],
+    },
+    {
+      id: 'theme-system',
+      label: 'System-Theme',
+      icon: Monitor,
+      action: () => setTheme('system'),
+      keywords: ['auto', 'automatisch', 'system'],
+    },
+  ];
+
   const helpCommands: CommandItem[] = [
     {
       id: 'help',
@@ -183,7 +210,6 @@ export function CommandPalette({
       label: 'Tastaturkürzel anzeigen',
       icon: Search,
       action: () => {
-        // Could open a shortcuts modal
         alert('Tastaturkürzel:\n\n⌘K - Befehlspalette\n⌥D - Dashboard\n⌥B - Buchungen\n⌥R - Rechnungen\n⌥E - Belege\n⌥K - Kontakte\n⌘N - Neue Buchung\n⌘I - Neue Rechnung\n⌘U - Beleg hochladen');
       },
       keywords: ['keyboard', 'hotkeys'],
@@ -242,6 +268,26 @@ export function CommandPalette({
               <span>{cmd.label}</span>
               {cmd.shortcut && (
                 <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+              )}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Darstellung">
+          {themeCommands.map((cmd) => (
+            <CommandItem
+              key={cmd.id}
+              onSelect={() => handleSelect(cmd)}
+              keywords={cmd.keywords}
+            >
+              <cmd.icon className="mr-2 h-4 w-4" />
+              <span>{cmd.label}</span>
+              {((cmd.id === 'theme-light' && theme === 'light') ||
+                (cmd.id === 'theme-dark' && theme === 'dark') ||
+                (cmd.id === 'theme-system' && theme === 'system')) && (
+                <span className="ml-auto text-xs text-primary">Aktiv</span>
               )}
             </CommandItem>
           ))}
