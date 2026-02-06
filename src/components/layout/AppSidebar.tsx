@@ -20,6 +20,8 @@ import {
   Mail,
   HelpCircle,
   Repeat,
+  FileCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,6 +56,8 @@ const navItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Buchungen', url: '/buchungen', icon: Receipt },
   { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
+  { title: 'Angebote', url: '/angebote', icon: FileCheck },
+  { title: 'Aufträge', url: '/auftraege', icon: ClipboardList },
   { title: 'Rechnungen', url: '/rechnungen', icon: FileText },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
   { title: 'Kontakte', url: '/kontakte', icon: Users },
