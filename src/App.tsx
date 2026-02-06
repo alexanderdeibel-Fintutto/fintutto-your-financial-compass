@@ -27,6 +27,7 @@ import Notifications from "./pages/Notifications";
 import HelpCenter from "./pages/HelpCenter";
 import BankCallback from "./pages/BankCallback";
 import NotFound from "./pages/NotFound";
+import RecurringTransactions from "./pages/RecurringTransactions";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/buchungen" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+      <Route path="/wiederkehrend" element={<ProtectedRoute><RecurringTransactions /></ProtectedRoute>} />
       <Route path="/rechnungen" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
       <Route path="/belege" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
       <Route path="/kontakte" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />

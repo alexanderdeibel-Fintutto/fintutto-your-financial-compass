@@ -19,6 +19,7 @@ import {
   Calendar,
   Mail,
   HelpCircle,
+  Repeat,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +53,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Buchungen', url: '/buchungen', icon: Receipt },
+  { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
   { title: 'Rechnungen', url: '/rechnungen', icon: FileText },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
   { title: 'Kontakte', url: '/kontakte', icon: Users },
