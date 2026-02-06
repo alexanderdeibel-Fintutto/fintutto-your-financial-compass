@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import RecurringTransactions from "./pages/RecurringTransactions";
 import Quotes from "./pages/Quotes";
 import OrderConfirmations from "./pages/OrderConfirmations";
+import Automation from "./pages/Automation";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ function AppRoutes() {
       <Route path="/bankverbindung" element={<ProtectedRoute><BankConnect /></ProtectedRoute>} />
       <Route path="/elster" element={<ProtectedRoute><Elster /></ProtectedRoute>} />
       <Route path="/berichte" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/automatisierung" element={<ProtectedRoute><Automation /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

@@ -22,6 +22,7 @@ import {
   Repeat,
   FileCheck,
   ClipboardList,
+  Zap,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,6 +68,7 @@ const navItems = [
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'ELSTER', url: '/elster', icon: Landmark },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
+  { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
