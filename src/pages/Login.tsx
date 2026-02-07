@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, TrendingUp, Shield, Users, Info } from 'lucide-react';
+import { Loader2, TrendingUp, Shield, Users } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -223,13 +223,6 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Demo Notice */}
-          <Alert className="border-info/50 bg-info/10">
-            <Info className="h-4 w-4 text-info" />
-            <AlertDescription className="text-info">
-              <strong>Demo-Modus:</strong> Erstellen Sie ein kostenloses Konto, um alle Funktionen zu testen.
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
     </div>
