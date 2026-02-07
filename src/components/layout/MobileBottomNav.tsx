@@ -37,6 +37,7 @@ const moreNavItems = [
   { title: 'ELSTER', url: '/elster' },
   { title: 'Berichte', url: '/berichte' },
   { title: 'Automatisierung', url: '/automatisierung' },
+  { title: 'Steuerberater', url: '/steuerberater' },
   { title: 'Firmen', url: '/firmen' },
   { title: 'Vorlagen', url: '/vorlagen' },
   { title: 'Einstellungen', url: '/einstellungen' },

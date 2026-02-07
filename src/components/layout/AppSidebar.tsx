@@ -24,6 +24,7 @@ import {
   ClipboardList,
   Zap,
   Euro,
+  UserCheck,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,6 +72,7 @@ const navItems = [
   { title: 'ELSTER', url: '/elster', icon: Landmark },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
+  { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },

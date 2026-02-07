@@ -32,6 +32,7 @@ import Quotes from "./pages/Quotes";
 import OrderConfirmations from "./pages/OrderConfirmations";
 import Automation from "./pages/Automation";
 import SepaPayments from "./pages/SepaPayments";
+import TaxAdvisorPortal from "./pages/TaxAdvisorPortal";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ function AppRoutes() {
       <Route path="/berichte" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/automatisierung" element={<ProtectedRoute><Automation /></ProtectedRoute>} />
       <Route path="/sepa" element={<ProtectedRoute><SepaPayments /></ProtectedRoute>} />
+      <Route path="/steuerberater" element={<ProtectedRoute><TaxAdvisorPortal /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
