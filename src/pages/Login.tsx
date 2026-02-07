@@ -51,7 +51,6 @@ export default function Login() {
     <div className="min-h-screen flex" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="mb-12">
             <h1 className="text-5xl font-bold text-white mb-4">Fintutto</h1>
