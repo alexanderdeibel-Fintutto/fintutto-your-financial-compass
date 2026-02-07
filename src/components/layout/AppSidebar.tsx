@@ -147,8 +147,8 @@ export function AppSidebar() {
 
   return (
     <>
-      <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
+      <Sidebar className="border-r border-white/10 bg-black/30 backdrop-blur-xl">
+      <SidebarHeader className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-lg font-bold text-primary-foreground">F</span>
@@ -240,7 +240,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
+      <SidebarFooter className="p-4 border-t border-white/10">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary/20 text-primary">
