@@ -147,7 +147,15 @@ export function AppSidebar() {
 
   return (
     <>
-      <Sidebar className="border-r border-white/10 bg-black/30 backdrop-blur-xl">
+      <Sidebar
+        className="border-r border-white/10"
+        style={{
+          backgroundImage: 'url(/images/gradient-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
       <SidebarHeader className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">

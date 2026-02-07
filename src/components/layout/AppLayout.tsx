@@ -46,10 +46,20 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+      <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
-          <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-black/20 backdrop-blur-xl">
+        <main className="flex-1 flex flex-col relative overflow-hidden">
+          {/* Flipped gradient background for main content area */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: 'url(/images/gradient-bg.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              transform: 'scaleX(-1)',
+            }}
+          />
+          <header className="relative z-10 h-14 border-b border-white/10 flex items-center justify-between px-4 bg-black/20 backdrop-blur-xl">
             <div className="flex items-center lg:hidden">
               <SidebarTrigger>
                 <Menu className="h-6 w-6" />
@@ -75,7 +85,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <NotificationCenter />
             </div>
           </header>
-          <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8 bg-black/10">
+          <div className="relative z-10 flex-1 p-4 sm:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8 bg-black/10">
             {children}
           </div>
         </main>
