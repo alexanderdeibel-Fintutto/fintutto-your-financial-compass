@@ -127,7 +127,10 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background: var(--gradient-dark);
+    background-image: url('/images/gradient-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     min-height: 100vh;
   }
 }
