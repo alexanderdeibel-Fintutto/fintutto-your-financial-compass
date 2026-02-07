@@ -38,6 +38,7 @@ const moreNavItems = [
   { title: 'Berichte', url: '/berichte' },
   { title: 'Automatisierung', url: '/automatisierung' },
   { title: 'Steuerberater', url: '/steuerberater' },
+  { title: 'E-Commerce', url: '/ecommerce' },
   { title: 'Firmen', url: '/firmen' },
   { title: 'Vorlagen', url: '/vorlagen' },
   { title: 'Einstellungen', url: '/einstellungen' },

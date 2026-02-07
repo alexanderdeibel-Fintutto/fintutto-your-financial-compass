@@ -25,6 +25,7 @@ import {
   Zap,
   Euro,
   UserCheck,
+  ShoppingCart,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,6 +74,7 @@ const navItems = [
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
   { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
+  { title: 'E-Commerce', url: '/ecommerce', icon: ShoppingCart },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
