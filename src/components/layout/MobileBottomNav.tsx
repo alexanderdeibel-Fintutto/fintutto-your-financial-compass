@@ -40,6 +40,7 @@ const moreNavItems = [
   { title: 'Steuerberater', url: '/steuerberater' },
   { title: 'E-Commerce', url: '/ecommerce' },
   { title: 'Online-Zahlungen', url: '/zahlungen' },
+  { title: 'Buchhaltungssoftware', url: '/software' },
   { title: 'Firmen', url: '/firmen' },
   { title: 'Vorlagen', url: '/vorlagen' },
   { title: 'Einstellungen', url: '/einstellungen' },

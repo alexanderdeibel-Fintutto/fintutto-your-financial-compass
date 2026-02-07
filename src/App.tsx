@@ -35,6 +35,7 @@ import SepaPayments from "./pages/SepaPayments";
 import TaxAdvisorPortal from "./pages/TaxAdvisorPortal";
 import EcommerceIntegration from "./pages/EcommerceIntegration";
 import OnlinePayments from "./pages/OnlinePayments";
+import AccountingSoftware from "./pages/AccountingSoftware";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ function AppRoutes() {
       <Route path="/steuerberater" element={<ProtectedRoute><TaxAdvisorPortal /></ProtectedRoute>} />
       <Route path="/ecommerce" element={<ProtectedRoute><EcommerceIntegration /></ProtectedRoute>} />
       <Route path="/zahlungen" element={<ProtectedRoute><OnlinePayments /></ProtectedRoute>} />
+      <Route path="/software" element={<ProtectedRoute><AccountingSoftware /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
