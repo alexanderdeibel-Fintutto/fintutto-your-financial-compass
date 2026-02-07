@@ -48,10 +48,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background" style={{ background: 'hsl(222 47% 6%)' }}>
+    <div className="min-h-screen flex" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-black/20" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="mb-12">
             <h1 className="text-5xl font-bold text-white mb-4">Fintutto</h1>
@@ -101,14 +101,14 @@ export default function Login() {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
         <div className="w-full max-w-md space-y-6">
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-4xl font-bold gradient-text mb-2">Fintutto</h1>
             <p className="text-muted-foreground">Ihre Finanzbuchhaltung</p>
           </div>
 
-          <Card className="glass border-border/50">
+          <Card className="glass border-white/20 bg-black/30 backdrop-blur-xl">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Willkommen</CardTitle>
               <CardDescription>
