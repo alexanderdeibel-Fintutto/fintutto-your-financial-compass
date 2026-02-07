@@ -26,6 +26,7 @@ import {
   Euro,
   UserCheck,
   ShoppingCart,
+  Wallet,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,6 +76,7 @@ const navItems = [
   { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
   { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
   { title: 'E-Commerce', url: '/ecommerce', icon: ShoppingCart },
+  { title: 'Online-Zahlungen', url: '/zahlungen', icon: Wallet },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
