@@ -29,6 +29,7 @@ const moreNavItems = [
   { title: 'Angebote', url: '/angebote' },
   { title: 'Aufträge', url: '/auftraege' },
   { title: 'Kontakte', url: '/kontakte' },
+  { title: 'Beleg-Scanner', url: '/scanner' },
   { title: 'Bankkonten', url: '/bankkonten' },
   { title: 'Bankverbindung', url: '/bankverbindung' },
   { title: 'SEPA-Zahlungen', url: '/sepa' },
