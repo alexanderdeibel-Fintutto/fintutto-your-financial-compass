@@ -50,48 +50,48 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-black/20" />
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="mb-12">
-            <h1 className="text-5xl font-bold gradient-text mb-4">Fintutto</h1>
-            <p className="text-xl text-muted-foreground">
+            <h1 className="text-5xl font-bold text-white mb-4">Fintutto</h1>
+            <p className="text-xl text-white/80">
               Ihre professionelle Finanzbuchhaltung
             </p>
           </div>
           
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <TrendingUp className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm">
+                <TrendingUp className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Echtzeit-Übersicht</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-1 text-white">Echtzeit-Übersicht</h3>
+                <p className="text-sm text-white/70">
                   Alle Finanzdaten auf einen Blick
                 </p>
               </div>
             </div>
             
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Shield className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm">
+                <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Sichere Daten</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-1 text-white">Sichere Daten</h3>
+                <p className="text-sm text-white/70">
                   Enterprise-Grade Sicherheit
                 </p>
               </div>
             </div>
             
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm">
+                <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Multi-Mandanten</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-1 text-white">Multi-Mandanten</h3>
+                <p className="text-sm text-white/70">
                   Mehrere Firmen verwalten
                 </p>
               </div>
