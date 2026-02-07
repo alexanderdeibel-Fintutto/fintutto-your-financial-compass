@@ -31,6 +31,7 @@ const moreNavItems = [
   { title: 'Kontakte', url: '/kontakte' },
   { title: 'Bankkonten', url: '/bankkonten' },
   { title: 'Bankverbindung', url: '/bankverbindung' },
+  { title: 'SEPA-Zahlungen', url: '/sepa' },
   { title: 'Übergaben', url: '/uebergabe' },
   { title: 'Kalender', url: '/kalender' },
   { title: 'ELSTER', url: '/elster' },
