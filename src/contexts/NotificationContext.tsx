@@ -13,20 +13,27 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { companies } = useCompany();
+  const { companies, loading: companiesLoading } = useCompany();
   const { addNotification, notifications } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [welcomeSent, setWelcomeSent] = useState(false);
 
-  // Check if onboarding should be shown
+  // Check if onboarding should be shown - only when companies have finished loading
   useEffect(() => {
-    if (user && companies.length === 0) {
-      const completed = localStorage.getItem('onboarding_completed');
+    if (!user || companiesLoading) return;
+    
+    const completed = localStorage.getItem('onboarding_completed');
+    
+    if (companies.length > 0) {
+      // User already has companies, mark onboarding as done and never show again
       if (!completed) {
-        setShowOnboarding(true);
+        localStorage.setItem('onboarding_completed', 'true');
       }
+      setShowOnboarding(false);
+    } else if (!completed) {
+      setShowOnboarding(true);
     }
-  }, [user, companies]);
+  }, [user, companies, companiesLoading]);
 
   // Send welcome notifications on first login
   useEffect(() => {
