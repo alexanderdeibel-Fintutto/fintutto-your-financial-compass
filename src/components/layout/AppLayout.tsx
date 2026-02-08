@@ -11,6 +11,7 @@ import { useAppShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Menu, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import fintuttoLogo from '@/assets/fintutto-logo.svg';
+import fintuttoHorizontal from '@/assets/fintutto-horizontal.svg';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -60,7 +61,8 @@ export function AppLayout({ children }: AppLayoutProps) {
               transform: 'scaleX(-1)',
             }}
           />
-          <header className="relative z-10 h-14 border-b border-white/10 flex items-center justify-between px-4 bg-black/20 backdrop-blur-xl">
+          <header className="relative z-10 h-14 border-b border-white/10 flex items-center px-4 bg-black/20 backdrop-blur-xl">
+            {/* Left: Logo (desktop) / Mobile menu + logo */}
             <div className="flex items-center lg:hidden">
               <SidebarTrigger>
                 <Menu className="h-6 w-6" />
@@ -68,11 +70,16 @@ export function AppLayout({ children }: AppLayoutProps) {
               <img src={fintuttoLogo} alt="Fintutto" className="ml-3 h-8 w-8 rounded-lg" />
               <span className="ml-2 font-semibold gradient-text">Fintutto</span>
             </div>
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center shrink-0">
+              <img src={fintuttoHorizontal} alt="Fintutto" className="h-9" />
+            </div>
+
+            {/* Center: Search */}
+            <div className="hidden lg:flex flex-1 justify-center">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-muted-foreground gap-2 w-64 justify-start"
+                className="text-muted-foreground gap-2 w-72 justify-start"
                 onClick={() => setCommandPaletteOpen(true)}
               >
                 <Search className="h-4 w-4" />
@@ -82,7 +89,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </kbd>
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 ml-auto lg:ml-0 shrink-0">
               <ThemeToggle />
               <NotificationCenter />
             </div>
