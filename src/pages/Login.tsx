@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, TrendingUp, Shield, Users } from 'lucide-react';
+import fintuttoLogo from '@/assets/fintutto-logo.svg';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -53,6 +54,7 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="mb-12">
+            <img src={fintuttoLogo} alt="Fintutto Logo" className="h-20 w-20 rounded-2xl mb-4" />
             <h1 className="text-5xl font-bold text-white mb-4">Fintutto</h1>
             <p className="text-xl text-white/80">
               Ihre professionelle Finanzbuchhaltung
@@ -103,6 +105,7 @@ export default function Login() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
         <div className="w-full max-w-md space-y-6">
           <div className="lg:hidden text-center mb-8">
+            <img src={fintuttoLogo} alt="Fintutto Logo" className="h-16 w-16 rounded-xl mx-auto mb-2" />
             <h1 className="text-4xl font-bold gradient-text mb-2">Fintutto</h1>
             <p className="text-muted-foreground">Ihre Finanzbuchhaltung</p>
           </div>

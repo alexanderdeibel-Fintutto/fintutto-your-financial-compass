@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAppShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Menu, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import fintuttoLogo from '@/assets/fintutto-logo.svg';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -64,7 +65,8 @@ export function AppLayout({ children }: AppLayoutProps) {
               <SidebarTrigger>
                 <Menu className="h-6 w-6" />
               </SidebarTrigger>
-              <span className="ml-4 font-semibold gradient-text">Fintutto</span>
+              <img src={fintuttoLogo} alt="Fintutto" className="ml-3 h-8 w-8 rounded-lg" />
+              <span className="ml-2 font-semibold gradient-text">Fintutto</span>
             </div>
             <div className="hidden lg:flex items-center gap-2">
               <Button
