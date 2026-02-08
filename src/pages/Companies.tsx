@@ -16,8 +16,9 @@
    AlertDialogHeader,
    AlertDialogTitle,
  } from '@/components/ui/alert-dialog';
- import { NewCompanyDialog } from '@/components/company/NewCompanyDialog';
- import { Building2, Plus, Pencil, Trash2, ArrowRight, Receipt, TrendingUp } from 'lucide-react';
+import { NewCompanyDialog } from '@/components/company/NewCompanyDialog';
+import { EditCompanyDialog } from '@/components/company/EditCompanyDialog';
+import { Building2, Plus, Pencil, Trash2, ArrowRight, Receipt, TrendingUp } from 'lucide-react';
  import { cn } from '@/lib/utils';
  
  interface CompanyStats {
@@ -25,17 +26,18 @@
    totalRevenue: number;
  }
  
- interface CompanyWithStats {
-   id: string;
-   name: string;
-   legal_form?: string;
-   tax_id?: string;
-   address?: string;
-   zip?: string;
-   city?: string;
-   chart_of_accounts?: string;
-   stats: CompanyStats;
- }
+interface CompanyWithStats {
+  id: string;
+  name: string;
+  legal_form?: string;
+  tax_id?: string;
+  vat_id?: string;
+  address?: string;
+  zip?: string;
+  city?: string;
+  chart_of_accounts?: string;
+  stats: CompanyStats;
+}
  
  const legalFormLabels: Record<string, string> = {
    gmbh: 'GmbH',
@@ -62,9 +64,10 @@
    const { toast } = useToast();
    const [companiesWithStats, setCompaniesWithStats] = useState<CompanyWithStats[]>([]);
    const [loading, setLoading] = useState(true);
-   const [newCompanyOpen, setNewCompanyOpen] = useState(false);
-   const [deleteCompanyId, setDeleteCompanyId] = useState<string | null>(null);
-   const [isDeleting, setIsDeleting] = useState(false);
+  const [newCompanyOpen, setNewCompanyOpen] = useState(false);
+  const [editCompany, setEditCompany] = useState<CompanyWithStats | null>(null);
+  const [deleteCompanyId, setDeleteCompanyId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
  
    useEffect(() => {
      fetchCompaniesWithStats();
@@ -97,15 +100,16 @@
          .eq('id', company.id)
          .single();
  
-       enrichedCompanies.push({
-         id: company.id,
-         name: company.name,
-         legal_form: fullCompany?.legal_form,
-         tax_id: fullCompany?.tax_id,
-         address: fullCompany?.address,
-         zip: fullCompany?.zip,
-         city: fullCompany?.city,
-         chart_of_accounts: fullCompany?.chart_of_accounts,
+        enrichedCompanies.push({
+          id: company.id,
+          name: company.name,
+          legal_form: fullCompany?.legal_form,
+          tax_id: fullCompany?.tax_id,
+          vat_id: fullCompany?.vat_id,
+          address: fullCompany?.address,
+          zip: fullCompany?.zip,
+          city: fullCompany?.city,
+          chart_of_accounts: fullCompany?.chart_of_accounts,
          stats: {
            transactionCount: transactionCount || 0,
            totalRevenue,
@@ -304,9 +308,9 @@
                        Wechseln
                      </Button>
                    )}
-                   <Button variant="outline" size="sm">
-                     <Pencil className="h-4 w-4" />
-                   </Button>
+                <Button variant="outline" size="sm" onClick={() => setEditCompany(company)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                    <Button
                      variant="outline"
                      size="sm"
@@ -336,8 +340,25 @@
          </div>
        )}
  
-       {/* New Company Dialog */}
-       <NewCompanyDialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen} />
+      {/* New Company Dialog */}
+      <NewCompanyDialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen} />
+
+      {/* Edit Company Dialog */}
+      <EditCompanyDialog
+        open={!!editCompany}
+        onOpenChange={(open) => { if (!open) setEditCompany(null); }}
+        company={editCompany ? {
+          id: editCompany.id,
+          name: editCompany.name,
+          legal_form: editCompany.legal_form,
+          tax_id: editCompany.tax_id,
+          vat_id: editCompany.vat_id,
+          address: editCompany.address,
+          zip: editCompany.zip,
+          city: editCompany.city,
+          chart_of_accounts: editCompany.chart_of_accounts,
+        } : null}
+      />
  
        {/* Delete Confirmation Dialog */}
        <AlertDialog open={!!deleteCompanyId} onOpenChange={() => setDeleteCompanyId(null)}>
