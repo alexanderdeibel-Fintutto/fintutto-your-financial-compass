@@ -16,7 +16,7 @@ import {
   Link2,
   CreditCard,
   Landmark,
-  ClipboardCheck,
+  
   Calendar,
   Mail,
   HelpCircle,
@@ -90,7 +90,7 @@ const navItems: NavItem[] = [
       { title: 'SEPA-Zahlungen', url: '/sepa', icon: Euro },
     ],
   },
-  { title: 'Übergaben', url: '/uebergabe', icon: ClipboardCheck },
+  
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   {

@@ -18,7 +18,7 @@ import {
   FileBarChart,
   Settings,
   Building2,
-  FolderOutput,
+  
   CalendarDays,
   Mail,
   Bell,
@@ -53,7 +53,7 @@ const routeMap: Record<string, { label: string; icon?: React.ElementType }> = {
   '/ecommerce': { label: 'E-Commerce', icon: ShoppingCart },
   '/einstellungen': { label: 'Einstellungen', icon: Settings },
   '/firmen': { label: 'Firmen', icon: Building2 },
-  '/uebergabe': { label: 'Übergabe', icon: FolderOutput },
+  
   '/kalender': { label: 'Kalender', icon: CalendarDays },
   '/vorlagen': { label: 'E-Mail-Vorlagen', icon: Mail },
   '/benachrichtigungen': { label: 'Benachrichtigungen', icon: Bell },

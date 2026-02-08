@@ -32,7 +32,7 @@ const moreNavItems = [
   { title: 'Bankkonten', url: '/bankkonten' },
   { title: 'Bankverbindung', url: '/bankverbindung' },
   { title: 'SEPA-Zahlungen', url: '/sepa' },
-  { title: 'Übergaben', url: '/uebergabe' },
+  
   { title: 'Kalender', url: '/kalender' },
   { title: 'ELSTER', url: '/elster' },
   { title: 'Berichte', url: '/berichte' },
