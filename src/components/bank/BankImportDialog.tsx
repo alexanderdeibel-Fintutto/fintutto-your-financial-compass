@@ -268,9 +268,31 @@
          return tx;
        })
      );
-   };
- 
-   const handleImport = async () => {
+    };
+
+    const recalculateAccountBalance = async (accountId: string) => {
+      if (!currentCompany) return;
+      
+      // Sum all transactions for this bank account
+      const { data: txData } = await supabase
+        .from('transactions')
+        .select('amount, type')
+        .eq('company_id', currentCompany.id)
+        .eq('bank_account_id', accountId);
+      
+      if (txData) {
+        const balance = txData.reduce((sum, tx) => {
+          return sum + (tx.type === 'income' ? Number(tx.amount) : -Number(tx.amount));
+        }, 0);
+        
+        await supabase
+          .from('bank_accounts')
+          .update({ balance })
+          .eq('id', accountId);
+      }
+    };
+  
+    const handleImport = async () => {
      const selectedTransactions = enhancedTransactions.filter(tx => tx.selected);
      
      if (!currentCompany || !selectedAccountId || selectedTransactions.length === 0) {
@@ -311,17 +333,20 @@
              .eq('id', tx.matchingInvoice.id);
            linkedToInvoices++;
          }
-       }
- 
-       const duplicatesSkipped = enhancedTransactions.filter(tx => tx.isDuplicate && !tx.selected).length;
-       
-       setImportStats({
-         imported,
-         duplicatesSkipped,
-         linkedToInvoices,
-       });
-       setStep('complete');
-       onSuccess();
+        }
+
+        // Recalculate and update bank account balance from all linked transactions
+        await recalculateAccountBalance(selectedAccountId);
+  
+        const duplicatesSkipped = enhancedTransactions.filter(tx => tx.isDuplicate && !tx.selected).length;
+        
+        setImportStats({
+          imported,
+          duplicatesSkipped,
+          linkedToInvoices,
+        });
+        setStep('complete');
+        onSuccess();
      } catch (error) {
        console.error('Import error:', error);
        toast({
