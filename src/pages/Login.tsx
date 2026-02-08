@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, TrendingUp, Shield, Users } from 'lucide-react';
-import fintuttoLogo from '@/assets/fintutto-logo.svg';
+import fintuttoLogo from '@/assets/fintutto-animated.svg';
 
 export default function Login() {
   const [email, setEmail] = useState('');
