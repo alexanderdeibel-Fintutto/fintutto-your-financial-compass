@@ -92,7 +92,6 @@ const navItems: NavItem[] = [
   },
   { title: 'Übergaben', url: '/uebergabe', icon: ClipboardCheck },
   { title: 'Kalender', url: '/kalender', icon: Calendar },
-  { title: 'ELSTER', url: '/elster', icon: Landmark },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   {
     title: 'Einstellungen', url: '/einstellungen', icon: Settings,
@@ -102,6 +101,7 @@ const navItems: NavItem[] = [
       { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
       { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
       { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
+      { title: 'ELSTER', url: '/elster', icon: Landmark },
     ],
   },
   { title: 'Hilfe', url: '/hilfe', icon: HelpCircle },
