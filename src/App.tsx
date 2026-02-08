@@ -9,6 +9,8 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Invoices from "./pages/Invoices";
@@ -75,6 +77,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/passwort-vergessen" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
+      <Route path="/passwort-zuruecksetzen" element={<ResetPassword />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/buchungen" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
       <Route path="/wiederkehrend" element={<ProtectedRoute><RecurringTransactions /></ProtectedRoute>} />
