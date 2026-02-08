@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LayoutDashboard,
   Receipt,
@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  ChevronRight,
   Plus,
   Link2,
   CreditCard,
@@ -44,6 +45,11 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -57,13 +63,24 @@ import { NewCompanyDialog } from '@/components/company/NewCompanyDialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  children?: NavItem[];
+}
+
+const navItems: NavItem[] = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Buchungen', url: '/buchungen', icon: Receipt },
-  { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
-  { title: 'Angebote', url: '/angebote', icon: FileCheck },
-  { title: 'Aufträge', url: '/auftraege', icon: ClipboardList },
-  { title: 'Rechnungen', url: '/rechnungen', icon: FileText },
+  {
+    title: 'Rechnungen', url: '/rechnungen', icon: FileText,
+    children: [
+      { title: 'Angebote', url: '/angebote', icon: FileCheck },
+      { title: 'Aufträge', url: '/auftraege', icon: ClipboardList },
+      { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
+    ],
+  },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
   { title: 'Kontakte', url: '/kontakte', icon: Users },
   { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
@@ -110,6 +127,10 @@ export function AppSidebar() {
   const [newCompanyOpen, setNewCompanyOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Auto-open collapsible if a child route is active
+  const isChildActive = (item: NavItem) =>
+    item.children?.some(child => isActive(child.url)) ?? false;
 
   const getAvatarColor = (index: number) => {
     return avatarColors[index % avatarColors.length];
@@ -231,21 +252,60 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === '/'}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
-                    >
-                      <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) =>
+                item.children ? (
+                  <SidebarMenuItem key={item.title}>
+                    <Collapsible defaultOpen={isActive(item.url) || isChildActive(item)}>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-sidebar-accent group"
+                            activeClassName="bg-sidebar-accent text-primary font-medium"
+                          >
+                            <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <span className="flex-1">{item.title}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenu className="ml-4 mt-1 border-l border-white/10 pl-2">
+                          {item.children.map((child) => (
+                            <SidebarMenuItem key={child.title}>
+                              <SidebarMenuButton asChild>
+                                <NavLink
+                                  to={child.url}
+                                  className="flex items-center gap-3 px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-sidebar-accent text-sm"
+                                  activeClassName="bg-sidebar-accent text-primary font-medium"
+                                >
+                                  <child.icon className={`h-4 w-4 ${isActive(child.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  <span>{child.title}</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </SidebarMenuItem>
+                ) : (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === '/'}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-sidebar-accent"
+                        activeClassName="bg-sidebar-accent text-primary font-medium"
+                      >
+                        <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
