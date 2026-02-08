@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import fintuttoLogo from '@/assets/fintutto-animated.svg';
+import fintuttoHorizontalLogo from '@/assets/fintutto-horizontal.svg';
 import { useCompany } from '@/contexts/CompanyContext';
 import {
   Sidebar,
@@ -185,13 +185,9 @@ export function AppSidebar() {
             backgroundPosition: 'center',
           }}
         />
-      <SidebarHeader className="p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <img src={fintuttoLogo} alt="Fintutto Logo" className="h-14 w-14 rounded-xl" />
-          <div>
-            <h1 className="text-xl font-bold gradient-text">Fintutto</h1>
-            <p className="text-xs text-muted-foreground">Finanzbuchhaltung</p>
-          </div>
+      <SidebarHeader className="p-5 border-b border-white/10">
+        <div className="flex items-center justify-center">
+          <img src={fintuttoHorizontalLogo} alt="Fintutto" className="h-12" />
         </div>
 
         {/* Company Selector */}
