@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles } from 'lucide-react';
+import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -15,8 +15,12 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { EmailInboxTab } from '@/components/receipts/EmailInboxTab';
+import { OpenQuestionsTab } from '@/components/receipts/OpenQuestionsTab';
+import { useEmailInbox } from '@/hooks/useEmailInbox';
 
 interface Receipt {
   id: string;
@@ -214,6 +218,9 @@ export default function Receipts() {
     );
   }
 
+  const { emailReceipts: emailReceiptsList } = useEmailInbox();
+  const openQuestionsCount = emailReceiptsList.filter((r) => r.status === 'question' || r.status === 'error').length;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -222,6 +229,29 @@ export default function Receipts() {
           <p className="text-muted-foreground">Verwalten Sie Ihre Belege und Dokumente</p>
         </div>
       </div>
+
+      <Tabs defaultValue="upload" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsTrigger value="upload" className="gap-2">
+            <Upload className="h-4 w-4" />
+            Upload
+          </TabsTrigger>
+          <TabsTrigger value="email" className="gap-2">
+            <Mail className="h-4 w-4" />
+            E-Mail-Eingang
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="gap-2 relative">
+            <AlertCircle className="h-4 w-4" />
+            Offene Fragen
+            {openQuestionsCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                {openQuestionsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="mt-0 space-y-6">
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -488,6 +518,16 @@ export default function Receipts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="email" className="mt-0">
+          <EmailInboxTab />
+        </TabsContent>
+
+        <TabsContent value="questions" className="mt-0">
+          <OpenQuestionsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

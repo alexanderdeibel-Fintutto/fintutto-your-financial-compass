@@ -179,6 +179,145 @@ export type Database = {
           },
         ]
       }
+      email_inboxes: {
+        Row: {
+          allowed_senders: string[] | null
+          company_id: string
+          created_at: string
+          id: string
+          inbox_address: string
+          is_active: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_senders?: string[] | null
+          company_id: string
+          created_at?: string
+          id?: string
+          inbox_address: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_senders?: string[] | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          inbox_address?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_inboxes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_receipts: {
+        Row: {
+          amount: number | null
+          category: string | null
+          company_id: string
+          confidence: number | null
+          created_at: string
+          date: string | null
+          description: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          inbox_id: string
+          question_text: string | null
+          receipt_id: string | null
+          received_at: string
+          sender_email: string
+          status: string
+          subject: string | null
+          tax_amount: number | null
+          transaction_id: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount?: number | null
+          category?: string | null
+          company_id: string
+          confidence?: number | null
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          inbox_id: string
+          question_text?: string | null
+          receipt_id?: string | null
+          received_at?: string
+          sender_email: string
+          status?: string
+          subject?: string | null
+          tax_amount?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number | null
+          category?: string | null
+          company_id?: string
+          confidence?: number | null
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          inbox_id?: string
+          question_text?: string | null
+          receipt_id?: string | null
+          received_at?: string
+          sender_email?: string
+          status?: string
+          subject?: string | null
+          tax_amount?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_receipts_inbox_id_fkey"
+            columns: ["inbox_id"]
+            isOneToOne: false
+            referencedRelation: "email_inboxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_receipts_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_receipts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body: string
