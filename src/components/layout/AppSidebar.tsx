@@ -67,6 +67,7 @@ interface NavItem {
   title: string;
   url: string;
   icon: any;
+  businessOnly?: boolean;
   children?: NavItem[];
 }
 
@@ -76,8 +77,8 @@ const navItems: NavItem[] = [
   {
     title: 'Rechnungen', url: '/rechnungen', icon: FileText,
     children: [
-      { title: 'Angebote', url: '/angebote', icon: FileCheck },
-      { title: 'Aufträge', url: '/auftraege', icon: ClipboardList },
+      { title: 'Angebote', url: '/angebote', icon: FileCheck, businessOnly: true },
+      { title: 'Aufträge', url: '/auftraege', icon: ClipboardList, businessOnly: true },
       { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
     ],
   },
@@ -98,10 +99,10 @@ const navItems: NavItem[] = [
     children: [
       { title: 'Firmen', url: '/firmen', icon: Building2 },
       { title: 'Kontakte', url: '/kontakte', icon: Users },
-      { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
-      { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
-      { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
-      { title: 'ELSTER', url: '/elster', icon: Landmark },
+      { title: 'Vorlagen', url: '/vorlagen', icon: Mail, businessOnly: true },
+      { title: 'Automatisierung', url: '/automatisierung', icon: Zap, businessOnly: true },
+      { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck, businessOnly: true },
+      { title: 'ELSTER', url: '/elster', icon: Landmark, businessOnly: true },
     ],
   },
   { title: 'Hilfe', url: '/hilfe', icon: HelpCircle },
@@ -133,6 +134,21 @@ export function AppSidebar() {
   const { companies, currentCompany, setCurrentCompany, personalCompany, businessCompanies } = useCompany();
   const { toast } = useToast();
   const [newCompanyOpen, setNewCompanyOpen] = useState(false);
+  const isPersonal = currentCompany?.is_personal ?? false;
+
+  // Filter nav items: hide businessOnly items in personal area
+  const filteredNavItems = useMemo(() => {
+    if (!isPersonal) return navItems;
+    return navItems
+      .filter(item => !item.businessOnly)
+      .map(item => {
+        if (item.children) {
+          const filteredChildren = item.children.filter(child => !child.businessOnly);
+          return { ...item, children: filteredChildren.length > 0 ? filteredChildren : undefined };
+        }
+        return item;
+      });
+  }, [isPersonal]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -284,7 +300,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) =>
+              {filteredNavItems.map((item) =>
                 item.children ? (
                   <SidebarMenuItem key={item.title}>
                     <Collapsible defaultOpen={isActive(item.url) || isChildActive(item)}>
