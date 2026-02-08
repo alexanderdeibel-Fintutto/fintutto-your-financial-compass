@@ -73,6 +73,7 @@ const routeParents: Record<string, string> = {
   '/vorlagen': '/einstellungen',
   '/automatisierung': '/einstellungen',
   '/steuerberater': '/einstellungen',
+  '/elster': '/einstellungen',
 };
 
 export function HeaderBreadcrumb() {
