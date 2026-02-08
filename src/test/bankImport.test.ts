@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseCSV, detectBankFormat } from '@/services/bankImport';
+import { parseCSV, detectBankFormat, BankFormat } from '@/services/bankImport';
 
 const OUTBANK_CSV = `#;Konto;Datum;Valuta;Betrag;Währung;Name;Nummer;Bank;Zweck;Hauptkategorie;Kategorie;Kategoriepfad;Tags;Notiz;Buchungstext
 1;DE58500240245625741701;04.02.2026;;-9,99;EUR;"Apple";;;;"Familie";"Cloud/Netz Abos";"Familie / Cloud/Netz Abos";;;"Apple.Com/Bill"
@@ -70,5 +70,35 @@ describe('Bank Import - Outbank CSV', () => {
     
     // Category from Kategoriepfad (col 12) or Kategorie (col 11)
     expect(transactions[0].category).toContain('Cloud/Netz Abos');
+  });
+});
+
+describe('Bank Import - Format Auto-Detection', () => {
+  it('should detect Outbank from header', () => {
+    expect(detectBankFormat('#;Konto;Datum;Valuta;Betrag;Währung;Name\n')).toBe('outbank');
+  });
+
+  it('should detect Sparkasse from header', () => {
+    expect(detectBankFormat('"Auftragskonto";"Buchungstag";"Valutadatum";"Empfänger"\n')).toBe('sparkasse');
+  });
+
+  it('should detect Deutsche Bank from header', () => {
+    expect(detectBankFormat('"Buchungstag";"Wertstellung";"Buchungsart";"Begünstigter";"Betrag"\n')).toBe('deutschebank');
+  });
+
+  it('should detect Commerzbank from header', () => {
+    expect(detectBankFormat('"Buchungstag";"Wertstellung";"Umsatzart";"Buchungstext"\n')).toBe('commerzbank');
+  });
+
+  it('should detect Revolut from header', () => {
+    expect(detectBankFormat('Type,Product,Started Date,Completed Date,Description,Amount\n')).toBe('revolut');
+  });
+
+  it('should detect C24 from header', () => {
+    expect(detectBankFormat('Buchungstyp,Buchungsdatum,Betrag,Währung,Empfänger\n')).toBe('c24');
+  });
+
+  it('should return null for unknown formats', () => {
+    expect(detectBankFormat('random,csv,headers\n1,2,3')).toBeNull();
   });
 });
