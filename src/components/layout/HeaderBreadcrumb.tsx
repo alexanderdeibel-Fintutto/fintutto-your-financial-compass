@@ -72,6 +72,7 @@ const routeParents: Record<string, string> = {
   '/kontakte': '/einstellungen',
   '/vorlagen': '/einstellungen',
   '/automatisierung': '/einstellungen',
+  '/steuerberater': '/einstellungen',
 };
 
 export function HeaderBreadcrumb() {
