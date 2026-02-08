@@ -149,49 +149,92 @@
     return undefined;
    }, [openInvoices]);
  
-   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-     const selectedFile = e.target.files?.[0];
-     if (!selectedFile) return;
- 
-     setFile(selectedFile);
-     setParseError(null);
- 
-     try {
-       const content = await selectedFile.text();
-       const fileFormat = detectFileFormat(content, selectedFile.name);
-       
-       let transactions: BankTransaction[] = [];
-       
-       if (fileFormat === 'mt940') {
-         transactions = parseMT940(content);
-       } else if (fileFormat === 'camt053') {
-         transactions = parseCAMT053(content);
-       } else {
-         transactions = parseCSV(content, bankFormat);
-       }
- 
-       if (transactions.length === 0) {
-         setParseError('Keine Transaktionen gefunden. Bitte überprüfen Sie das Dateiformat.');
-         return;
-       }
- 
-       const enhanced = transactions.map((tx, index) => {
-         const isDuplicate = checkDuplicate(tx);
-         return {
-           ...tx,
-           id: `tx-${index}-${Date.now()}`,
-           isDuplicate,
-           selected: !isDuplicate,
-           matchingInvoice: findMatchingInvoice(tx),
-         };
-       });
-       setEnhancedTransactions(enhanced);
-       setStep('preview');
-     } catch (error) {
-       console.error('Parse error:', error);
-       setParseError('Fehler beim Lesen der Datei. Bitte überprüfen Sie das Format.');
-     }
-   }, [bankFormat, checkDuplicate, findMatchingInvoice]);
+    const processTransactions = useCallback((transactions: BankTransaction[]) => {
+      if (transactions.length === 0) {
+        setParseError('Keine Transaktionen gefunden. Bitte überprüfen Sie das Dateiformat.');
+        return;
+      }
+
+      const enhanced = transactions.map((tx, index) => {
+        const isDuplicate = checkDuplicate(tx);
+        return {
+          ...tx,
+          id: `tx-${index}-${Date.now()}`,
+          isDuplicate,
+          selected: !isDuplicate,
+          matchingInvoice: findMatchingInvoice(tx),
+        };
+      });
+      setEnhancedTransactions(enhanced);
+      setStep('preview');
+    }, [checkDuplicate, findMatchingInvoice]);
+
+    const handlePdfImport = useCallback(async (selectedFile: File) => {
+      setImporting(true);
+      setParseError(null);
+      
+      try {
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+
+        const { data, error } = await supabase.functions.invoke('parse-bank-pdf', {
+          body: { pdfBase64: base64, filename: selectedFile.name },
+        });
+
+        if (error) {
+          console.error('PDF parse error:', error);
+          setParseError('PDF konnte nicht analysiert werden. Bitte versuchen Sie ein anderes Format.');
+          return;
+        }
+
+        const transactions: BankTransaction[] = data.transactions || [];
+        processTransactions(transactions);
+      } catch (error) {
+        console.error('PDF import error:', error);
+        setParseError('Fehler beim Analysieren der PDF-Datei.');
+      } finally {
+        setImporting(false);
+      }
+    }, [processTransactions]);
+
+    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0];
+      if (!selectedFile) return;
+
+      setFile(selectedFile);
+      setParseError(null);
+
+      // Handle PDF files with AI
+      if (selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        await handlePdfImport(selectedFile);
+        return;
+      }
+
+      try {
+        const content = await selectedFile.text();
+        const fileFormat = detectFileFormat(content, selectedFile.name);
+        
+        let transactions: BankTransaction[] = [];
+        
+        if (fileFormat === 'mt940') {
+          transactions = parseMT940(content);
+        } else if (fileFormat === 'camt053') {
+          transactions = parseCAMT053(content);
+        } else {
+          transactions = parseCSV(content, bankFormat);
+        }
+
+        processTransactions(transactions);
+      } catch (error) {
+        console.error('Parse error:', error);
+        setParseError('Fehler beim Lesen der Datei. Bitte überprüfen Sie das Format.');
+      }
+    }, [bankFormat, handlePdfImport, processTransactions]);
  
    const toggleSelection = (id: string) => {
      setEnhancedTransactions(prev =>
@@ -252,7 +295,7 @@
            type: tx.amount >= 0 ? 'income' : 'expense',
            amount: Math.abs(tx.amount),
            description: tx.description || tx.counterpartName || 'Importierte Buchung',
-           category: 'Bank-Import',
+           category: tx.category || 'Bank-Import',
          });
  
          if (error) {
@@ -383,22 +426,34 @@
              <div>
                <Label>Datei hochladen</Label>
                <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                 <input
-                   type="file"
-                   accept=".csv,.txt,.sta,.mt940,.xml"
-                   onChange={handleFileChange}
-                   className="hidden"
-                   id="bank-file-upload"
-                 />
-                 <label htmlFor="bank-file-upload" className="cursor-pointer">
-                   <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                   <p className="text-lg font-medium mb-1">
-                     {file ? file.name : 'Datei auswählen oder hier ablegen'}
-                   </p>
-                   <p className="text-sm text-muted-foreground">
-                     Unterstützte Formate: CSV, MT940, CAMT.053
-                   </p>
-                 </label>
+                  <input
+                    type="file"
+                    accept=".csv,.txt,.sta,.mt940,.xml,.pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="bank-file-upload"
+                  />
+                  <label htmlFor="bank-file-upload" className="cursor-pointer">
+                    {importing ? (
+                      <>
+                        <Loader2 className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
+                        <p className="text-lg font-medium mb-1">PDF wird analysiert...</p>
+                        <p className="text-sm text-muted-foreground">
+                          KI extrahiert Transaktionen aus dem PDF
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-lg font-medium mb-1">
+                          {file ? file.name : 'Datei auswählen oder hier ablegen'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Unterstützte Formate: CSV, MT940, CAMT.053, PDF
+                        </p>
+                      </>
+                    )}
+                  </label>
                </div>
              </div>
  
@@ -410,14 +465,15 @@
                </Alert>
              )}
  
-             <Alert>
-               <FileText className="h-4 w-4" />
-               <AlertTitle>Hinweis zum Dateiformat</AlertTitle>
-               <AlertDescription>
-                 Laden Sie die Kontoauszüge direkt aus Ihrem Online-Banking herunter. 
-                 MT940 und CAMT.053 Formate werden automatisch erkannt.
-               </AlertDescription>
-             </Alert>
+              <Alert>
+                <FileText className="h-4 w-4" />
+                <AlertTitle>Hinweis zum Dateiformat</AlertTitle>
+                <AlertDescription>
+                  Laden Sie die Kontoauszüge direkt aus Ihrem Online-Banking herunter. 
+                  MT940 und CAMT.053 Formate werden automatisch erkannt. 
+                  PDF-Kontoauszüge werden per KI analysiert.
+                </AlertDescription>
+              </Alert>
            </div>
          ) : (
            <div className="space-y-4">
