@@ -53,12 +53,14 @@ export default function Login() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="relative z-10 flex flex-col justify-center px-16">
-          <div className="mb-12">
-            <img src={fintuttoLogo} alt="Fintutto Logo" className="h-20 w-20 rounded-2xl mb-4" />
-            <h1 className="text-5xl font-bold text-white mb-4">Fintutto</h1>
-            <p className="text-xl text-white/80">
-              Ihre professionelle Finanzbuchhaltung
-            </p>
+          <div className="mb-12 flex items-center gap-5">
+            <img src={fintuttoLogo} alt="Fintutto Logo" className="h-20 w-20 rounded-2xl shrink-0" />
+            <div>
+              <h1 className="text-5xl font-bold text-white leading-tight">Fintutto</h1>
+              <p className="text-xl text-white/80">
+                Ihre professionelle Finanzbuchhaltung
+              </p>
+            </div>
           </div>
           
           <div className="space-y-6">
