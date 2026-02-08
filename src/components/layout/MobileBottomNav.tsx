@@ -40,6 +40,7 @@ const moreNavItems = [
   { title: 'Cash-Flow', url: '/cashflow' },
   { title: 'Vergleiche', url: '/vergleiche' },
   { title: 'Forecast', url: '/forecast' },
+  { title: 'Budgetplanung', url: '/budget' },
   { title: 'Automatisierung', url: '/automatisierung' },
   { title: 'Steuerberater', url: '/steuerberater' },
   { title: 'E-Commerce', url: '/ecommerce' },
@@ -47,6 +48,7 @@ const moreNavItems = [
   { title: 'Buchhaltungssoftware', url: '/software' },
   { title: 'Firmen', url: '/firmen' },
   { title: 'Vorlagen', url: '/vorlagen' },
+  { title: 'Datensicherung', url: '/backup' },
   { title: 'Einstellungen', url: '/einstellungen' },
   { title: 'Hilfe', url: '/hilfe' },
 ];
