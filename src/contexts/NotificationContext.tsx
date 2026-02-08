@@ -13,27 +13,29 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { companies, loading: companiesLoading } = useCompany();
+  const { companies, businessCompanies, loading: companiesLoading } = useCompany();
   const { addNotification, notifications } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [welcomeSent, setWelcomeSent] = useState(false);
 
   // Check if onboarding should be shown - only when companies have finished loading
+  // Onboarding now guides to creating a business company (personal is auto-created)
   useEffect(() => {
     if (!user || companiesLoading) return;
     
     const completed = localStorage.getItem('onboarding_completed');
     
-    if (companies.length > 0) {
-      // User already has companies, mark onboarding as done and never show again
+    if (businessCompanies.length > 0) {
+      // User already has business companies, mark onboarding as done
       if (!completed) {
         localStorage.setItem('onboarding_completed', 'true');
       }
       setShowOnboarding(false);
     } else if (!completed) {
+      // No business companies yet — show onboarding to create one
       setShowOnboarding(true);
     }
-  }, [user, companies, companiesLoading]);
+  }, [user, businessCompanies, companiesLoading]);
 
   // Send welcome notifications on first login
   useEffect(() => {

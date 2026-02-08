@@ -68,7 +68,7 @@ interface PendingReceipt {
 }
 
 export default function Dashboard() {
-  const { currentCompany, companies, refetchCompanies } = useCompany();
+  const { currentCompany, companies, businessCompanies, refetchCompanies } = useCompany();
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     bankBalance: 0,
@@ -361,8 +361,8 @@ export default function Dashboard() {
     };
   };
 
-  // Show onboarding if no companies
-  if (companies.length === 0) {
+  // Show company creation prompt only if no business companies exist
+  if (companies.length === 0 || (companies.length > 0 && businessCompanies.length === 0 && !currentCompany?.is_personal)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="p-6 rounded-full bg-primary/10 mb-6">
@@ -370,7 +370,7 @@ export default function Dashboard() {
         </div>
         <h2 className="text-2xl font-bold mb-2">Willkommen bei Fintutto!</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          Erstellen Sie Ihre erste Firma, um mit der Buchhaltung zu beginnen.
+          Erstellen Sie Ihre erste Firma, um mit der geschäftlichen Buchhaltung zu beginnen.
         </p>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -418,9 +418,13 @@ export default function Dashboard() {
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+          {currentCompany?.is_personal ? 'Privatbereich' : 'Dashboard'}
+        </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Übersicht für {currentCompany?.name || 'Ihre Firma'}
+          {currentCompany?.is_personal
+            ? 'Ihre persönliche Finanzübersicht'
+            : `Übersicht für ${currentCompany?.name || 'Ihre Firma'}`}
         </p>
       </div>
 
