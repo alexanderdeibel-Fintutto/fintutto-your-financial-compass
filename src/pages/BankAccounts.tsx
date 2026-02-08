@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
- import { Plus, Building2, CreditCard, Upload, RefreshCw, Link2, Clock } from 'lucide-react';
+ import { Plus, Building2, CreditCard, Upload, RefreshCw, Link2, Clock, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -179,6 +179,7 @@ export default function BankAccounts() {
             <div
               key={account.id}
               className="glass rounded-xl p-6 hover:bg-secondary/30 transition-colors cursor-pointer group"
+              onClick={() => navigate(`/buchungen?konto=${account.id}`)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -191,6 +192,9 @@ export default function BankAccounts() {
                       {account.bic || 'Kein BIC'}
                     </p>
                   </div>
+                </div>
+                <div className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-primary/10">
+                  <ArrowUpRight className="h-4 w-4 text-primary" />
                 </div>
               </div>
               <div className="space-y-2">

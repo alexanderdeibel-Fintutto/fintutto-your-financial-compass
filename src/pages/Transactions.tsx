@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet } from 'lucide-react';
+import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ import {
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 interface Transaction {
   id: string;
@@ -32,6 +33,13 @@ interface Transaction {
   type: string;
   date: string;
   category: string | null;
+  bank_account_id: string | null;
+}
+
+interface BankAccountInfo {
+  id: string;
+  name: string;
+  iban: string | null;
 }
 
 type FilterType = 'all' | 'income' | 'expense';
@@ -51,6 +59,10 @@ const categories = [
 export default function Transactions() {
   const { currentCompany } = useCompany();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const bankAccountFilter = searchParams.get('konto');
+  const [bankAccountInfo, setBankAccountInfo] = useState<BankAccountInfo | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -70,17 +82,35 @@ export default function Transactions() {
     if (currentCompany) {
       fetchTransactions();
     }
-  }, [currentCompany]);
+  }, [currentCompany, bankAccountFilter]);
 
   const fetchTransactions = async () => {
     if (!currentCompany) return;
 
     setLoading(true);
-    const { data } = await supabase
+    
+    let query = supabase
       .from('transactions')
       .select('*')
       .eq('company_id', currentCompany.id)
       .order('date', { ascending: false });
+
+    if (bankAccountFilter) {
+      query = query.eq('bank_account_id', bankAccountFilter);
+      
+      // Fetch bank account info for header
+      const { data: accountData } = await supabase
+        .from('bank_accounts')
+        .select('id, name, iban')
+        .eq('id', bankAccountFilter)
+        .single();
+      
+      setBankAccountInfo(accountData);
+    } else {
+      setBankAccountInfo(null);
+    }
+
+    const { data } = await query;
 
     if (data) {
       setTransactions(data);
@@ -180,10 +210,44 @@ export default function Transactions() {
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
+      {/* Bank account filter banner */}
+      {bankAccountInfo && (
+        <div className="flex items-center gap-3 glass rounded-xl p-4">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <CreditCard className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">{bankAccountInfo.name}</p>
+            {bankAccountInfo.iban && (
+              <p className="text-sm text-muted-foreground font-mono truncate">
+                {bankAccountInfo.iban.replace(/(.{4})/g, '$1 ').trim()}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              searchParams.delete('konto');
+              setSearchParams(searchParams);
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Filter aufheben
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Buchungen</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Verwalten Sie Ihre Transaktionen</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+            {bankAccountInfo ? `Buchungen – ${bankAccountInfo.name}` : 'Buchungen'}
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {bankAccountInfo 
+              ? `${transactions.length} Buchungen für dieses Konto`
+              : 'Verwalten Sie Ihre Transaktionen'}
+          </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
