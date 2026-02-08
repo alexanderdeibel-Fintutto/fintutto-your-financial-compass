@@ -104,41 +104,68 @@
      }
    };
  
-   const handleCreate = async () => {
-     if (!user) return;
- 
-     setIsCreating(true);
-     try {
-       // Create the company
-       const { data: company, error: companyError } = await supabase
-         .from('companies')
-         .insert({
-           name: form.name.trim(),
-           legal_form: form.legalForm,
-           tax_id: form.taxId || null,
-           vat_id: form.vatId || null,
-           address: form.address || null,
-           zip: form.zip || null,
-           city: form.city || null,
-           chart_of_accounts: form.chartOfAccounts,
-         })
-         .select()
-         .single();
- 
-       if (companyError) throw companyError;
- 
-       // Create bank account if provided
-       if (form.bankName && form.iban) {
-         await supabase.from('bank_accounts').insert({
-           company_id: company.id,
-           name: form.bankName,
-           iban: form.iban,
-           bic: form.bic || null,
-         });
-       }
- 
-       await refetchCompanies();
-       setCurrentCompany(company);
+    const handleCreate = async () => {
+      if (!user) return;
+  
+      setIsCreating(true);
+      try {
+        // Generate ID client-side to avoid .select() timing issues with RLS
+        const companyId = crypto.randomUUID();
+
+        // Step 1: Insert company without .select() to avoid RLS read check
+        const { error: insertError } = await supabase
+          .from('companies')
+          .insert({
+            id: companyId,
+            name: form.name.trim(),
+            legal_form: form.legalForm,
+            tax_id: form.taxId || null,
+            vat_id: form.vatId || null,
+            address: form.address || null,
+            zip: form.zip || null,
+            city: form.city || null,
+            chart_of_accounts: form.chartOfAccounts,
+          });
+  
+        if (insertError) throw insertError;
+
+        // Step 2: Ensure membership exists (fallback if trigger didn't fire)
+        const { data: membership } = await supabase
+          .from('company_members')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!membership) {
+          await supabase.from('company_members').insert({
+            company_id: companyId,
+            user_id: user.id,
+            role: 'owner',
+          });
+        }
+
+        // Step 3: Now fetch the company (membership is guaranteed)
+        const { data: company, error: fetchError } = await supabase
+          .from('companies')
+          .select('id, name, tax_id, address, legal_form, vat_id, zip, city, chart_of_accounts')
+          .eq('id', companyId)
+          .single();
+
+        if (fetchError) throw fetchError;
+  
+        // Step 4: Create bank account if provided
+        if (form.bankName && form.iban) {
+          await supabase.from('bank_accounts').insert({
+            company_id: companyId,
+            name: form.bankName,
+            iban: form.iban,
+            bic: form.bic || null,
+          });
+        }
+  
+        await refetchCompanies();
+        setCurrentCompany(company);
  
        toast({
          title: 'Firma erstellt',
