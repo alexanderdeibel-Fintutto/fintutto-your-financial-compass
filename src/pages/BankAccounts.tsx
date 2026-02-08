@@ -13,8 +13,8 @@ interface BankAccount {
   name: string;
   iban: string | null;
   bic: string | null;
-  balance: number;
-  currency: string;
+  balance: number | null;
+  currency: string | null;
 }
 
 export default function BankAccounts() {
@@ -64,7 +64,7 @@ export default function BankAccounts() {
     return iban.replace(/(.{4})/g, '$1 ').trim();
   };
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance ?? 0), 0);
 
   const handleImportSuccess = () => {
     fetchAccounts();
@@ -204,8 +204,8 @@ export default function BankAccounts() {
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-border">
                   <span className="text-muted-foreground">Kontostand</span>
-                  <span className={`text-xl font-bold ${Number(account.balance) >= 0 ? 'text-success' : 'text-destructive'}`}>
-                    {formatCurrency(Number(account.balance), account.currency)}
+                  <span className={`text-xl font-bold ${Number(account.balance ?? 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
+                    {formatCurrency(Number(account.balance ?? 0), account.currency ?? 'EUR')}
                   </span>
                 </div>
               </div>
