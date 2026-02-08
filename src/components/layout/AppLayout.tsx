@@ -103,6 +103,10 @@ export function AppLayout({ children }: AppLayoutProps) {
               <NotificationCenter />
             </div>
           </header>
+          {/* Mobile Breadcrumb */}
+          <div className="relative z-10 lg:hidden px-4 py-2 bg-black/15 backdrop-blur-sm border-b border-white/5">
+            <HeaderBreadcrumb />
+          </div>
           <div className="relative z-10 flex-1 p-4 sm:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8 bg-black/10">
             {children}
           </div>
