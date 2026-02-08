@@ -9,9 +9,10 @@ export interface BankTransaction {
    category?: string;
  }
  
-export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'general';
+export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'general';
 
 export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
+  { value: 'outbank', label: 'Outbank' },
   { value: 'c24', label: 'C24 Bank' },
   { value: 'sparkasse', label: 'Sparkasse' },
   { value: 'deutschebank', label: 'Deutsche Bank' },
@@ -21,10 +22,26 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'general', label: 'Allgemein CSV' },
 ];
  
+ // Auto-detect Outbank format from header line
+ export function detectBankFormat(content: string): BankFormat | null {
+   const cleanContent = content.replace(/^\uFEFF/, '');
+   const firstLine = cleanContent.split('\n')[0]?.trim() || '';
+   // Outbank header: #;Konto;Datum;Valuta;Betrag;Währung;Name;...
+   if (firstLine.startsWith('#;Konto;Datum') || firstLine.includes(';Valuta;Betrag;Währung;Name;')) {
+     return 'outbank';
+   }
+   return null;
+ }
+
  // CSV Parser für verschiedene Banken
  export function parseCSV(content: string, format: BankFormat): BankTransaction[] {
    // Remove BOM character if present
    const cleanContent = content.replace(/^\uFEFF/, '');
+   
+   // Auto-detect Outbank format regardless of user selection
+   const detectedFormat = detectBankFormat(cleanContent);
+   const effectiveFormat = detectedFormat || format;
+   
    const lines = cleanContent.split('\n');
    const transactions: BankTransaction[] = [];
 
@@ -34,88 +51,102 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
      if (!line) continue;
 
      try {
-       // Handle comma-separated formats FIRST (C24, Revolut)
-       // These use commas as delimiters, so semicolon-split would fail
-       if (format === 'revolut') {
-         const revCols = parseCSVLine(line);
-         if (revCols.length < 6) continue;
-         transactions.push({
-           date: revCols[2]?.split(' ')[0] || '',
-           valueDate: revCols[3]?.split(' ')[0] || revCols[2]?.split(' ')[0] || '',
-           description: revCols[4],
-           reference: '',
-           amount: parseFloat(revCols[5]) || 0,
-         });
-         continue;
-       }
+        // Handle comma-separated formats FIRST (C24, Revolut)
+        // These use commas as delimiters, so semicolon-split would fail
+        if (effectiveFormat === 'revolut') {
+          const revCols = parseCSVLine(line);
+          if (revCols.length < 6) continue;
+          transactions.push({
+            date: revCols[2]?.split(' ')[0] || '',
+            valueDate: revCols[3]?.split(' ')[0] || revCols[2]?.split(' ')[0] || '',
+            description: revCols[4],
+            reference: '',
+            amount: parseFloat(revCols[5]) || 0,
+          });
+          continue;
+        }
 
-       if (format === 'c24') {
-         const c24Cols = parseCSVLine(line);
-         if (c24Cols.length < 5) continue;
-         const amountStr = c24Cols[3]?.replace('€', '').trim() || '0';
-         transactions.push({
-           date: parseGermanDate(c24Cols[1]),
-           valueDate: parseGermanDate(c24Cols[1]),
-           description: c24Cols[8] || c24Cols[7] || c24Cols[0],
-           reference: c24Cols[7] || '',
-           counterpartName: c24Cols[4] || '',
-           counterpartIban: c24Cols[5] || '',
-           amount: parseGermanNumber(amountStr),
-           category: c24Cols[11] || undefined,
-         });
-         continue;
-       }
+        if (effectiveFormat === 'c24') {
+          const c24Cols = parseCSVLine(line);
+          if (c24Cols.length < 5) continue;
+          const amountStr = c24Cols[3]?.replace('€', '').trim() || '0';
+          transactions.push({
+            date: parseGermanDate(c24Cols[1]),
+            valueDate: parseGermanDate(c24Cols[1]),
+            description: c24Cols[8] || c24Cols[7] || c24Cols[0],
+            reference: c24Cols[7] || '',
+            counterpartName: c24Cols[4] || '',
+            counterpartIban: c24Cols[5] || '',
+            amount: parseGermanNumber(amountStr),
+            category: c24Cols[11] || undefined,
+          });
+          continue;
+        }
 
-       // Semicolon-separated formats (Sparkasse, Deutsche Bank, etc.)
-       const cols = line.split(';').map((c) => c.replace(/"/g, '').trim());
-       if (cols.length < 3) continue;
+        // Semicolon-separated formats (Sparkasse, Deutsche Bank, Outbank, etc.)
+        const cols = line.split(';').map((c) => c.replace(/"/g, '').trim());
+        if (cols.length < 3) continue;
 
-       if (format === 'sparkasse') {
-         transactions.push({
-           date: parseGermanDate(cols[1]),
-           valueDate: parseGermanDate(cols[2]),
-           description: cols[4] || cols[3],
-           reference: cols[4] || '',
-           counterpartName: cols[5],
-           amount: parseGermanNumber(cols[8]),
-         });
-       } else if (format === 'deutschebank') {
-         transactions.push({
-           date: parseGermanDate(cols[0]),
-           valueDate: parseGermanDate(cols[1]),
-           description: cols[4],
-           reference: cols[7] || '',
-           counterpartName: cols[3],
-           counterpartIban: cols[5],
-           amount: parseGermanNumber(cols[15] || cols[16]) || parseGermanNumber(cols[11]),
-         });
-       } else if (format === 'commerzbank') {
-         transactions.push({
-           date: parseGermanDate(cols[0]),
-           valueDate: parseGermanDate(cols[1]),
-           description: cols[3] || cols[2],
-           reference: '',
-           amount: parseGermanNumber(cols[4]),
-         });
-       } else if (format === 'n26') {
-         transactions.push({
-           date: cols[0],
-           valueDate: cols[0],
-           description: cols[4] || cols[3],
-           reference: '',
-           counterpartName: cols[1],
-           counterpartIban: cols[2],
-           amount: parseGermanNumber(cols[5]),
-         });
-       } else {
-         // Allgemein: Datum;Beschreibung;Betrag
-         transactions.push({
-           date: cols[0],
-           valueDate: cols[0],
-           description: cols[1],
-           reference: '',
-           amount: parseGermanNumber(cols[2]),
-         });
+        if (effectiveFormat === 'outbank') {
+          // Outbank: #;Konto;Datum;Valuta;Betrag;Währung;Name;Nummer;Bank;Zweck;Hauptkategorie;Kategorie;Kategoriepfad;Tags;Notiz;Buchungstext
+          if (cols.length < 5) continue;
+          const valueDateStr = cols[3]?.trim();
+          transactions.push({
+            date: parseGermanDate(cols[2]),
+            valueDate: valueDateStr ? parseGermanDate(valueDateStr) : parseGermanDate(cols[2]),
+            amount: parseGermanNumber(cols[4]),
+            description: cols[15] || cols[9] || cols[6] || '',
+            reference: cols[9] || '',
+            counterpartName: cols[6] || '',
+            counterpartIban: cols[7] || '',
+            category: cols[12] || cols[11] || undefined,
+          });
+        } else if (effectiveFormat === 'sparkasse') {
+          transactions.push({
+            date: parseGermanDate(cols[1]),
+            valueDate: parseGermanDate(cols[2]),
+            description: cols[4] || cols[3],
+            reference: cols[4] || '',
+            counterpartName: cols[5],
+            amount: parseGermanNumber(cols[8]),
+          });
+        } else if (effectiveFormat === 'deutschebank') {
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[4],
+            reference: cols[7] || '',
+            counterpartName: cols[3],
+            counterpartIban: cols[5],
+            amount: parseGermanNumber(cols[15] || cols[16]) || parseGermanNumber(cols[11]),
+          });
+        } else if (effectiveFormat === 'commerzbank') {
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[3] || cols[2],
+            reference: '',
+            amount: parseGermanNumber(cols[4]),
+          });
+        } else if (effectiveFormat === 'n26') {
+          transactions.push({
+            date: cols[0],
+            valueDate: cols[0],
+            description: cols[4] || cols[3],
+            reference: '',
+            counterpartName: cols[1],
+            counterpartIban: cols[2],
+            amount: parseGermanNumber(cols[5]),
+          });
+        } else {
+          // Allgemein: Datum;Beschreibung;Betrag
+          transactions.push({
+            date: cols[0],
+            valueDate: cols[0],
+            description: cols[1],
+            reference: '',
+            amount: parseGermanNumber(cols[2]),
+          });
        }
      } catch (e) {
        console.warn(`Failed to parse line ${i}:`, line, e);

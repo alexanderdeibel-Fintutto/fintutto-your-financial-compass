@@ -6,6 +6,49 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Robustly extract a JSON array from AI response text.
+ * Handles: plain JSON, ```json blocks, and truncated responses.
+ */
+function extractJsonArray(text: string): unknown[] {
+  // 1. Try to extract from code block (complete or truncated)
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/);
+  const jsonCandidate = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim();
+
+  // 2. Try direct parse first
+  try {
+    const parsed = JSON.parse(jsonCandidate);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // continue to recovery
+  }
+
+  // 3. Try to find the array start and recover truncated JSON
+  const arrayStart = jsonCandidate.indexOf('[');
+  if (arrayStart === -1) return [];
+
+  let jsonStr = jsonCandidate.slice(arrayStart);
+
+  // If array isn't closed, try to close it by finding the last complete object
+  if (!jsonStr.trimEnd().endsWith(']')) {
+    // Find the last complete object (ending with })
+    const lastBrace = jsonStr.lastIndexOf('}');
+    if (lastBrace !== -1) {
+      jsonStr = jsonStr.slice(0, lastBrace + 1) + ']';
+    } else {
+      return [];
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    console.error("Failed to parse recovered JSON array, length:", jsonStr.length);
+    return [];
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -75,7 +118,7 @@ Falls keine Transaktionen erkannt werden können, antworte mit einem leeren Arra
           },
         ],
         temperature: 0.1,
-        max_tokens: 16000,
+        max_tokens: 64000,
       }),
     });
 
@@ -91,20 +134,8 @@ Falls keine Transaktionen erkannt werden können, antworte mit einem leeren Arra
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "[]";
 
-    // Extract JSON from response (might be wrapped in markdown code blocks)
-    let jsonStr = content;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim();
-    }
-
-    let transactions;
-    try {
-      transactions = JSON.parse(jsonStr);
-    } catch {
-      console.error("Failed to parse AI response as JSON:", content);
-      transactions = [];
-    }
+    // Extract JSON from response - handle both complete and truncated code blocks
+    const transactions = extractJsonArray(content);
 
     // Validate and clean transactions
     const cleanedTransactions = (Array.isArray(transactions) ? transactions : []).map((tx: any) => ({
