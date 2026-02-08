@@ -181,9 +181,10 @@ export function AppSidebar() {
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: 'url(/images/gradient-bg.png)',
-            backgroundSize: 'cover',
+            backgroundSize: '100% 100%',
             backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
+            backgroundRepeat: 'no-repeat',
+            transform: 'scaleX(-1)',
           }}
         />
       <SidebarHeader className="p-4 border-b border-white/10">
