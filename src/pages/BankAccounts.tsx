@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
- import { Plus, Building2, CreditCard, Upload, RefreshCw, Link2, Clock, ArrowUpRight } from 'lucide-react';
+import { Plus, Building2, CreditCard, Upload, RefreshCw, Link2, Clock, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
