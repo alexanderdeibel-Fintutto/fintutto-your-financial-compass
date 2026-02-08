@@ -16,7 +16,6 @@ import {
   Link2,
   CreditCard,
   Landmark,
-  
   Calendar,
   Mail,
   HelpCircle,
@@ -27,6 +26,7 @@ import {
   Euro,
   UserCheck,
   ShoppingCart,
+  User,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -130,7 +130,7 @@ const avatarColors = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { companies, currentCompany, setCurrentCompany } = useCompany();
+  const { companies, currentCompany, setCurrentCompany, personalCompany, businessCompanies } = useCompany();
   const { toast } = useToast();
   const [newCompanyOpen, setNewCompanyOpen] = useState(false);
 
@@ -165,8 +165,8 @@ export function AppSidebar() {
       document.body.classList.add('animate-fade-in');
       
       toast({
-        title: 'Firma gewechselt',
-        description: `Gewechselt zu ${company.name}`,
+        title: company.is_personal ? 'Privatbereich' : 'Firma gewechselt',
+        description: company.is_personal ? 'Gewechselt zum Privatbereich' : `Gewechselt zu ${company.name}`,
       });
       
       setTimeout(() => {
@@ -202,20 +202,50 @@ export function AppSidebar() {
                 className="w-full mt-4 justify-between text-left h-auto py-2 px-2 bg-sidebar-accent hover:bg-sidebar-accent/80"
               >
                 <div className="flex items-center gap-2 truncate flex-1">
-                  <Avatar className={cn('h-7 w-7 shrink-0', getAvatarColor(companies.findIndex(c => c.id === currentCompany?.id)))}>
-                    <AvatarFallback className="text-white text-xs font-bold">
-                      {currentCompany ? getInitials(currentCompany.name) : 'F'}
-                    </AvatarFallback>
-                  </Avatar>
+                  {currentCompany?.is_personal ? (
+                    <Avatar className="h-7 w-7 shrink-0 bg-emerald-500">
+                      <AvatarFallback className="text-white text-xs font-bold bg-emerald-500">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Avatar className={cn('h-7 w-7 shrink-0', getAvatarColor(companies.findIndex(c => c.id === currentCompany?.id)))}>
+                      <AvatarFallback className="text-white text-xs font-bold">
+                        {currentCompany ? getInitials(currentCompany.name) : 'F'}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div className="truncate flex-1 min-w-0">
-                    <span className="truncate block text-sm">{currentCompany?.name || 'Firma wählen'}</span>
+                    <span className="truncate block text-sm">{currentCompany?.name || 'Bereich wählen'}</span>
                   </div>
                 </div>
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
-              {companies.map((company, index) => (
+              {/* Personal area */}
+              {personalCompany && (
+                <DropdownMenuItem
+                  onClick={() => handleCompanySwitch(personalCompany)}
+                  className={currentCompany?.id === personalCompany.id ? 'bg-accent' : ''}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <Avatar className="h-6 w-6 shrink-0 bg-emerald-500">
+                      <AvatarFallback className="text-white text-xs font-bold bg-emerald-500">
+                        <User className="h-3 w-3" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate flex-1">Privat</span>
+                    <Badge variant="outline" className="text-xs shrink-0">Privat</Badge>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              {/* Separator between personal and business */}
+              {personalCompany && businessCompanies.length > 0 && (
+                <Separator className="my-1" />
+              )}
+              {/* Business companies */}
+              {businessCompanies.map((company, index) => (
                 <DropdownMenuItem
                   key={company.id}
                   onClick={() => handleCompanySwitch(company)}

@@ -65,6 +65,7 @@ export type Database = {
           city: string | null
           created_at: string | null
           id: string
+          is_personal: boolean
           legal_form: string | null
           name: string
           tax_id: string | null
@@ -78,6 +79,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           id?: string
+          is_personal?: boolean
           legal_form?: string | null
           name: string
           tax_id?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           id?: string
+          is_personal?: boolean
           legal_form?: string | null
           name?: string
           tax_id?: string | null
