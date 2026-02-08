@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Building2 } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Building2, Settings, Grid3X3, RotateCcw, LayoutGrid } from 'lucide-react';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
@@ -7,11 +7,15 @@ import { RevenueExpenseChart } from '@/components/dashboard/RevenueExpenseChart'
 import { ExpenseByCategoryChart } from '@/components/dashboard/ExpenseByCategoryChart';
 import { DueInvoicesList } from '@/components/dashboard/DueInvoicesList';
 import { PendingReceiptsList } from '@/components/dashboard/PendingReceiptsList';
+import { Widget } from '@/components/dashboard/DashboardWidgets';
+import { useDashboardWidgets, WIDGET_DEFINITIONS, WidgetType } from '@/hooks/useDashboardWidgets';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +24,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStats {
@@ -70,6 +81,17 @@ interface PendingReceipt {
 export default function Dashboard() {
   const { currentCompany, companies, refetchCompanies } = useCompany();
   const { user } = useAuth();
+  const {
+    visibleWidgets,
+    availableWidgets,
+    editMode,
+    setEditMode,
+    addWidget,
+    removeWidget,
+    updateWidget,
+    moveWidget,
+    resetToDefault,
+  } = useDashboardWidgets();
   const [stats, setStats] = useState<DashboardStats>({
     bankBalance: 0,
     income: 0,
@@ -93,6 +115,8 @@ export default function Dashboard() {
   const [creatingCompany, setCreatingCompany] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [useWidgets, setUseWidgets] = useState(false);
+  const [widgetSheetOpen, setWidgetSheetOpen] = useState(false);
 
   useEffect(() => {
     if (currentCompany) {
@@ -417,64 +441,190 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Dashboard</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Übersicht für {currentCompany?.name || 'Ihre Firma'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Übersicht für {currentCompany?.name || 'Ihre Firma'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="widget-mode"
+              checked={useWidgets}
+              onCheckedChange={setUseWidgets}
+            />
+            <Label htmlFor="widget-mode" className="text-sm cursor-pointer">
+              <LayoutGrid className="h-4 w-4 inline mr-1" />
+              Widgets
+            </Label>
+          </div>
+          {useWidgets && (
+            <>
+              <Button
+                variant={editMode ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                {editMode ? 'Fertig' : 'Anpassen'}
+              </Button>
+              {editMode && (
+                <>
+                  <Sheet open={widgetSheetOpen} onOpenChange={setWidgetSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Widget
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Widget hinzufügen</SheetTitle>
+                      </SheetHeader>
+                      <div className="space-y-4 mt-4">
+                        {availableWidgets.length === 0 ? (
+                          <p className="text-muted-foreground text-sm">
+                            Alle Widgets wurden bereits hinzugefügt.
+                          </p>
+                        ) : (
+                          availableWidgets.map((type) => {
+                            const def = WIDGET_DEFINITIONS[type];
+                            return (
+                              <button
+                                key={type}
+                                className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors"
+                                onClick={() => {
+                                  addWidget(type);
+                                  setWidgetSheetOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium">{def.title}</p>
+                                    <p className="text-sm text-muted-foreground">{def.description}</p>
+                                  </div>
+                                  <Badge variant="outline" className="capitalize">
+                                    {def.category}
+                                  </Badge>
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      {availableWidgets.length > 0 && (
+                        <div className="mt-6 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              resetToDefault();
+                              setWidgetSheetOpen(false);
+                            }}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Standard wiederherstellen
+                          </Button>
+                        </div>
+                      )}
+                    </SheetContent>
+                  </Sheet>
+                  <Button variant="ghost" size="sm" onClick={resetToDefault}>
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* KPI Cards - 2 columns on mobile, 4 on large screens */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-4">
-        <KPICard
-          title="Bankguthaben"
-          value={formatCurrency(stats.bankBalance)}
-          icon={Wallet}
-          sparklineData={sparklineData.balance}
-        />
-        <KPICard
-          title="Einnahmen"
-          value={formatCurrency(stats.income)}
-          change={incomeChange.value}
-          changeType={incomeChange.type}
-          icon={TrendingUp}
-          sparklineData={sparklineData.income}
-        />
-        <KPICard
-          title="Ausgaben"
-          value={formatCurrency(stats.expenses)}
-          change={expensesChange.value}
-          changeType={stats.expenses <= stats.previousExpenses ? 'positive' : 'negative'}
-          icon={TrendingDown}
-          sparklineData={sparklineData.expenses}
-        />
-        <KPICard
-          title="Gewinn"
-          value={formatCurrency(stats.profit)}
-          change={profitChange.value}
-          changeType={stats.profit >= 0 ? profitChange.type : 'negative'}
-          icon={PiggyBank}
-          sparklineData={sparklineData.profit}
-        />
-      </div>
+      {useWidgets ? (
+        /* Customizable Widget View */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleWidgets.map((widget) => (
+            <Widget
+              key={widget.id}
+              widget={widget}
+              editMode={editMode}
+              onRemove={() => removeWidget(widget.id)}
+              onMove={(dir) => moveWidget(widget.id, dir)}
+              onUpdate={(updates) => updateWidget(widget.id, updates)}
+            />
+          ))}
+          {visibleWidgets.length === 0 && (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              <Grid3X3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Keine Widgets konfiguriert.</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setWidgetSheetOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Widget hinzufügen
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Classic Dashboard View */
+        <>
+          {/* KPI Cards - 2 columns on mobile, 4 on large screens */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-4">
+            <KPICard
+              title="Bankguthaben"
+              value={formatCurrency(stats.bankBalance)}
+              icon={Wallet}
+              sparklineData={sparklineData.balance}
+            />
+            <KPICard
+              title="Einnahmen"
+              value={formatCurrency(stats.income)}
+              change={incomeChange.value}
+              changeType={incomeChange.type}
+              icon={TrendingUp}
+              sparklineData={sparklineData.income}
+            />
+            <KPICard
+              title="Ausgaben"
+              value={formatCurrency(stats.expenses)}
+              change={expensesChange.value}
+              changeType={stats.expenses <= stats.previousExpenses ? 'positive' : 'negative'}
+              icon={TrendingDown}
+              sparklineData={sparklineData.expenses}
+            />
+            <KPICard
+              title="Gewinn"
+              value={formatCurrency(stats.profit)}
+              change={profitChange.value}
+              changeType={stats.profit >= 0 ? profitChange.type : 'negative'}
+              icon={PiggyBank}
+              sparklineData={sparklineData.profit}
+            />
+          </div>
 
-      {/* Charts Row - stack on mobile */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <RevenueExpenseChart data={monthlyData} />
-        <ExpenseByCategoryChart data={categoryData} />
-      </div>
+          {/* Charts Row - stack on mobile */}
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+            <RevenueExpenseChart data={monthlyData} />
+            <ExpenseByCategoryChart data={categoryData} />
+          </div>
 
-      {/* Lists Row - stack on mobile */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        <RecentTransactions transactions={transactions} />
-        <DueInvoicesList invoices={dueInvoices} />
-        <PendingReceiptsList receipts={pendingReceipts} />
-      </div>
+          {/* Lists Row - stack on mobile */}
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+            <RecentTransactions transactions={transactions} />
+            <DueInvoicesList invoices={dueInvoices} />
+            <PendingReceiptsList receipts={pendingReceipts} />
+          </div>
 
-      {/* Quick Actions - hidden on mobile as we have FAB */}
-      <div className="hidden sm:block">
-        <QuickActions />
-      </div>
+          {/* Quick Actions - hidden on mobile as we have FAB */}
+          <div className="hidden sm:block">
+            <QuickActions />
+          </div>
+        </>
+      )}
     </div>
   );
 }
