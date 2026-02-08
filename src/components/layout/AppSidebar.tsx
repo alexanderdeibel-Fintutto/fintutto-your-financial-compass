@@ -188,9 +188,9 @@ export function AppSidebar() {
         />
       <SidebarHeader className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <img src={fintuttoLogo} alt="Fintutto Logo" className="h-10 w-10 rounded-lg" />
+          <img src={fintuttoLogo} alt="Fintutto Logo" className="h-14 w-14 rounded-xl" />
           <div>
-            <h1 className="text-lg font-bold gradient-text">Fintutto</h1>
+            <h1 className="text-xl font-bold gradient-text">Fintutto</h1>
             <p className="text-xs text-muted-foreground">Finanzbuchhaltung</p>
           </div>
         </div>
