@@ -8,16 +8,17 @@
    counterpartIban?: string;
  }
  
- export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'general';
- 
- export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
-   { value: 'sparkasse', label: 'Sparkasse' },
-   { value: 'deutschebank', label: 'Deutsche Bank' },
-   { value: 'commerzbank', label: 'Commerzbank' },
-   { value: 'n26', label: 'N26' },
-   { value: 'revolut', label: 'Revolut' },
-   { value: 'general', label: 'Allgemein CSV' },
- ];
+export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'general';
+
+export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
+  { value: 'c24', label: 'C24 Bank' },
+  { value: 'sparkasse', label: 'Sparkasse' },
+  { value: 'deutschebank', label: 'Deutsche Bank' },
+  { value: 'commerzbank', label: 'Commerzbank' },
+  { value: 'n26', label: 'N26' },
+  { value: 'revolut', label: 'Revolut' },
+  { value: 'general', label: 'Allgemein CSV' },
+];
  
  // CSV Parser für verschiedene Banken
  export function parseCSV(content: string, format: BankFormat): BankTransaction[] {
@@ -74,18 +75,32 @@
            counterpartIban: cols[2],
            amount: parseGermanNumber(cols[5]),
          });
-       } else if (format === 'revolut') {
-         // Revolut: Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
-         const revCols = line.split(',').map((c) => c.replace(/"/g, '').trim());
-         if (revCols.length < 6) continue;
-         transactions.push({
-           date: revCols[2]?.split(' ')[0] || '',
-           valueDate: revCols[3]?.split(' ')[0] || revCols[2]?.split(' ')[0] || '',
-           description: revCols[4],
-           reference: '',
-           amount: parseFloat(revCols[5]) || 0,
-         });
-       } else {
+    } else if (format === 'revolut') {
+      // Revolut: Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+      const revCols = line.split(',').map((c) => c.replace(/"/g, '').trim());
+      if (revCols.length < 6) continue;
+      transactions.push({
+        date: revCols[2]?.split(' ')[0] || '',
+        valueDate: revCols[3]?.split(' ')[0] || revCols[2]?.split(' ')[0] || '',
+        description: revCols[4],
+        reference: '',
+        amount: parseFloat(revCols[5]) || 0,
+      });
+    } else if (format === 'c24') {
+      // C24: Transaktionstyp,Buchungsdatum,Karteneinsatz,Betrag,Zahlungsempfänger,IBAN,BIC,Verwendungszweck,Beschreibung,Kontonummer,Kontoname,Kategorie,Unterkategorie,Bargeldabhebung
+      const c24Cols = parseCSVLine(line);
+      if (c24Cols.length < 5) continue;
+      const amountStr = c24Cols[3]?.replace('€', '').trim() || '0';
+      transactions.push({
+        date: parseGermanDate(c24Cols[1]),
+        valueDate: parseGermanDate(c24Cols[1]),
+        description: c24Cols[8] || c24Cols[7] || c24Cols[0],
+        reference: c24Cols[7] || '',
+        counterpartName: c24Cols[4] || '',
+        counterpartIban: c24Cols[5] || '',
+        amount: parseGermanNumber(amountStr),
+      });
+    } else {
          // Allgemein: Datum;Beschreibung;Betrag
          transactions.push({
            date: cols[0],
@@ -207,10 +222,31 @@
    return dateStr;
  }
  
- // Parse German number format (1.234,56 -> 1234.56)
- function parseGermanNumber(numStr: string): number {
-   if (!numStr) return 0;
-   // Remove thousand separators and replace comma with dot
-   const cleaned = numStr.replace(/\./g, '').replace(',', '.');
-   return parseFloat(cleaned) || 0;
- }
+// Parse German number format (1.234,56 -> 1234.56)
+function parseGermanNumber(numStr: string): number {
+  if (!numStr) return 0;
+  // Remove thousand separators and replace comma with dot
+  const cleaned = numStr.replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleaned) || 0;
+}
+
+// Parse a CSV line respecting quoted fields (handles commas inside quotes)
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
