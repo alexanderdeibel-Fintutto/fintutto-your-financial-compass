@@ -92,10 +92,37 @@ serve(async (req) => {
     const clientId = Deno.env.get("FINAPI_CLIENT_ID");
     const clientSecret = Deno.env.get("FINAPI_CLIENT_SECRET");
 
+    // For status checks, return 200 even without credentials
+    if (action === "status") {
+      if (!clientId || !clientSecret) {
+        return new Response(
+          JSON.stringify({ configured: false, connected: false }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      try {
+        const token = await getFinAPIToken();
+        return new Response(
+          JSON.stringify({ 
+            configured: true, 
+            connected: true,
+            sandbox: FINAPI_BASE_URL.includes("sandbox")
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch {
+        return new Response(
+          JSON.stringify({ configured: true, connected: false }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // For all other actions, credentials are required
     if (!clientId || !clientSecret) {
       return new Response(
         JSON.stringify({ 
-          error: "FinAPI nicht konfiguriert",
+          error: "FinAPI nicht konfiguriert. Bitte API-Schlüssel in den Einstellungen hinterlegen.",
           configured: false 
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -103,25 +130,6 @@ serve(async (req) => {
     }
 
     switch (action) {
-      case "status": {
-        // Test API connection
-        try {
-          const token = await getFinAPIToken();
-          return new Response(
-            JSON.stringify({ 
-              configured: true, 
-              connected: true,
-              sandbox: FINAPI_BASE_URL.includes("sandbox")
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        } catch {
-          return new Response(
-            JSON.stringify({ configured: true, connected: false }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
 
       case "webform": {
         // Create web form for bank connection
