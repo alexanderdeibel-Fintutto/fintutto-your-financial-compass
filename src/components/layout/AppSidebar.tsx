@@ -170,7 +170,7 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar
-        className="border-r border-white/10 relative overflow-hidden"
+        className="border-r border-white/10 overflow-hidden"
       >
         <div
           className="absolute inset-0 pointer-events-none"
