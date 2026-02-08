@@ -82,7 +82,6 @@ const navItems: NavItem[] = [
     ],
   },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
-  { title: 'Kontakte', url: '/kontakte', icon: Users },
   {
     title: 'Finanzen', url: '/bankkonten', icon: Landmark,
     children: [
@@ -97,11 +96,12 @@ const navItems: NavItem[] = [
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   { title: 'Automatisierung', url: '/automatisierung', icon: Zap },
   { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck },
-  { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   {
     title: 'Einstellungen', url: '/einstellungen', icon: Settings,
     children: [
       { title: 'Firmen', url: '/firmen', icon: Building2 },
+      { title: 'Kontakte', url: '/kontakte', icon: Users },
+      { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
     ],
   },
   { title: 'Hilfe', url: '/hilfe', icon: HelpCircle },
