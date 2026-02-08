@@ -179,7 +179,6 @@ export function AppSidebar() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',
-            transform: 'scaleX(-1)',
           }}
         />
       <SidebarHeader className="p-4 border-b border-white/10">
