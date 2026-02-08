@@ -83,9 +83,14 @@ const navItems: NavItem[] = [
   },
   { title: 'Belege', url: '/belege', icon: FolderOpen },
   { title: 'Kontakte', url: '/kontakte', icon: Users },
-  { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
-  { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
-  { title: 'SEPA-Zahlungen', url: '/sepa', icon: Euro },
+  {
+    title: 'Finanzen', url: '/bankkonten', icon: Landmark,
+    children: [
+      { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
+      { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
+      { title: 'SEPA-Zahlungen', url: '/sepa', icon: Euro },
+    ],
+  },
   { title: 'Übergaben', url: '/uebergabe', icon: ClipboardCheck },
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'ELSTER', url: '/elster', icon: Landmark },
