@@ -22,7 +22,7 @@ import Elster from "./pages/Elster";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Companies from "./pages/Companies";
-import Handover from "./pages/Handover";
+
 import Calendar from "./pages/Calendar";
 import EmailTemplates from "./pages/EmailTemplates";
 import Notifications from "./pages/Notifications";
@@ -97,7 +97,7 @@ function AppRoutes() {
       <Route path="/ecommerce" element={<ProtectedRoute><EcommerceIntegration /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
-      <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
+      
       <Route path="/kalender" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
       <Route path="/vorlagen" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />
       <Route path="/benachrichtigungen" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
