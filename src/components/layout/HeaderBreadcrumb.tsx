@@ -68,6 +68,7 @@ const routeParents: Record<string, string> = {
   '/bankkonten': '/finanzen',
   '/bankverbindung': '/finanzen',
   '/sepa': '/finanzen',
+  '/firmen': '/einstellungen',
 };
 
 export function HeaderBreadcrumb() {
