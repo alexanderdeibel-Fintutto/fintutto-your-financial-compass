@@ -23,13 +23,62 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
 ];
  
  // Auto-detect Outbank format from header line
+ // Auto-detect bank format from CSV content
  export function detectBankFormat(content: string): BankFormat | null {
    const cleanContent = content.replace(/^\uFEFF/, '');
-   const firstLine = cleanContent.split('\n')[0]?.trim() || '';
-   // Outbank header: #;Konto;Datum;Valuta;Betrag;Währung;Name;...
+   const lines = cleanContent.split('\n');
+   const firstLine = lines[0]?.trim() || '';
+   const secondLine = lines[1]?.trim() || '';
+
+   // Outbank: #;Konto;Datum;Valuta;Betrag;Währung;Name;...
    if (firstLine.startsWith('#;Konto;Datum') || firstLine.includes(';Valuta;Betrag;Währung;Name;')) {
      return 'outbank';
    }
+
+   // C24 Bank: comma-separated, headers typically include "Buchungsdatum" or specific C24 patterns
+   // C24 exports have columns like: Typ,Buchungsdatum,Betrag,...
+   if (firstLine.includes(',') && !firstLine.includes(';')) {
+     const cols = firstLine.split(',').map(c => c.replace(/"/g, '').trim().toLowerCase());
+     if (cols.some(c => c.includes('buchungsdatum')) || cols.some(c => c.includes('buchungstyp'))) {
+       return 'c24';
+     }
+     // Revolut: "Type","Started Date","Completed Date",...
+     if (cols.some(c => c.includes('started date') || c.includes('completed date'))) {
+       return 'revolut';
+     }
+     // N26: comma-separated with "Date","Payee","Account number",...
+     if (cols.some(c => c === 'payee' || c === 'account number')) {
+       return 'n26';
+     }
+   }
+
+   // Semicolon-separated formats (check most specific first)
+   if (firstLine.includes(';')) {
+     const cols = firstLine.split(';').map(c => c.replace(/"/g, '').trim().toLowerCase());
+
+     // Outbank already checked above
+
+     // Commerzbank: has "Umsatzart" (unique to Commerzbank)
+     if (cols.some(c => c.includes('umsatzart'))) {
+       return 'commerzbank';
+     }
+
+     // Deutsche Bank: has "Buchungsart" (unique to Deutsche Bank)
+     if (cols.some(c => c.includes('buchungsart'))) {
+       return 'deutschebank';
+     }
+
+     // Sparkasse: has "Auftragskonto" (unique) or "Buchungstag" without other distinguishing cols
+     if (cols.some(c => c.includes('auftragskonto'))) {
+       return 'sparkasse';
+     }
+
+     // Fallback: if it has "Buchungstag" and "Valutadatum", likely Sparkasse
+     if (cols.some(c => c.includes('buchungstag')) && cols.some(c => c.includes('valutadatum'))) {
+       return 'sparkasse';
+     }
+   }
+
    return null;
  }
 

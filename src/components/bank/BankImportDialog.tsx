@@ -30,15 +30,16 @@
  import { supabase } from '@/integrations/supabase/client';
  import { useCompany } from '@/contexts/CompanyContext';
  import { useToast } from '@/hooks/use-toast';
- import {
-   BankTransaction,
-   BankFormat,
-   BANK_FORMATS,
-   parseCSV,
-   parseMT940,
-   parseCAMT053,
-   detectFileFormat,
- } from '@/services/bankImport';
+  import {
+    BankTransaction,
+    BankFormat,
+    BANK_FORMATS,
+    parseCSV,
+    parseMT940,
+    parseCAMT053,
+    detectFileFormat,
+    detectBankFormat,
+  } from '@/services/bankImport';
  
  interface BankAccount {
    id: string;
@@ -226,7 +227,20 @@
         } else if (fileFormat === 'camt053') {
           transactions = parseCAMT053(content);
         } else {
-          transactions = parseCSV(content, bankFormat);
+          // Auto-detect bank format from CSV content
+          const detectedFormat = detectBankFormat(content);
+          const effectiveFormat = detectedFormat || bankFormat;
+          
+          if (detectedFormat && detectedFormat !== bankFormat) {
+            setBankFormat(detectedFormat);
+            const formatLabel = BANK_FORMATS.find(f => f.value === detectedFormat)?.label || detectedFormat;
+            toast({
+              title: 'Format erkannt',
+              description: `${formatLabel}-Format wurde automatisch erkannt und ausgewählt.`,
+            });
+          }
+          
+          transactions = parseCSV(content, effectiveFormat);
         }
 
         processTransactions(transactions);
@@ -234,7 +248,7 @@
         console.error('Parse error:', error);
         setParseError('Fehler beim Lesen der Datei. Bitte überprüfen Sie das Format.');
       }
-    }, [bankFormat, handlePdfImport, processTransactions]);
+    }, [bankFormat, handlePdfImport, processTransactions, toast]);
  
    const toggleSelection = (id: string) => {
      setEnhancedTransactions(prev =>
