@@ -42,6 +42,7 @@ const routeMap: Record<string, { label: string; icon?: React.ElementType }> = {
   '/rechnungen': { label: 'Rechnungen', icon: FileText },
   '/belege': { label: 'Belege', icon: Receipt },
   '/kontakte': { label: 'Kontakte', icon: Users },
+  '/finanzen': { label: 'Finanzen', icon: Landmark },
   '/bankkonten': { label: 'Bankkonten', icon: Landmark },
   '/bankverbindung': { label: 'Bankverbindung', icon: Link2 },
   '/elster': { label: 'ELSTER', icon: Send },
@@ -64,8 +65,9 @@ const routeParents: Record<string, string> = {
   '/angebote': '/rechnungen',
   '/auftraege': '/rechnungen',
   '/wiederkehrend': '/rechnungen',
-  '/bankverbindung': '/bankkonten',
-  '/sepa': '/bankkonten',
+  '/bankkonten': '/finanzen',
+  '/bankverbindung': '/finanzen',
+  '/sepa': '/finanzen',
 };
 
 export function HeaderBreadcrumb() {
