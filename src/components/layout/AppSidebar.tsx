@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import fintuttoLogo from '@/assets/fintutto-logo.svg';
+import fintuttoLogo from '@/assets/fintutto-animated.svg';
 import { useCompany } from '@/contexts/CompanyContext';
 import {
   Sidebar,
