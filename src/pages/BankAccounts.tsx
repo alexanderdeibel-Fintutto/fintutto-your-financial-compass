@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
  import { BankImportDialog } from '@/components/bank/BankImportDialog';
+ import { AddBankAccountDialog } from '@/components/bank/AddBankAccountDialog';
  import { useNavigate } from 'react-router-dom';
  import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +22,7 @@ export default function BankAccounts() {
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [syncing, setSyncing] = useState(false);
   const navigate = useNavigate();
@@ -117,10 +119,10 @@ export default function BankAccounts() {
             <Upload className="mr-2 h-4 w-4" />
             Import
           </Button>
-          <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Konto hinzufügen
-        </Button>
+          <Button onClick={() => setAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Konto hinzufügen
+          </Button>
         </div>
       </div>
 
@@ -166,7 +168,7 @@ export default function BankAccounts() {
         <div className="glass rounded-xl p-12 text-center">
           <CreditCard className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground mb-4">Keine Bankkonten vorhanden</p>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setAddDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Erstes Bankkonto hinzufügen
           </Button>
@@ -208,6 +210,14 @@ export default function BankAccounts() {
         </div>
       )}
        
+       {/* Add Bank Account Dialog */}
+       <AddBankAccountDialog
+         open={addDialogOpen}
+         onOpenChange={setAddDialogOpen}
+         companyId={currentCompany.id}
+         onSuccess={handleImportSuccess}
+       />
+
        {/* Bank Import Dialog */}
        <BankImportDialog
          open={importDialogOpen}
