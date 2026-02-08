@@ -258,13 +258,13 @@ export function AppSidebar() {
                     <Collapsible defaultOpen={isActive(item.url) || isChildActive(item)}>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton asChild>
-                          <NavLink
+                        <NavLink
                             to={item.url}
                             end
                             className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-sidebar-accent group"
-                            activeClassName="bg-sidebar-accent text-primary font-medium"
+                            activeClassName="bg-sidebar-accent text-sidebar-foreground font-medium"
                           >
-                            <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-sidebar-foreground' : 'text-muted-foreground'}`} />
                             <span className="flex-1">{item.title}</span>
                             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
                           </NavLink>
@@ -278,9 +278,9 @@ export function AppSidebar() {
                                 <NavLink
                                   to={child.url}
                                   className="flex items-center gap-3 px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-sidebar-accent text-sm"
-                                  activeClassName="bg-sidebar-accent text-primary font-medium"
+                                  activeClassName="bg-sidebar-accent text-sidebar-foreground font-medium"
                                 >
-                                  <child.icon className={`h-4 w-4 ${isActive(child.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  <child.icon className={`h-4 w-4 ${isActive(child.url) ? 'text-sidebar-foreground' : 'text-muted-foreground'}`} />
                                   <span>{child.title}</span>
                                 </NavLink>
                               </SidebarMenuButton>
@@ -297,9 +297,9 @@ export function AppSidebar() {
                         to={item.url}
                         end={item.url === '/'}
                         className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-sidebar-accent"
-                        activeClassName="bg-sidebar-accent text-primary font-medium"
+                        activeClassName="bg-sidebar-accent text-sidebar-foreground font-medium"
                       >
-                        <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <item.icon className={`h-5 w-5 ${isActive(item.url) ? 'text-sidebar-foreground' : 'text-muted-foreground'}`} />
                         <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
