@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAppShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Menu, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HeaderBreadcrumb } from './HeaderBreadcrumb';
 import fintuttoLogo from '@/assets/fintutto-logo.svg';
 import fintuttoHorizontal from '@/assets/fintutto-horizontal.svg';
 
@@ -74,12 +75,18 @@ export function AppLayout({ children }: AppLayoutProps) {
               <img src={fintuttoHorizontal} alt="Fintutto" className="h-9" />
             </div>
 
+            {/* Breadcrumb Navigation */}
+            <div className="hidden lg:flex items-center ml-6 mr-4">
+              <div className="w-px h-5 bg-white/15 mr-5" />
+              <HeaderBreadcrumb />
+            </div>
+
             {/* Center: Search */}
-            <div className="hidden lg:flex flex-1 justify-center">
+            <div className="hidden lg:flex flex-1 justify-end">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-muted-foreground gap-2 w-72 justify-start"
+                className="text-muted-foreground gap-2 w-64 justify-start"
                 onClick={() => setCommandPaletteOpen(true)}
               >
                 <Search className="h-4 w-4" />
