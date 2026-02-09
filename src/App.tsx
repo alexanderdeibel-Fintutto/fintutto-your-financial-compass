@@ -43,6 +43,7 @@ import ComparisonReports from "./pages/ComparisonReports";
 import BusinessForecast from "./pages/BusinessForecast";
 import Budgeting from "./pages/Budgeting";
 import DataBackup from "./pages/DataBackup";
+import AssetManagement from "./pages/AssetManagement";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ function AppRoutes() {
       <Route path="/prognose" element={<ProtectedRoute><BusinessForecast /></ProtectedRoute>} />
       <Route path="/budget" element={<ProtectedRoute><Budgeting /></ProtectedRoute>} />
       <Route path="/backup" element={<ProtectedRoute><DataBackup /></ProtectedRoute>} />
+      <Route path="/anlagen" element={<ProtectedRoute><AssetManagement /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

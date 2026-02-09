@@ -35,6 +35,7 @@ import {
   LineChart,
   PiggyBank,
   HardDrive,
+  Package,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,6 +94,7 @@ const navItems = [
   { title: 'Online-Zahlungen', url: '/zahlungen', icon: Wallet },
   { title: 'Buchhaltungssoftware', url: '/software', icon: FileSpreadsheet },
   { title: 'Datensicherung', url: '/backup', icon: HardDrive },
+  { title: 'Anlagenverwaltung', url: '/anlagen', icon: Package },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
