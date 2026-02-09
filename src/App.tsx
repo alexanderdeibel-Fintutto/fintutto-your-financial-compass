@@ -37,6 +37,12 @@ import EcommerceIntegration from "./pages/EcommerceIntegration";
 import OnlinePayments from "./pages/OnlinePayments";
 import AccountingSoftware from "./pages/AccountingSoftware";
 import ReceiptScanner from "./pages/ReceiptScanner";
+import BankReconciliation from "./pages/BankReconciliation";
+import CashFlowAnalysis from "./pages/CashFlowAnalysis";
+import ComparisonReports from "./pages/ComparisonReports";
+import BusinessForecast from "./pages/BusinessForecast";
+import Budgeting from "./pages/Budgeting";
+import DataBackup from "./pages/DataBackup";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +103,12 @@ function AppRoutes() {
       <Route path="/zahlungen" element={<ProtectedRoute><OnlinePayments /></ProtectedRoute>} />
       <Route path="/software" element={<ProtectedRoute><AccountingSoftware /></ProtectedRoute>} />
       <Route path="/scanner" element={<ProtectedRoute><ReceiptScanner /></ProtectedRoute>} />
+      <Route path="/abstimmung" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
+      <Route path="/cashflow" element={<ProtectedRoute><CashFlowAnalysis /></ProtectedRoute>} />
+      <Route path="/vergleiche" element={<ProtectedRoute><ComparisonReports /></ProtectedRoute>} />
+      <Route path="/prognose" element={<ProtectedRoute><BusinessForecast /></ProtectedRoute>} />
+      <Route path="/budget" element={<ProtectedRoute><Budgeting /></ProtectedRoute>} />
+      <Route path="/backup" element={<ProtectedRoute><DataBackup /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
