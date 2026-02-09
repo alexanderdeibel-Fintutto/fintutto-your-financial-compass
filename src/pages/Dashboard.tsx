@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Building2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
@@ -417,15 +419,30 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
-          {currentCompany?.is_personal ? 'Privatbereich' : 'Dashboard'}
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          {currentCompany?.is_personal
-            ? 'Ihre persönliche Finanzübersicht'
-            : `Übersicht für ${currentCompany?.name || 'Ihre Firma'}`}
-        </p>
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-1 sm:mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              {currentCompany?.is_personal ? 'Privatbereich' : 'Dashboard'}
+            </h1>
+            <Badge
+              variant={currentCompany?.is_personal ? 'secondary' : 'default'}
+              className={cn(
+                'text-xs px-3 py-1',
+                currentCompany?.is_personal
+                  ? 'bg-muted text-muted-foreground border-border'
+                  : 'bg-primary/15 text-primary border-primary/30 border'
+              )}
+            >
+              {currentCompany?.is_personal ? '👤 Privat' : '🏢 Firma'}
+            </Badge>
+          </div>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {currentCompany?.is_personal
+              ? 'Ihre persönliche Finanzübersicht'
+              : `Übersicht für ${currentCompany?.name || 'Ihre Firma'}`}
+          </p>
+        </div>
       </div>
 
       {/* KPI Cards - 2 columns on mobile, 4 on large screens */}
