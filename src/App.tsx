@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -44,6 +45,11 @@ import BusinessForecast from "./pages/BusinessForecast";
 import Budgeting from "./pages/Budgeting";
 import DataBackup from "./pages/DataBackup";
 import AssetManagement from "./pages/AssetManagement";
+import MultiCurrency from "./pages/MultiCurrency";
+import DocumentArchive from "./pages/DocumentArchive";
+import KPIDashboard from "./pages/KPIDashboard";
+import UserRoles from "./pages/UserRoles";
+import ApiDocumentation from "./pages/ApiDocumentation";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +117,11 @@ function AppRoutes() {
       <Route path="/budget" element={<ProtectedRoute><Budgeting /></ProtectedRoute>} />
       <Route path="/backup" element={<ProtectedRoute><DataBackup /></ProtectedRoute>} />
       <Route path="/anlagen" element={<ProtectedRoute><AssetManagement /></ProtectedRoute>} />
+      <Route path="/waehrungen" element={<ProtectedRoute><MultiCurrency /></ProtectedRoute>} />
+      <Route path="/archiv" element={<ProtectedRoute><DocumentArchive /></ProtectedRoute>} />
+      <Route path="/kpi" element={<ProtectedRoute><KPIDashboard /></ProtectedRoute>} />
+      <Route path="/benutzer" element={<ProtectedRoute><UserRoles /></ProtectedRoute>} />
+      <Route path="/api-docs" element={<ProtectedRoute><ApiDocumentation /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
@@ -126,17 +137,19 @@ function AppRoutes() {
 
 const App = () => (
   <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </LanguageProvider>
   </ThemeProvider>
 );
 

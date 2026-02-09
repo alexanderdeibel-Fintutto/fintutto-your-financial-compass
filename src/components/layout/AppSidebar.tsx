@@ -36,6 +36,11 @@ import {
   PiggyBank,
   HardDrive,
   Package,
+  Coins,
+  Archive,
+  Gauge,
+  Shield,
+  Code,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,6 +100,11 @@ const navItems = [
   { title: 'Buchhaltungssoftware', url: '/software', icon: FileSpreadsheet },
   { title: 'Datensicherung', url: '/backup', icon: HardDrive },
   { title: 'Anlagenverwaltung', url: '/anlagen', icon: Package },
+  { title: 'Währungen', url: '/waehrungen', icon: Coins },
+  { title: 'Archiv', url: '/archiv', icon: Archive },
+  { title: 'KPI-Dashboard', url: '/kpi', icon: Gauge },
+  { title: 'Benutzer & Rollen', url: '/benutzer', icon: Shield },
+  { title: 'API-Dokumentation', url: '/api-docs', icon: Code },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
