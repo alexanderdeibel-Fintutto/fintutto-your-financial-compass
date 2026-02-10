@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { RevenueExpenseChart } from '@/components/dashboard/RevenueExpenseChart'
 import { ExpenseByCategoryChart } from '@/components/dashboard/ExpenseByCategoryChart';
 import { DueInvoicesList } from '@/components/dashboard/DueInvoicesList';
 import { PendingReceiptsList } from '@/components/dashboard/PendingReceiptsList';
+import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -95,23 +96,37 @@ export default function Dashboard() {
   const [creatingCompany, setCreatingCompany] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('month');
+  const [dateRange, setDateRange] = useState<DateRange>(getDateRange('month'));
+
+  const handlePeriodChange = useCallback((period: PeriodKey, range: DateRange) => {
+    setSelectedPeriod(period);
+    setDateRange(range);
+  }, []);
 
   useEffect(() => {
     if (currentCompany) {
       fetchDashboardData();
     }
-  }, [currentCompany]);
+  }, [currentCompany, dateRange]);
 
   const fetchDashboardData = async () => {
     if (!currentCompany) return;
     setIsLoading(true);
 
     try {
-      // Calculate date ranges
+      // Use selected date range
+      const periodStart = dateRange.from.toISOString().split('T')[0];
+      const periodEnd = dateRange.to.toISOString().split('T')[0];
+      
+      // Calculate previous period (same duration, shifted back)
+      const duration = dateRange.to.getTime() - dateRange.from.getTime();
+      const prevEnd = new Date(dateRange.from.getTime() - 1);
+      const prevStart = new Date(prevEnd.getTime() - duration);
+      const prevStartStr = prevStart.toISOString().split('T')[0];
+      const prevEndStr = prevEnd.toISOString().split('T')[0];
+
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const sevenDaysFromNow = new Date(now);
       sevenDaysFromNow.setDate(now.getDate() + 7);
@@ -132,20 +147,21 @@ export default function Dashboard() {
           .select('balance')
           .eq('company_id', currentCompany.id),
         
-        // Current month transactions
+        // Period transactions
         supabase
           .from('transactions')
           .select('*')
           .eq('company_id', currentCompany.id)
-          .gte('date', startOfMonth.toISOString().split('T')[0]),
+          .gte('date', periodStart)
+          .lte('date', periodEnd),
         
-        // Previous month transactions
+        // Previous period transactions
         supabase
           .from('transactions')
           .select('*')
           .eq('company_id', currentCompany.id)
-          .gte('date', startOfPreviousMonth.toISOString().split('T')[0])
-          .lte('date', endOfPreviousMonth.toISOString().split('T')[0]),
+          .gte('date', prevStartStr)
+          .lte('date', prevEndStr),
         
         // Yearly transactions (for charts)
         supabase
@@ -444,6 +460,9 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Period Selector */}
+      <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={handlePeriodChange} />
 
       {/* KPI Cards - 2 columns on mobile, 4 on large screens */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-4">
