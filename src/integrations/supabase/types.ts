@@ -69,6 +69,7 @@ export type Database = {
           legal_form: string | null
           name: string
           tax_id: string | null
+          theme_index: number
           updated_at: string | null
           vat_id: string | null
           zip: string | null
@@ -83,6 +84,7 @@ export type Database = {
           legal_form?: string | null
           name: string
           tax_id?: string | null
+          theme_index?: number
           updated_at?: string | null
           vat_id?: string | null
           zip?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           legal_form?: string | null
           name?: string
           tax_id?: string | null
+          theme_index?: number
           updated_at?: string | null
           vat_id?: string | null
           zip?: string | null

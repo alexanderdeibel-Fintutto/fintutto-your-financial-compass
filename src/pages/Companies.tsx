@@ -19,7 +19,8 @@
 import { NewCompanyDialog } from '@/components/company/NewCompanyDialog';
 import { EditCompanyDialog } from '@/components/company/EditCompanyDialog';
 import { Building2, Plus, Pencil, Trash2, ArrowRight, Receipt, TrendingUp } from 'lucide-react';
- import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { COMPANY_GRADIENTS, getCompanyGradient } from '@/lib/companyGradients';
  
  interface CompanyStats {
    transactionCount: number;
@@ -36,6 +37,7 @@ interface CompanyWithStats {
   zip?: string;
   city?: string;
   chart_of_accounts?: string;
+  theme_index?: number;
   stats: CompanyStats;
 }
  
@@ -110,11 +112,12 @@ interface CompanyWithStats {
           zip: fullCompany?.zip,
           city: fullCompany?.city,
           chart_of_accounts: fullCompany?.chart_of_accounts,
-         stats: {
-           transactionCount: transactionCount || 0,
-           totalRevenue,
-         },
-       });
+          theme_index: fullCompany?.theme_index ?? 0,
+          stats: {
+            transactionCount: transactionCount || 0,
+            totalRevenue,
+          },
+        });
      }
  
      setCompaniesWithStats(enrichedCompanies);
@@ -239,14 +242,18 @@ interface CompanyWithStats {
          </div>
        ) : (
          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-           {companiesWithStats.map((company, index) => (
-             <Card
-               key={company.id}
-               className={cn(
-                 'transition-all duration-200 hover:shadow-lg',
-                 currentCompany?.id === company.id && 'ring-2 ring-primary'
-               )}
-             >
+            {companiesWithStats.map((company, index) => {
+              const gradient = getCompanyGradient(company.theme_index ?? 0);
+              return (
+              <Card
+                key={company.id}
+                className={cn(
+                  'transition-all duration-200 hover:shadow-lg overflow-hidden',
+                  currentCompany?.id === company.id && 'ring-2 ring-primary'
+                )}
+              >
+                {/* Gradient accent bar */}
+                <div className="h-1.5" style={{ background: gradient.gradient }} />
                <CardHeader>
                  <div className="flex items-start justify-between">
                    <div className="flex items-center gap-3">
@@ -320,9 +327,10 @@ interface CompanyWithStats {
                      <Trash2 className="h-4 w-4" />
                    </Button>
                  </div>
-               </CardContent>
-             </Card>
-           ))}
+                </CardContent>
+              </Card>
+              );
+            })}
  
            {/* Add New Company Card */}
            <Card
@@ -347,17 +355,18 @@ interface CompanyWithStats {
       <EditCompanyDialog
         open={!!editCompany}
         onOpenChange={(open) => { if (!open) setEditCompany(null); }}
-        company={editCompany ? {
-          id: editCompany.id,
-          name: editCompany.name,
-          legal_form: editCompany.legal_form,
-          tax_id: editCompany.tax_id,
-          vat_id: editCompany.vat_id,
-          address: editCompany.address,
-          zip: editCompany.zip,
-          city: editCompany.city,
-          chart_of_accounts: editCompany.chart_of_accounts,
-        } : null}
+         company={editCompany ? {
+           id: editCompany.id,
+           name: editCompany.name,
+           legal_form: editCompany.legal_form,
+           tax_id: editCompany.tax_id,
+           vat_id: editCompany.vat_id,
+           address: editCompany.address,
+           zip: editCompany.zip,
+           city: editCompany.city,
+           chart_of_accounts: editCompany.chart_of_accounts,
+           theme_index: editCompany.theme_index,
+         } : null}
       />
  
        {/* Delete Confirmation Dialog */}

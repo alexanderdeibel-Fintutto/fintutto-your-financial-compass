@@ -21,7 +21,9 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Loader2, Save } from 'lucide-react';
+import { Building2, Loader2, Save, Check } from 'lucide-react';
+import { COMPANY_GRADIENTS } from '@/lib/companyGradients';
+import { cn } from '@/lib/utils';
 
 interface EditCompanyDialogProps {
   open: boolean;
@@ -36,6 +38,7 @@ interface EditCompanyDialogProps {
     zip?: string;
     city?: string;
     chart_of_accounts?: string;
+    theme_index?: number;
   } | null;
 }
 
@@ -62,6 +65,7 @@ export function EditCompanyDialog({ open, onOpenChange, company }: EditCompanyDi
     zip: '',
     city: '',
     chartOfAccounts: 'skr03',
+    themeIndex: 0,
   });
 
   useEffect(() => {
@@ -75,11 +79,12 @@ export function EditCompanyDialog({ open, onOpenChange, company }: EditCompanyDi
         zip: company.zip || '',
         city: company.city || '',
         chartOfAccounts: company.chart_of_accounts || 'skr03',
+        themeIndex: company.theme_index ?? 0,
       });
     }
   }, [company, open]);
 
-  const updateForm = (field: string, value: string) => {
+  const updateForm = (field: string, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
@@ -107,6 +112,7 @@ export function EditCompanyDialog({ open, onOpenChange, company }: EditCompanyDi
           zip: form.zip || null,
           city: form.city || null,
           chart_of_accounts: form.chartOfAccounts,
+          theme_index: form.themeIndex,
         })
         .eq('id', company.id);
 
@@ -251,6 +257,47 @@ export function EditCompanyDialog({ open, onOpenChange, company }: EditCompanyDi
                 />
               </div>
             </div>
+          </div>
+
+          {/* Farbthema */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Farbthema
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Wählen Sie eine Farbe, um diese Firma visuell zu unterscheiden.
+            </p>
+            <div className="grid grid-cols-6 gap-3">
+              {COMPANY_GRADIENTS.map((g, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => updateForm('themeIndex', i)}
+                  className={cn(
+                    'relative h-12 rounded-lg border-2 transition-all duration-200 cursor-pointer',
+                    form.themeIndex === i
+                      ? 'ring-2 ring-offset-2 ring-offset-background scale-105'
+                      : 'hover:scale-105 border-transparent'
+                  )}
+                  style={{
+                    background: g.gradient,
+                    borderColor: form.themeIndex === i ? g.accent : 'transparent',
+                    // @ts-ignore ring color via CSS variable
+                    '--tw-ring-color': g.accent,
+                  }}
+                >
+                  {form.themeIndex === i && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Check className="h-5 w-5" style={{ color: g.accent }} />
+                    </div>
+                  )}
+                  <span className="sr-only">{g.name}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {COMPANY_GRADIENTS[form.themeIndex]?.name}
+            </p>
           </div>
 
           {/* Kontenrahmen */}
