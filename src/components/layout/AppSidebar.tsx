@@ -199,9 +199,7 @@ export function AppSidebar() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'url(/images/gradient-bg.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            background: 'radial-gradient(ellipse at 50% 100%, #e07050 0%, #b85060 20%, #6a3080 45%, #2d1850 70%, #0f0f1a 100%)',
           }}
         />
       <SidebarHeader className="p-5 border-b border-white/10">
