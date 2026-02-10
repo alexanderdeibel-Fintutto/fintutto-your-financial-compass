@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { HeaderBreadcrumb } from './HeaderBreadcrumb';
 import fintuttoLogo from '@/assets/fintutto-logo.svg';
 import fintuttoHorizontal from '@/assets/fintutto-horizontal.svg';
+import { useCompany } from '@/contexts/CompanyContext';
+import { getCompanyGradient, getCompanyShortName } from '@/lib/companyGradients';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -21,6 +23,11 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const { currentCompany } = useCompany();
+  const companyGradient = getCompanyGradient(currentCompany?.theme_index ?? 0);
+  const companyShortName = currentCompany?.is_personal
+    ? 'Privat'
+    : getCompanyShortName(currentCompany?.name || '');
 
   const handleNewBooking = useCallback(() => {
     navigate('/buchungen?action=new');
@@ -62,7 +69,13 @@ export function AppLayout({ children }: AppLayoutProps) {
               transform: 'scaleX(-1)',
             }}
           />
-          <header className="relative z-10 h-14 border-b border-white/10 flex items-center px-4 bg-black/20 backdrop-blur-xl">
+          <header
+            className="relative z-10 h-14 border-b flex items-center px-4 backdrop-blur-xl transition-all duration-500"
+            style={{
+              background: companyGradient.gradient,
+              borderBottomColor: companyGradient.borderColor,
+            }}
+          >
             {/* Left: Logo (desktop) / Mobile menu + logo */}
             <div className="flex items-center lg:hidden">
               <SidebarTrigger>
@@ -75,8 +88,23 @@ export function AppLayout({ children }: AppLayoutProps) {
               <img src={fintuttoHorizontal} alt="Fintutto" className="h-9" />
             </div>
 
+            {/* Company Short Name */}
+            <div className="hidden lg:flex items-center ml-4">
+              <div className="w-px h-5 bg-white/15 mr-4" />
+              <div
+                className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border backdrop-blur-sm"
+                style={{
+                  borderColor: companyGradient.borderColor,
+                  color: companyGradient.accent,
+                }}
+              >
+                {currentCompany?.is_personal ? '👤' : '🏢'}
+                <span>{companyShortName}</span>
+              </div>
+            </div>
+
             {/* Breadcrumb Navigation */}
-            <div className="hidden lg:flex items-center ml-6 mr-4">
+            <div className="hidden lg:flex items-center ml-4 mr-4">
               <div className="w-px h-5 bg-white/15 mr-5" />
               <HeaderBreadcrumb />
             </div>
@@ -103,8 +131,20 @@ export function AppLayout({ children }: AppLayoutProps) {
               <NotificationCenter />
             </div>
           </header>
-          {/* Mobile Breadcrumb */}
-          <div className="relative z-10 lg:hidden px-4 py-2 bg-black/15 backdrop-blur-sm border-b border-white/5">
+          {/* Mobile Breadcrumb + Company indicator */}
+          <div
+            className="relative z-10 lg:hidden px-4 py-2 backdrop-blur-sm border-b flex items-center gap-2"
+            style={{
+              background: companyGradient.gradient,
+              borderBottomColor: companyGradient.borderColor,
+            }}
+          >
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full border shrink-0"
+              style={{ borderColor: companyGradient.borderColor, color: companyGradient.accent }}
+            >
+              {currentCompany?.is_personal ? '👤 Privat' : `🏢 ${companyShortName}`}
+            </span>
             <HeaderBreadcrumb />
           </div>
           <div className="relative z-10 flex-1 p-4 sm:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8 bg-black/10">
