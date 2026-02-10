@@ -51,8 +51,14 @@ export function KPICard({
         <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">{title}</p>
         <p className="text-xl sm:text-3xl font-bold tracking-tight mb-1">{value}</p>
         {change && (
-          <span className={`text-xs sm:text-sm font-medium ${changeColors[changeType]}`}>
-            {change} ggü. Vormonat
+          <span className={`inline-block mt-1 text-xs font-semibold px-3 py-1 rounded-full ${
+            changeType === 'negative' 
+              ? 'bg-destructive text-destructive-foreground' 
+              : changeType === 'positive' 
+                ? 'bg-success text-success-foreground' 
+                : 'bg-muted text-muted-foreground'
+          }`}>
+            {change}
           </span>
         )}
       </div>
