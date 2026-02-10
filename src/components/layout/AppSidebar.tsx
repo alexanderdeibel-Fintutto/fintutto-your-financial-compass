@@ -43,6 +43,7 @@ import {
   Code,
   History,
   CalendarClock,
+  ClockArrowUp,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -109,6 +110,7 @@ const navItems = [
   { title: 'API-Dokumentation', url: '/api-docs', icon: Code },
   { title: 'Audit-Log', url: '/audit', icon: History },
   { title: 'Steuerkalender', url: '/steuerkalender', icon: CalendarClock },
+  { title: 'Bericht-Scheduler', url: '/report-scheduler', icon: ClockArrowUp },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
