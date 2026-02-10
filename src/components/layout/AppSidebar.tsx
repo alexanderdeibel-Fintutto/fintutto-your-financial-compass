@@ -199,7 +199,7 @@ export function AppSidebar() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at 50% 100%, #f06070 0%, #c04068 25%, #6a3080 50%, #2d1850 75%, #0f0f1a 100%)',
+            background: 'radial-gradient(ellipse at 50% 100%, #e8b830 0%, #d09030 20%, #a06040 35%, #6a3080 55%, #2d1850 75%, #0f0f1a 100%)',
           }}
         />
       <SidebarHeader className="p-5 border-b border-white/10">
