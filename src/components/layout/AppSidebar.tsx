@@ -194,14 +194,8 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar
-        className="border-r border-white/10 overflow-hidden"
+        className="border-r border-white/10 overflow-hidden bg-black/30 backdrop-blur-sm"
       >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 100%, #e8b830 0%, #d09030 20%, #a06040 35%, #6a3080 55%, #2d1850 75%, #0f0f1a 100%)',
-          }}
-        />
       <SidebarHeader className="p-5 border-b border-white/10">
         <div className="flex items-center justify-center">
           <img src={fintuttoHorizontalLogo} alt="Fintutto" className="h-12" />
