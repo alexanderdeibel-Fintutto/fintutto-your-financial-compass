@@ -59,7 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div
         className="min-h-screen flex w-full relative"
         style={{
-          background: 'radial-gradient(ellipse at 50% 100%, #e8b830 0%, #d09030 20%, #a06040 35%, #6a3080 55%, #2d1850 75%, #0f0f1a 100%)',
+          background: 'radial-gradient(ellipse at 50% 120%, #b8882a 0%, #8a5a30 15%, #7a4860 30%, #5a2880 50%, #2d1850 70%, #0f0f1a 100%)',
         }}
       >
         <AppSidebar />
