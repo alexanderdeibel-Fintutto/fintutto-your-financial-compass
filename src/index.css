@@ -4,6 +4,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,9 +75,9 @@
     --chart-4: 238 83% 66%;
     --chart-5: 0 0% 45%;
     --sidebar: 0 0% 98%;
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --font-sans: "Lato", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-serif: "EB Garamond", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -85,6 +88,31 @@
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+    --primary-glow: 20 85% 58%;
+    --secondary-glow: 280 60% 45%;
+    --meter-electricity: 48 96% 53%;
+    --meter-gas: 25 95% 53%;
+    --meter-cold-water: 200 85% 50%;
+    --meter-warm-water: 0 85% 58%;
+    --meter-heating: 15 92% 55%;
+    --glass-bg: 260 30% 20% / 0.6;
+    --glass-border: 270 20% 90% / 0.15;
+    --accent-mint: 158 64% 52%;
+    --accent-mint-foreground: 0 0% 100%;
+    --accent-coral: 20 85% 58%;
+    --accent-coral-foreground: 0 0% 100%;
+    --accent-sky: 263 60% 58%;
+    --accent-sky-foreground: 0 0% 100%;
+    --accent-amber: 30 90% 52%;
+    --accent-amber-foreground: 0 0% 100%;
+    --gradient-mint: linear-gradient(135deg, hsl(158, 64%, 52%) 0%, hsl(168, 70%, 45%) 100%);
+    --gradient-coral: linear-gradient(135deg, hsl(20, 85%, 58%) 0%, hsl(10, 80%, 52%) 100%);
+    --gradient-sky: linear-gradient(135deg, hsl(263, 60%, 58%) 0%, hsl(280, 55%, 50%) 100%);
+    --gradient-amber: linear-gradient(135deg, hsl(30, 90%, 52%) 0%, hsl(20, 85%, 48%) 100%);
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(280, 60%, 45%) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(250, 50%, 20%) 0px, transparent 50%),
+                     radial-gradient(at 0% 50%, hsl(20, 85%, 58%) 0px, transparent 50%);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* Dark mode */
@@ -156,6 +184,18 @@
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --primary-glow: 20 85% 58%;
+    --secondary-glow: 280 60% 45%;
+    --glass-bg: 260 30% 10% / 0.8;
+    --glass-border: 270 20% 90% / 0.1;
+    --accent-mint: 158 64% 45%;
+    --accent-mint-foreground: 0 0% 100%;
+    --accent-coral: 20 85% 55%;
+    --accent-coral-foreground: 0 0% 100%;
+    --accent-sky: 263 55% 55%;
+    --accent-sky-foreground: 0 0% 100%;
+    --accent-amber: 30 90% 48%;
+    --accent-amber-foreground: 0 0% 100%;
   }
 }
 
