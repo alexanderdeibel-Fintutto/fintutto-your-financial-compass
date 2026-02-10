@@ -56,16 +56,14 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div
+        className="min-h-screen flex w-full relative"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 100%, #e8b830 0%, #d09030 20%, #a06040 35%, #6a3080 55%, #2d1850 75%, #0f0f1a 100%)',
+        }}
+      >
         <AppSidebar />
         <main className="flex-1 flex flex-col relative overflow-hidden">
-          {/* Flipped gradient background for main content area */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(ellipse at 50% 100%, #e8b830 0%, #d09030 20%, #a06040 35%, #6a3080 55%, #2d1850 75%, #0f0f1a 100%)',
-            }}
-          />
           <header className="relative z-10 h-14 border-b border-white/10 flex items-center px-4 bg-black/20 backdrop-blur-xl">
             {/* Left: Logo (desktop) / Mobile menu + logo */}
             <div className="flex items-center lg:hidden">
