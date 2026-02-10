@@ -69,13 +69,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               transform: 'scaleX(-1)',
             }}
           />
-          <header
-            className="relative z-10 h-14 border-b flex items-center px-4 backdrop-blur-xl transition-all duration-500"
-            style={{
-              background: companyGradient.gradient,
-              borderBottomColor: companyGradient.borderColor,
-            }}
-          >
+          <header className="relative z-10 h-14 border-b border-white/10 flex items-center px-4 bg-black/20 backdrop-blur-xl">
             {/* Left: Logo (desktop) / Mobile menu + logo */}
             <div className="flex items-center lg:hidden">
               <SidebarTrigger>
