@@ -9,6 +9,9 @@ import { RevenueExpenseChart } from '@/components/dashboard/RevenueExpenseChart'
 import { ExpenseByCategoryChart } from '@/components/dashboard/ExpenseByCategoryChart';
 import { DueInvoicesList } from '@/components/dashboard/DueInvoicesList';
 import { PendingReceiptsList } from '@/components/dashboard/PendingReceiptsList';
+import { BankAccountsWidget } from '@/components/dashboard/BankAccountsWidget';
+import { TaskFeed } from '@/components/dashboard/TaskFeed';
+import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -434,8 +437,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+      {/* Header with Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1 sm:mb-2">
             <h1 className="text-2xl sm:text-3xl font-bold">
@@ -458,6 +461,10 @@ export default function Dashboard() {
               ? 'Ihre persönliche Finanzübersicht'
               : `Übersicht für ${currentCompany?.name || 'Ihre Firma'}`}
           </p>
+        </div>
+        {/* Compact Quick Actions in header */}
+        <div className="hidden sm:block">
+          <QuickActions variant="compact" />
         </div>
       </div>
 
@@ -504,16 +511,18 @@ export default function Dashboard() {
         <ExpenseByCategoryChart data={categoryData} />
       </div>
 
+      {/* New Widgets Row - Bankkonten, Kalender, Aufgaben */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+        <BankAccountsWidget />
+        <CalendarWidget />
+        <TaskFeed />
+      </div>
+
       {/* Lists Row - stack on mobile */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <RecentTransactions transactions={transactions} />
         <DueInvoicesList invoices={dueInvoices} />
         <PendingReceiptsList receipts={pendingReceipts} />
-      </div>
-
-      {/* Quick Actions - hidden on mobile as we have FAB */}
-      <div className="hidden sm:block">
-        <QuickActions />
       </div>
     </div>
   );
