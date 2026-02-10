@@ -33,7 +33,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div className="min-h-screen flex items-center justify-center p-8" style={{ background: 'radial-gradient(ellipse at 50% 100%, #e07050 0%, #b85060 20%, #6a3080 45%, #2d1850 70%, #0f0f1a 100%)' }}>
       <div className="w-full max-w-md space-y-6">
         <div className="text-center mb-8">
           <img src={fintuttoLogo} alt="Fintutto Logo" className="h-16 w-16 rounded-xl mx-auto mb-2" />

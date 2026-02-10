@@ -49,7 +49,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundImage: 'url(/images/gradient-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div className="min-h-screen flex" style={{ background: 'radial-gradient(ellipse at 50% 100%, #e07050 0%, #b85060 20%, #6a3080 45%, #2d1850 70%, #0f0f1a 100%)' }}>
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="relative z-10 flex flex-col justify-center px-16">
