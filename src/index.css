@@ -18,7 +18,7 @@
     --foreground: 0 0% 9%;
 
     --card: 0 0% 98%;
-    --card-foreground: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 89%;
     --popover-foreground: 0 0% 9%;
@@ -212,7 +212,7 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card/30 backdrop-blur-xl border border-white/10;
+    @apply bg-white/10 backdrop-blur-xl border border-white/15;
   }
 
   .glass-hover {
