@@ -51,6 +51,7 @@ import KPIDashboard from "./pages/KPIDashboard";
 import UserRoles from "./pages/UserRoles";
 import ApiDocumentation from "./pages/ApiDocumentation";
 import AuditLog from "./pages/AuditLog";
+import TaxCalendar from "./pages/TaxCalendar";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,7 @@ function AppRoutes() {
       <Route path="/benutzer" element={<ProtectedRoute><UserRoles /></ProtectedRoute>} />
       <Route path="/api-docs" element={<ProtectedRoute><ApiDocumentation /></ProtectedRoute>} />
       <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
+      <Route path="/steuerkalender" element={<ProtectedRoute><TaxCalendar /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

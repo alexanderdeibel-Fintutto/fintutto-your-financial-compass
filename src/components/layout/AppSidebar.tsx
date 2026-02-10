@@ -42,6 +42,7 @@ import {
   Shield,
   Code,
   History,
+  CalendarClock,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,6 +108,7 @@ const navItems = [
   { title: 'Benutzer & Rollen', url: '/benutzer', icon: Shield },
   { title: 'API-Dokumentation', url: '/api-docs', icon: Code },
   { title: 'Audit-Log', url: '/audit', icon: History },
+  { title: 'Steuerkalender', url: '/steuerkalender', icon: CalendarClock },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
