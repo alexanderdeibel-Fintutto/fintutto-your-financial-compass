@@ -42,6 +42,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/steuerkalender': 'Steuerkalender',
   '/report-scheduler': 'Bericht-Scheduler',
   '/bankregeln': 'Bankregeln',
+  '/buchungsvorlagen': 'Buchungsvorlagen',
+  '/eingangsrechnungen': 'Eingangsrechnungen',
+  '/jahresabschluss': 'Jahresabschluss',
+  '/zahlungsuebersicht': 'Zahlungen',
 };
 
 export function HeaderToolbar() {

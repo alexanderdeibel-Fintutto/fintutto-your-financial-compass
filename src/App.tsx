@@ -54,6 +54,10 @@ import AuditLog from "./pages/AuditLog";
 import TaxCalendar from "./pages/TaxCalendar";
 import ReportScheduler from "./pages/ReportScheduler";
 import BankRules from "./pages/BankRules";
+import BookingTemplates from "./pages/BookingTemplates";
+import SupplierInvoices from "./pages/SupplierInvoices";
+import YearEndClosing from "./pages/YearEndClosing";
+import Payments from "./pages/Payments";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +134,10 @@ function AppRoutes() {
       <Route path="/steuerkalender" element={<ProtectedRoute><TaxCalendar /></ProtectedRoute>} />
       <Route path="/report-scheduler" element={<ProtectedRoute><ReportScheduler /></ProtectedRoute>} />
       <Route path="/bankregeln" element={<ProtectedRoute><BankRules /></ProtectedRoute>} />
+      <Route path="/buchungsvorlagen" element={<ProtectedRoute><BookingTemplates /></ProtectedRoute>} />
+      <Route path="/eingangsrechnungen" element={<ProtectedRoute><SupplierInvoices /></ProtectedRoute>} />
+      <Route path="/jahresabschluss" element={<ProtectedRoute><YearEndClosing /></ProtectedRoute>} />
+      <Route path="/zahlungsuebersicht" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

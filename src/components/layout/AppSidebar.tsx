@@ -45,6 +45,10 @@ import {
   CalendarClock,
   ClockArrowUp,
   Wand2,
+  BookTemplate,
+  FileInput,
+  CalendarCheck,
+  Wallet2,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -113,6 +117,10 @@ const navItems = [
   { title: 'Audit-Log', url: '/audit', icon: History },
   { title: 'Steuerkalender', url: '/steuerkalender', icon: CalendarClock },
   { title: 'Bericht-Scheduler', url: '/report-scheduler', icon: ClockArrowUp },
+  { title: 'Buchungsvorlagen', url: '/buchungsvorlagen', icon: BookTemplate },
+  { title: 'Eingangsrechnungen', url: '/eingangsrechnungen', icon: FileInput },
+  { title: 'Jahresabschluss', url: '/jahresabschluss', icon: CalendarCheck },
+  { title: 'Zahlungen', url: '/zahlungsuebersicht', icon: Wallet2 },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
