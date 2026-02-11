@@ -53,6 +53,10 @@ import {
   ListTree,
   Calculator,
   FolderKanban,
+  RefreshCw,
+  FileStack,
+  AlertCircle,
+  Banknote,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -129,6 +133,10 @@ const navItems = [
   { title: 'Kontenplan', url: '/kontenplan', icon: ListTree },
   { title: 'USt-Voranmeldung', url: '/ustva', icon: Calculator },
   { title: 'Projekte', url: '/projekte', icon: FolderKanban },
+  { title: 'Dauerbuchungen', url: '/dauerbuchungen', icon: RefreshCw },
+  { title: 'Offene Posten', url: '/offene-posten', icon: FileStack },
+  { title: 'Mahnwesen', url: '/mahnwesen', icon: AlertCircle },
+  { title: 'Kassenbuch', url: '/kassenbuch', icon: Banknote },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },

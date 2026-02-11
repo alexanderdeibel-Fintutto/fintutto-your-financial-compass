@@ -50,6 +50,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/kontenplan': 'Kontenplan',
   '/ustva': 'USt-Voranmeldung',
   '/projekte': 'Projekt-Buchhaltung',
+  '/dauerbuchungen': 'Dauerbuchungen',
+  '/offene-posten': 'Offene Posten',
+  '/mahnwesen': 'Mahnwesen',
+  '/kassenbuch': 'Kassenbuch',
 };
 
 export function HeaderToolbar() {

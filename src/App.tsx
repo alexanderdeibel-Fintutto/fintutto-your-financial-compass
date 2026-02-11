@@ -62,6 +62,10 @@ import CostCenters from "./pages/CostCenters";
 import ChartOfAccounts from "./pages/ChartOfAccounts";
 import VATHelper from "./pages/VATHelper";
 import ProjectAccounting from "./pages/ProjectAccounting";
+import RecurringBookings from "./pages/RecurringBookings";
+import OpenItems from "./pages/OpenItems";
+import Dunning from "./pages/Dunning";
+import CashBook from "./pages/CashBook";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +150,10 @@ function AppRoutes() {
       <Route path="/kontenplan" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
       <Route path="/ustva" element={<ProtectedRoute><VATHelper /></ProtectedRoute>} />
       <Route path="/projekte" element={<ProtectedRoute><ProjectAccounting /></ProtectedRoute>} />
+      <Route path="/dauerbuchungen" element={<ProtectedRoute><RecurringBookings /></ProtectedRoute>} />
+      <Route path="/offene-posten" element={<ProtectedRoute><OpenItems /></ProtectedRoute>} />
+      <Route path="/mahnwesen" element={<ProtectedRoute><Dunning /></ProtectedRoute>} />
+      <Route path="/kassenbuch" element={<ProtectedRoute><CashBook /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
