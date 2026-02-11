@@ -12,6 +12,8 @@ import { PendingReceiptsList } from '@/components/dashboard/PendingReceiptsList'
 import { BankAccountsWidget } from '@/components/dashboard/BankAccountsWidget';
 import { TaskFeed } from '@/components/dashboard/TaskFeed';
 import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
+import { SepaWidget } from '@/components/dashboard/SepaWidget';
+import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -511,12 +513,20 @@ export default function Dashboard() {
         <ExpenseByCategoryChart data={categoryData} />
       </div>
 
-      {/* New Widgets Row - Bankkonten, Kalender, Aufgaben */}
+      {/* Widgets Row 1 - Bankkonten, Kalender, Aufgaben */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <BankAccountsWidget />
         <CalendarWidget />
         <TaskFeed />
       </div>
+
+      {/* Widgets Row 2 - SEPA, Wiederkehrende Buchungen */}
+      {!currentCompany?.is_personal && (
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <SepaWidget />
+          <RecurringWidget />
+        </div>
+      )}
 
       {/* Lists Row - stack on mobile */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
