@@ -41,6 +41,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/hilfe': 'Hilfe',
   '/steuerkalender': 'Steuerkalender',
   '/report-scheduler': 'Bericht-Scheduler',
+  '/bankregeln': 'Bankregeln',
 };
 
 export function HeaderToolbar() {

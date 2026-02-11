@@ -44,6 +44,7 @@ import {
   History,
   CalendarClock,
   ClockArrowUp,
+  Wand2,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -87,6 +88,7 @@ const navItems = [
   { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
   { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
   { title: 'Bank-Abstimmung', url: '/abstimmung', icon: ArrowRightLeft },
+  { title: 'Bankregeln', url: '/bankregeln', icon: Wand2 },
   { title: 'SEPA-Zahlungen', url: '/sepa', icon: Euro },
   { title: 'Übergaben', url: '/uebergabe', icon: ClipboardCheck },
   { title: 'Kalender', url: '/kalender', icon: Calendar },

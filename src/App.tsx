@@ -53,6 +53,7 @@ import ApiDocumentation from "./pages/ApiDocumentation";
 import AuditLog from "./pages/AuditLog";
 import TaxCalendar from "./pages/TaxCalendar";
 import ReportScheduler from "./pages/ReportScheduler";
+import BankRules from "./pages/BankRules";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,7 @@ function AppRoutes() {
       <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
       <Route path="/steuerkalender" element={<ProtectedRoute><TaxCalendar /></ProtectedRoute>} />
       <Route path="/report-scheduler" element={<ProtectedRoute><ReportScheduler /></ProtectedRoute>} />
+      <Route path="/bankregeln" element={<ProtectedRoute><BankRules /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
