@@ -58,6 +58,10 @@ import BookingTemplates from "./pages/BookingTemplates";
 import SupplierInvoices from "./pages/SupplierInvoices";
 import YearEndClosing from "./pages/YearEndClosing";
 import Payments from "./pages/Payments";
+import CostCenters from "./pages/CostCenters";
+import ChartOfAccounts from "./pages/ChartOfAccounts";
+import VATHelper from "./pages/VATHelper";
+import ProjectAccounting from "./pages/ProjectAccounting";
 
 const queryClient = new QueryClient();
 
@@ -138,6 +142,10 @@ function AppRoutes() {
       <Route path="/eingangsrechnungen" element={<ProtectedRoute><SupplierInvoices /></ProtectedRoute>} />
       <Route path="/jahresabschluss" element={<ProtectedRoute><YearEndClosing /></ProtectedRoute>} />
       <Route path="/zahlungsuebersicht" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+      <Route path="/kostenstellen" element={<ProtectedRoute><CostCenters /></ProtectedRoute>} />
+      <Route path="/kontenplan" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
+      <Route path="/ustva" element={<ProtectedRoute><VATHelper /></ProtectedRoute>} />
+      <Route path="/projekte" element={<ProtectedRoute><ProjectAccounting /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

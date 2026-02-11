@@ -46,6 +46,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/eingangsrechnungen': 'Eingangsrechnungen',
   '/jahresabschluss': 'Jahresabschluss',
   '/zahlungsuebersicht': 'Zahlungen',
+  '/kostenstellen': 'Kostenstellen',
+  '/kontenplan': 'Kontenplan',
+  '/ustva': 'USt-Voranmeldung',
+  '/projekte': 'Projekt-Buchhaltung',
 };
 
 export function HeaderToolbar() {

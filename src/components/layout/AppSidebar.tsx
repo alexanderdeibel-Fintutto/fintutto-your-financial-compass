@@ -49,6 +49,10 @@ import {
   FileInput,
   CalendarCheck,
   Wallet2,
+  Target,
+  ListTree,
+  Calculator,
+  FolderKanban,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -121,6 +125,10 @@ const navItems = [
   { title: 'Eingangsrechnungen', url: '/eingangsrechnungen', icon: FileInput },
   { title: 'Jahresabschluss', url: '/jahresabschluss', icon: CalendarCheck },
   { title: 'Zahlungen', url: '/zahlungsuebersicht', icon: Wallet2 },
+  { title: 'Kostenstellen', url: '/kostenstellen', icon: Target },
+  { title: 'Kontenplan', url: '/kontenplan', icon: ListTree },
+  { title: 'USt-Voranmeldung', url: '/ustva', icon: Calculator },
+  { title: 'Projekte', url: '/projekte', icon: FolderKanban },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
