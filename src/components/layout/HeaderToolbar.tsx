@@ -54,6 +54,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/offene-posten': 'Offene Posten',
   '/mahnwesen': 'Mahnwesen',
   '/kassenbuch': 'Kassenbuch',
+  '/bwa': 'BWA',
+  '/saldenliste': 'Summen- und Saldenliste',
+  '/kontoauszuege': 'Kontoauszüge',
+  '/inventar': 'Inventarverwaltung',
 };
 
 export function HeaderToolbar() {

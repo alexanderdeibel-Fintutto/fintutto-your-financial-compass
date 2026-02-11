@@ -66,6 +66,10 @@ import RecurringBookings from "./pages/RecurringBookings";
 import OpenItems from "./pages/OpenItems";
 import Dunning from "./pages/Dunning";
 import CashBook from "./pages/CashBook";
+import BWA from "./pages/BWA";
+import TrialBalance from "./pages/TrialBalance";
+import AccountStatements from "./pages/AccountStatements";
+import Inventory from "./pages/Inventory";
 
 const queryClient = new QueryClient();
 
@@ -154,6 +158,10 @@ function AppRoutes() {
       <Route path="/offene-posten" element={<ProtectedRoute><OpenItems /></ProtectedRoute>} />
       <Route path="/mahnwesen" element={<ProtectedRoute><Dunning /></ProtectedRoute>} />
       <Route path="/kassenbuch" element={<ProtectedRoute><CashBook /></ProtectedRoute>} />
+      <Route path="/bwa" element={<ProtectedRoute><BWA /></ProtectedRoute>} />
+      <Route path="/saldenliste" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
+      <Route path="/kontoauszuege" element={<ProtectedRoute><AccountStatements /></ProtectedRoute>} />
+      <Route path="/inventar" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       <Route path="/uebergabe" element={<ProtectedRoute><Handover /></ProtectedRoute>} />

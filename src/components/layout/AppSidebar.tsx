@@ -57,6 +57,10 @@ import {
   FileStack,
   AlertCircle,
   Banknote,
+  BarChart,
+  TableProperties,
+  FileBarChart,
+  Boxes,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -137,6 +141,10 @@ const navItems = [
   { title: 'Offene Posten', url: '/offene-posten', icon: FileStack },
   { title: 'Mahnwesen', url: '/mahnwesen', icon: AlertCircle },
   { title: 'Kassenbuch', url: '/kassenbuch', icon: Banknote },
+  { title: 'BWA', url: '/bwa', icon: BarChart },
+  { title: 'Saldenliste', url: '/saldenliste', icon: TableProperties },
+  { title: 'Kontoauszüge', url: '/kontoauszuege', icon: FileBarChart },
+  { title: 'Inventar', url: '/inventar', icon: Boxes },
   { title: 'Firmen', url: '/firmen', icon: Building2 },
   { title: 'Vorlagen', url: '/vorlagen', icon: Mail },
   { title: 'Einstellungen', url: '/einstellungen', icon: Settings },
