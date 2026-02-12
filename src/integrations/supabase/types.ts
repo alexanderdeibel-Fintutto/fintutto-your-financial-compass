@@ -598,6 +598,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string | null
         }
         Insert: {
@@ -606,6 +608,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -614,6 +618,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -678,6 +684,62 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          invitation_id: string | null
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_user_id: string
+          reward_applied: boolean | null
+          reward_applied_at: string | null
+          reward_type: string | null
+          status: string
+          stripe_coupon_id: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          invitation_id?: string | null
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_user_id: string
+          reward_applied?: boolean | null
+          reward_applied_at?: string | null
+          reward_type?: string | null
+          status?: string
+          stripe_coupon_id?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          invitation_id?: string | null
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_user_id?: string
+          reward_applied?: boolean | null
+          reward_applied_at?: string | null
+          reward_type?: string | null
+          status?: string
+          stripe_coupon_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "app_invitations"
             referencedColumns: ["id"]
           },
         ]
