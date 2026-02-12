@@ -562,6 +562,7 @@ export type Database = {
         Row: {
           amount: number
           bank_account_id: string | null
+          building: string | null
           category: string | null
           company_id: string
           contact_id: string | null
@@ -575,6 +576,7 @@ export type Database = {
         Insert: {
           amount: number
           bank_account_id?: string | null
+          building?: string | null
           category?: string | null
           company_id: string
           contact_id?: string | null
@@ -588,6 +590,7 @@ export type Database = {
         Update: {
           amount?: number
           bank_account_id?: string | null
+          building?: string | null
           category?: string | null
           company_id?: string
           contact_id?: string | null
