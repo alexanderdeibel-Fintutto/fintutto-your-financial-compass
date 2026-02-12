@@ -15,6 +15,7 @@ import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { SepaWidget } from '@/components/dashboard/SepaWidget';
 import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
 import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
+import { SubscriptionWidget } from '@/components/dashboard/SubscriptionWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -519,6 +520,11 @@ export default function Dashboard() {
         <BankAccountsWidget />
         <AssetsWidget />
         <CalendarWidget />
+        <SubscriptionWidget />
+      </div>
+
+      {/* Task Feed */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-1">
         <TaskFeed />
       </div>
 
