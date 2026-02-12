@@ -43,6 +43,7 @@ import CompanySharesPage from "./pages/assets/CompanyShares";
 import InvestmentAssets from "./pages/assets/InvestmentAssets";
 import Insurance from "./pages/assets/Insurance";
 import Vehicles from "./pages/assets/Vehicles";
+import Invitations from "./pages/Invitations";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ function AppRoutes() {
       <Route path="/vermoegen/versicherungen" element={<ProtectedRoute><Insurance /></ProtectedRoute>} />
       <Route path="/vermoegen/fahrzeuge" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+      <Route path="/einladungen" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
       
       <Route path="/kalender" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
       <Route path="/vorlagen" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />

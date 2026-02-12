@@ -34,6 +34,7 @@ import {
   Shield,
   Car,
   Wallet,
+  Send,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -120,6 +121,7 @@ const navItems: NavItem[] = [
       { title: 'Automatisierung', url: '/automatisierung', icon: Zap, businessOnly: true },
       { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck, businessOnly: true },
       { title: 'ELSTER', url: '/elster', icon: Landmark, businessOnly: true },
+      { title: 'Einladungen', url: '/einladungen', icon: Send },
     ],
   },
   { title: 'Hilfe', url: '/hilfe', icon: HelpCircle },
