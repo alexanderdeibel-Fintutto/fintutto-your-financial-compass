@@ -9,7 +9,7 @@ export interface BankTransaction {
    category?: string;
  }
  
-export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'general';
+export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'ing' | 'dkb' | 'comdirect' | 'postbank' | 'volksbank' | 'consorsbank' | 'targobank' | 'general';
 
 export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'outbank', label: 'Outbank' },
@@ -19,6 +19,13 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'commerzbank', label: 'Commerzbank' },
   { value: 'n26', label: 'N26' },
   { value: 'revolut', label: 'Revolut' },
+  { value: 'ing', label: 'ING (DiBa)' },
+  { value: 'dkb', label: 'DKB' },
+  { value: 'comdirect', label: 'Comdirect' },
+  { value: 'postbank', label: 'Postbank' },
+  { value: 'volksbank', label: 'Volksbank / Raiffeisenbank' },
+  { value: 'consorsbank', label: 'Consorsbank' },
+  { value: 'targobank', label: 'Targobank' },
   { value: 'general', label: 'Allgemein CSV' },
 ];
  
@@ -52,32 +59,67 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
      }
    }
 
-   // Semicolon-separated formats (check most specific first)
-   if (firstLine.includes(';')) {
-     const cols = firstLine.split(';').map(c => c.replace(/"/g, '').trim().toLowerCase());
+    // Semicolon-separated formats (check most specific first)
+    if (firstLine.includes(';')) {
+      const cols = firstLine.split(';').map(c => c.replace(/"/g, '').trim().toLowerCase());
 
-     // Outbank already checked above
+      // Outbank already checked above
 
-     // Commerzbank: has "Umsatzart" (unique to Commerzbank)
-     if (cols.some(c => c.includes('umsatzart'))) {
-       return 'commerzbank';
-     }
+      // Commerzbank: has "Umsatzart" (unique to Commerzbank)
+      if (cols.some(c => c.includes('umsatzart'))) {
+        return 'commerzbank';
+      }
 
-     // Deutsche Bank: has "Buchungsart" (unique to Deutsche Bank)
-     if (cols.some(c => c.includes('buchungsart'))) {
-       return 'deutschebank';
-     }
+      // Deutsche Bank: has "Buchungsart" (unique to Deutsche Bank)
+      if (cols.some(c => c.includes('buchungsart'))) {
+        return 'deutschebank';
+      }
 
-     // Sparkasse: has "Auftragskonto" (unique) or "Buchungstag" without other distinguishing cols
-     if (cols.some(c => c.includes('auftragskonto'))) {
-       return 'sparkasse';
-     }
+      // ING: has "Auftraggeber/Empfänger" or specific ING columns
+      if (cols.some(c => c.includes('auftraggeber/empfänger') || c.includes('auftraggeber'))) {
+        return 'ing';
+      }
 
-     // Fallback: if it has "Buchungstag" and "Valutadatum", likely Sparkasse
-     if (cols.some(c => c.includes('buchungstag')) && cols.some(c => c.includes('valutadatum'))) {
-       return 'sparkasse';
-     }
-   }
+      // DKB: has "Wertstellung" and "Kontonummer" or "Umsatztyp"
+      if (cols.some(c => c.includes('umsatztyp')) || (cols.some(c => c.includes('wertstellung')) && cols.some(c => c.includes('kontonummer')))) {
+        return 'dkb';
+      }
+
+      // Comdirect: has "Buchungstag" + "Wertstellung (Valuta)"
+      if (cols.some(c => c.includes('wertstellung (valuta)') || c.includes('valuta'))) {
+        return 'comdirect';
+      }
+
+      // Postbank: similar to Sparkasse but with "Empfänger/Zahlungspflichtiger"
+      if (cols.some(c => c.includes('empfänger/zahlungspflichtiger'))) {
+        return 'postbank';
+      }
+
+      // Targobank: has "Transaktionsart"
+      if (cols.some(c => c.includes('transaktionsart'))) {
+        return 'targobank';
+      }
+
+      // Consorsbank: has "Buchungstext" as distinctive column
+      if (cols.some(c => c === 'buchungstext') && !cols.some(c => c.includes('auftragskonto'))) {
+        return 'consorsbank';
+      }
+
+      // Volksbank/Raiffeisenbank: has "Auftragskonto" similar to Sparkasse, but check for "Kundenreferenz"
+      if (cols.some(c => c.includes('kundenreferenz'))) {
+        return 'volksbank';
+      }
+
+      // Sparkasse: has "Auftragskonto" (unique) or "Buchungstag" without other distinguishing cols
+      if (cols.some(c => c.includes('auftragskonto'))) {
+        return 'sparkasse';
+      }
+
+      // Fallback: if it has "Buchungstag" and "Valutadatum", likely Sparkasse
+      if (cols.some(c => c.includes('buchungstag')) && cols.some(c => c.includes('valutadatum'))) {
+        return 'sparkasse';
+      }
+    }
 
    return null;
  }
@@ -186,6 +228,79 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
             counterpartName: cols[1],
             counterpartIban: cols[2],
             amount: parseGermanNumber(cols[5]),
+          });
+        } else if (effectiveFormat === 'ing') {
+          // ING: Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[4] || cols[3],
+            reference: cols[4] || '',
+            counterpartName: cols[2] || '',
+            amount: parseGermanNumber(cols[7] || cols[5]),
+          });
+        } else if (effectiveFormat === 'dkb') {
+          // DKB: Buchungsdatum;Wertstellung;Status;Zahlungspflichtige*r;Zahlungsempfänger*in;Verwendungszweck;Umsatztyp;IBAN;Betrag (€);Gläubiger-ID;Mandatsreferenz;Kundenreferenz
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[5] || cols[4] || cols[3],
+            reference: cols[11] || '',
+            counterpartName: cols[4] || cols[3] || '',
+            counterpartIban: cols[7] || '',
+            amount: parseGermanNumber(cols[8]),
+          });
+        } else if (effectiveFormat === 'comdirect') {
+          // Comdirect: Buchungstag;Wertstellung (Valuta);Vorgang;Buchungstext;Umsatz in EUR
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[3] || cols[2],
+            reference: '',
+            amount: parseGermanNumber(cols[4]),
+          });
+        } else if (effectiveFormat === 'postbank') {
+          // Postbank: similar to Sparkasse - Buchungsdatum;Wertstellung;Empfänger/Zahlungspflichtiger;Buchungsart;Verwendungszweck;IBAN;BIC;Betrag;Währung
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[4] || cols[3],
+            reference: cols[4] || '',
+            counterpartName: cols[2] || '',
+            counterpartIban: cols[5] || '',
+            amount: parseGermanNumber(cols[7]),
+          });
+        } else if (effectiveFormat === 'volksbank') {
+          // Volksbank/Raiffeisenbank: Buchungstag;Valuta;Textschlüssel;Primanota;Zahlungsempfänger;ZahlungsempfängerKto;ZahlungsempfängerIBAN;ZahlungsempfängerBLZ;ZahlungsempfängerBIC;Vorgang/Verwendungszweck;Kundenreferenz;Währung;Umsatz;Soll/Haben
+          const amount = parseGermanNumber(cols[12]);
+          const direction = (cols[13] || '').trim().toUpperCase();
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[9] || cols[2],
+            reference: cols[10] || '',
+            counterpartName: cols[4] || '',
+            counterpartIban: cols[6] || '',
+            amount: direction === 'S' ? -amount : amount,
+          });
+        } else if (effectiveFormat === 'consorsbank') {
+          // Consorsbank: Buchungsdatum;Wertstellungsdatum;Buchungstext;Buchungsart;Betrag;Währung
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[2] || '',
+            reference: '',
+            amount: parseGermanNumber(cols[4]),
+          });
+        } else if (effectiveFormat === 'targobank') {
+          // Targobank: Buchungsdatum;Buchungstext;Transaktionsart;Betrag;Währung;Empfänger
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[0]),
+            description: cols[1] || '',
+            reference: '',
+            counterpartName: cols[5] || '',
+            amount: parseGermanNumber(cols[3]),
           });
         } else {
           // Allgemein: Datum;Beschreibung;Betrag

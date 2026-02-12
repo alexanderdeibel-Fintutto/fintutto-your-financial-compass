@@ -182,7 +182,7 @@ export default function AssignmentRules() {
     setFormCategory(rule.target_category);
     setFormName(rule.name);
     setFormActive(rule.is_active);
-    setApplyHistorical(false);
+    setApplyHistorical(true);
     setMatchedTransactions([]);
     setDialogOpen(true);
   };
@@ -568,27 +568,25 @@ export default function AssignmentRules() {
               <Switch checked={formActive} onCheckedChange={setFormActive} />
             </div>
 
-            {!selectedRule && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-                <Checkbox
-                  checked={applyHistorical}
-                  onCheckedChange={(v) => setApplyHistorical(v === true)}
-                  id="apply-historical"
-                />
-                <Label htmlFor="apply-historical" className="text-sm cursor-pointer">
-                  <span className="font-medium">Auf historische Buchungen anwenden</span>
-                  <span className="block text-muted-foreground text-xs mt-0.5">
-                    Zeigt eine Vorschau aller passenden Buchungen zur Bestätigung
-                  </span>
-                </Label>
-              </div>
-            )}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <Checkbox
+                checked={applyHistorical}
+                onCheckedChange={(v) => setApplyHistorical(v === true)}
+                id="apply-historical"
+              />
+              <Label htmlFor="apply-historical" className="text-sm cursor-pointer">
+                <span className="font-medium">Auf bestehende Buchungen anwenden</span>
+                <span className="block text-muted-foreground text-xs mt-0.5">
+                  Durchsucht alle Buchungen und zeigt eine Vorschau zur Bestätigung
+                </span>
+              </Label>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Abbrechen
             </Button>
-            {!selectedRule && applyHistorical ? (
+            {applyHistorical ? (
               <Button onClick={handlePreview}>
                 <Search className="mr-2 h-4 w-4" />
                 Vorschau & Anwenden
