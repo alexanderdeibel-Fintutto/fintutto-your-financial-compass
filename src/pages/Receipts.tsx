@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles, Mail } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -58,7 +60,8 @@ export default function Receipts() {
       .from('receipts')
       .select('*')
       .eq('company_id', currentCompany.id)
-      .order('date', { ascending: false });
+      .order('date', { ascending: false })
+      .limit(10000);
 
     if (data) {
       setReceipts(data);
@@ -209,6 +212,8 @@ export default function Receipts() {
       r.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const pagination = usePagination(filteredReceipts);
 
   if (!currentCompany) {
     return (
@@ -371,8 +376,9 @@ export default function Receipts() {
           </p>
         </div>
       ) : (
+        <>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredReceipts.map((receipt) => (
+          {pagination.paginatedItems.map((receipt) => (
             <div
               key={receipt.id}
               className="glass rounded-xl p-4 hover:bg-secondary/30 transition-colors cursor-pointer group"
@@ -412,6 +418,19 @@ export default function Receipts() {
             </div>
           ))}
         </div>
+        <PaginationControls
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          hasNextPage={pagination.hasNextPage}
+          hasPrevPage={pagination.hasPrevPage}
+          onNextPage={pagination.nextPage}
+          onPrevPage={pagination.prevPage}
+          onGoToPage={pagination.goToPage}
+        />
+        </>
       )}
 
       {/* AI Analysis Dialog */}

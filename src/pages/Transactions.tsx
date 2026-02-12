@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,7 +95,8 @@ export default function Transactions() {
       .from('transactions')
       .select('*')
       .eq('company_id', currentCompany.id)
-      .order('date', { ascending: false });
+      .order('date', { ascending: false })
+      .limit(10000);
 
     if (bankAccountFilter) {
       query = query.eq('bank_account_id', bankAccountFilter);
@@ -199,6 +202,8 @@ export default function Transactions() {
     const matchesFilter = filter === 'all' || t.type === filter;
     return matchesSearch && matchesFilter;
   });
+
+  const pagination = usePagination(filteredTransactions);
 
   if (!currentCompany) {
     return (
@@ -462,7 +467,7 @@ export default function Transactions() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {filteredTransactions.map((transaction) => (
+            {pagination.paginatedItems.map((transaction) => (
               <div
                 key={transaction.id}
                 className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-secondary/30 transition-colors cursor-pointer active:bg-secondary/40"
@@ -500,6 +505,18 @@ export default function Transactions() {
             ))}
           </div>
         )}
+        <PaginationControls
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          hasNextPage={pagination.hasNextPage}
+          hasPrevPage={pagination.hasPrevPage}
+          onNextPage={pagination.nextPage}
+          onPrevPage={pagination.prevPage}
+          onGoToPage={pagination.goToPage}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
  import { useState, useEffect, useCallback } from 'react';
  import { Plus, Search, FileText, TrendingUp, TrendingDown } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +57,8 @@ export default function Invoices() {
       .from('invoices')
       .select('*')
       .eq('company_id', currentCompany.id)
-      .order('issue_date', { ascending: false });
+      .order('issue_date', { ascending: false })
+      .limit(10000);
 
     if (data) {
       setInvoices(data);
@@ -80,6 +83,8 @@ export default function Invoices() {
       inv.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const pagination = usePagination(filteredInvoices);
 
    // Statistics
    const totalInvoices = invoices.length;
@@ -182,7 +187,7 @@ export default function Invoices() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {filteredInvoices.map((invoice) => (
+            {pagination.paginatedItems.map((invoice) => (
               <div
                 key={invoice.id}
                 className="flex items-center gap-4 p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -204,6 +209,18 @@ export default function Invoices() {
             ))}
           </div>
         )}
+        <PaginationControls
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          hasNextPage={pagination.hasNextPage}
+          hasPrevPage={pagination.hasPrevPage}
+          onNextPage={pagination.nextPage}
+          onPrevPage={pagination.prevPage}
+          onGoToPage={pagination.goToPage}
+        />
       </div>
        
        {/* Create Invoice Dialog */}
