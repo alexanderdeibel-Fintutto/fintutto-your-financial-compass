@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, TrendingUp, Shield, Users } from 'lucide-react';
+import { Loader2, TrendingUp, Shield, Users, Gift } from 'lucide-react';
 import fintuttoLogo from '@/assets/fintutto-animated.svg';
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref') || '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -53,7 +55,7 @@ export default function Login() {
     setLoading(true);
     setError(null);
     
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, referralCode || undefined);
     if (error) {
       setError(error.message);
     } else {
@@ -127,6 +129,14 @@ export default function Login() {
           </div>
 
           <Card className="glass border-white/20 bg-black/30 backdrop-blur-xl">
+            {referralCode && (
+              <div className="flex items-center gap-2 px-6 pt-4 pb-0">
+                <div className="flex items-center gap-2 w-full rounded-lg bg-primary/20 border border-primary/30 px-3 py-2 text-sm text-primary">
+                  <Gift className="h-4 w-4 shrink-0" />
+                  <span>Sie wurden eingeladen! Registrieren Sie sich für exklusive Vorteile.</span>
+                </div>
+              </div>
+            )}
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Willkommen</CardTitle>
               <CardDescription>
@@ -134,7 +144,7 @@ export default function Login() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="login" className="w-full">
+              <Tabs defaultValue={referralCode ? 'register' : 'login'} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Anmelden</TabsTrigger>
                   <TabsTrigger value="register">Registrieren</TabsTrigger>
