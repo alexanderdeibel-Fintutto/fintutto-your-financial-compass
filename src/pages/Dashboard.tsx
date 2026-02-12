@@ -16,6 +16,7 @@ import { SepaWidget } from '@/components/dashboard/SepaWidget';
 import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
 import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
 import { SubscriptionWidget } from '@/components/dashboard/SubscriptionWidget';
+import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -516,11 +517,12 @@ export default function Dashboard() {
       </div>
 
       {/* Widgets Row 1 - Bankkonten, Vermögen, Kalender, Aufgaben */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
         <BankAccountsWidget />
         <AssetsWidget />
         <CalendarWidget />
         <SubscriptionWidget />
+        <LeaderboardWidget />
       </div>
 
       {/* Task Feed */}
