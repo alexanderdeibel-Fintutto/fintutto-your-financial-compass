@@ -331,6 +331,7 @@ export default function Receipts() {
           type="file"
           id="file-upload"
           accept="image/jpeg,image/png,application/pdf"
+          multiple
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
