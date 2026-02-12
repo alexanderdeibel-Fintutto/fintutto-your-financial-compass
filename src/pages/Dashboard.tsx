@@ -14,6 +14,7 @@ import { TaskFeed } from '@/components/dashboard/TaskFeed';
 import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { SepaWidget } from '@/components/dashboard/SepaWidget';
 import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
+import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -513,9 +514,10 @@ export default function Dashboard() {
         <ExpenseByCategoryChart data={categoryData} />
       </div>
 
-      {/* Widgets Row 1 - Bankkonten, Kalender, Aufgaben */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+      {/* Widgets Row 1 - Bankkonten, Vermögen, Kalender, Aufgaben */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-4">
         <BankAccountsWidget />
+        <AssetsWidget />
         <CalendarWidget />
         <TaskFeed />
       </div>
