@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          address: string | null
+          area_sqm: number | null
+          city: string | null
+          company_id: string
+          created_at: string
+          current_value: number | null
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          type: string
+          units: number | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          area_sqm?: number | null
+          city?: string | null
+          company_id: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          type?: string
+          units?: number | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          area_sqm?: number | null
+          city?: string | null
+          company_id?: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          type?: string
+          units?: number | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_accounts: {
         Row: {
           balance: number | null
