@@ -9,21 +9,23 @@ export interface BankTransaction {
    category?: string;
  }
  
-export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'ing' | 'dkb' | 'comdirect' | 'postbank' | 'volksbank' | 'consorsbank' | 'targobank' | 'general';
+export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'ing' | 'dkb' | 'dkb_legacy' | 'comdirect' | 'postbank' | 'volksbank' | 'consorsbank' | 'targobank' | 'hypovereinsbank' | 'general';
 
 export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'outbank', label: 'Outbank' },
   { value: 'c24', label: 'C24 Bank' },
   { value: 'sparkasse', label: 'Sparkasse' },
   { value: 'deutschebank', label: 'Deutsche Bank' },
+  { value: 'postbank', label: 'Postbank' },
   { value: 'commerzbank', label: 'Commerzbank' },
   { value: 'n26', label: 'N26' },
   { value: 'revolut', label: 'Revolut' },
   { value: 'ing', label: 'ING (DiBa)' },
-  { value: 'dkb', label: 'DKB' },
+  { value: 'dkb', label: 'DKB (neu, ab 2023)' },
+  { value: 'dkb_legacy', label: 'DKB (alt, vor 2023)' },
   { value: 'comdirect', label: 'Comdirect' },
-  { value: 'postbank', label: 'Postbank' },
   { value: 'volksbank', label: 'Volksbank / Raiffeisenbank' },
+  { value: 'hypovereinsbank', label: 'HypoVereinsbank (HVB)' },
   { value: 'consorsbank', label: 'Consorsbank' },
   { value: 'targobank', label: 'Targobank' },
   { value: 'general', label: 'Allgemein CSV' },
@@ -80,13 +82,23 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
         return 'ing';
       }
 
-      // DKB: has "Wertstellung" and "Kontonummer" or "Umsatztyp"
-      if (cols.some(c => c.includes('umsatztyp')) || (cols.some(c => c.includes('wertstellung')) && cols.some(c => c.includes('kontonummer')))) {
+      // DKB new (2023+): has "Umsatztyp" column
+      if (cols.some(c => c.includes('umsatztyp'))) {
         return 'dkb';
       }
 
-      // Comdirect: has "Buchungstag" + "Wertstellung (Valuta)"
-      if (cols.some(c => c.includes('wertstellung (valuta)') || c.includes('valuta'))) {
+      // DKB legacy (pre-2023): has "Wertstellung" + "Kontonummer" without "Umsatztyp"
+      if (cols.some(c => c.includes('wertstellung')) && cols.some(c => c.includes('kontonummer'))) {
+        return 'dkb_legacy';
+      }
+
+      // HypoVereinsbank (HVB): has "Valuta" and "Empfänger/Auftraggeber" or "Empfaenger"
+      if (cols.some(c => c.includes('empfänger/auftraggeber') || c.includes('empfaenger/auftraggeber'))) {
+        return 'hypovereinsbank';
+      }
+
+      // Comdirect: has "Wertstellung (Valuta)" specifically
+      if (cols.some(c => c.includes('wertstellung (valuta)') || c === 'valuta')) {
         return 'comdirect';
       }
 
@@ -248,7 +260,18 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
             reference: cols[11] || '',
             counterpartName: cols[4] || cols[3] || '',
             counterpartIban: cols[7] || '',
-            amount: parseGermanNumber(cols[8]),
+           amount: parseGermanNumber(cols[8]),
+          });
+        } else if (effectiveFormat === 'dkb_legacy') {
+          // DKB legacy (pre-2023): Buchungstag;Wertstellung;Buchungstext;Auftraggeber / Begünstigter;Kontonummer;BLZ;Betrag (EUR);Gläubiger-ID;Mandatsreferenz;Kundenreferenz
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[2] || '',
+            reference: cols[9] || '',
+            counterpartName: cols[3] || '',
+            counterpartIban: cols[4] || '',
+            amount: parseGermanNumber(cols[6]),
           });
         } else if (effectiveFormat === 'comdirect') {
           // Comdirect: Buchungstag;Wertstellung (Valuta);Vorgang;Buchungstext;Umsatz in EUR
@@ -301,6 +324,17 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
             reference: '',
             counterpartName: cols[5] || '',
             amount: parseGermanNumber(cols[3]),
+          });
+        } else if (effectiveFormat === 'hypovereinsbank') {
+          // HypoVereinsbank: Buchungsdatum;Valuta;Empfänger/Auftraggeber;Buchungstext;Verwendungszweck;IBAN;BIC;Betrag;Währung
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]),
+            description: cols[4] || cols[3],
+            reference: cols[4] || '',
+            counterpartName: cols[2] || '',
+            counterpartIban: cols[5] || '',
+            amount: parseGermanNumber(cols[7]),
           });
         } else {
           // Allgemein: Datum;Beschreibung;Betrag
