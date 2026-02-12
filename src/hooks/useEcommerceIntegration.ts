@@ -11,7 +11,6 @@ export interface EcommerceConnection {
   store_name: string;
   store_url: string;
   status: ConnectionStatus;
-  api_key?: string;
   last_sync_at?: string;
   order_count: number;
   revenue_total: number;
@@ -195,7 +194,6 @@ export function useEcommerceIntegration() {
     platform: EcommercePlatform;
     store_name: string;
     store_url: string;
-    api_key?: string;
   }) => {
     if (!currentCompany) return null;
 
@@ -205,7 +203,6 @@ export function useEcommerceIntegration() {
       platform: data.platform,
       store_name: data.store_name,
       store_url: data.store_url,
-      api_key: data.api_key,
       status: 'connected',
       order_count: 0,
       revenue_total: 0,
