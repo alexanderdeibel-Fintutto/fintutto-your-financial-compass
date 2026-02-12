@@ -80,8 +80,8 @@
  
    const [selectedAccountId, setSelectedAccountId] = useState<string>('');
    const [bankFormat, setBankFormat] = useState<BankFormat>('general');
-   const [file, setFile] = useState<File | null>(null);
-   const [enhancedTransactions, setEnhancedTransactions] = useState<EnhancedTransaction[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [enhancedTransactions, setEnhancedTransactions] = useState<EnhancedTransaction[]>([]);
    const [existingTransactions, setExistingTransactions] = useState<{ date: string; amount: number }[]>([]);
    const [openInvoices, setOpenInvoices] = useState<OpenInvoice[]>([]);
    const [importing, setImporting] = useState(false);
@@ -170,11 +170,8 @@
       setStep('preview');
     }, [checkDuplicate, findMatchingInvoice]);
 
-    const handlePdfImport = useCallback(async (selectedFile: File) => {
-      setImporting(true);
-      setParseError(null);
-      
-      try {
+    const parseSingleFile = useCallback(async (selectedFile: File): Promise<BankTransaction[]> => {
+      if (selectedFile.name.toLowerCase().endsWith('.pdf')) {
         const arrayBuffer = await selectedFile.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
         let binary = '';
@@ -189,66 +186,52 @@
 
         if (error) {
           console.error('PDF parse error:', error);
-          setParseError('PDF konnte nicht analysiert werden. Bitte versuchen Sie ein anderes Format.');
-          return;
+          throw new Error(`PDF "${selectedFile.name}" konnte nicht analysiert werden.`);
         }
 
-        const transactions: BankTransaction[] = data.transactions || [];
-        processTransactions(transactions);
-      } catch (error) {
-        console.error('PDF import error:', error);
-        setParseError('Fehler beim Analysieren der PDF-Datei.');
+        return data.transactions || [];
+      }
+
+      const content = await selectedFile.text();
+      const fileFormat = detectFileFormat(content, selectedFile.name);
+
+      if (fileFormat === 'mt940') return parseMT940(content);
+      if (fileFormat === 'camt053') return parseCAMT053(content);
+
+      const detectedFormat = detectBankFormat(content);
+      const effectiveFormat = detectedFormat || bankFormat;
+
+      if (detectedFormat && detectedFormat !== bankFormat) {
+        setBankFormat(detectedFormat);
+        const formatLabel = BANK_FORMATS.find(f => f.value === detectedFormat)?.label || detectedFormat;
+        toast({ title: 'Format erkannt', description: `${formatLabel}-Format wurde automatisch erkannt.` });
+      }
+
+      return parseCSV(content, effectiveFormat);
+    }, [bankFormat, toast]);
+
+    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFiles = Array.from(e.target.files || []);
+      if (selectedFiles.length === 0) return;
+
+      setFiles(selectedFiles);
+      setParseError(null);
+      setImporting(true);
+
+      try {
+        const allTransactions: BankTransaction[] = [];
+        for (const f of selectedFiles) {
+          const txs = await parseSingleFile(f);
+          allTransactions.push(...txs);
+        }
+        processTransactions(allTransactions);
+      } catch (error: any) {
+        console.error('Parse error:', error);
+        setParseError(error?.message || 'Fehler beim Lesen der Dateien.');
       } finally {
         setImporting(false);
       }
-    }, [processTransactions]);
-
-    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0];
-      if (!selectedFile) return;
-
-      setFile(selectedFile);
-      setParseError(null);
-
-      // Handle PDF files with AI
-      if (selectedFile.name.toLowerCase().endsWith('.pdf')) {
-        await handlePdfImport(selectedFile);
-        return;
-      }
-
-      try {
-        const content = await selectedFile.text();
-        const fileFormat = detectFileFormat(content, selectedFile.name);
-        
-        let transactions: BankTransaction[] = [];
-        
-        if (fileFormat === 'mt940') {
-          transactions = parseMT940(content);
-        } else if (fileFormat === 'camt053') {
-          transactions = parseCAMT053(content);
-        } else {
-          // Auto-detect bank format from CSV content
-          const detectedFormat = detectBankFormat(content);
-          const effectiveFormat = detectedFormat || bankFormat;
-          
-          if (detectedFormat && detectedFormat !== bankFormat) {
-            setBankFormat(detectedFormat);
-            const formatLabel = BANK_FORMATS.find(f => f.value === detectedFormat)?.label || detectedFormat;
-            toast({
-              title: 'Format erkannt',
-              description: `${formatLabel}-Format wurde automatisch erkannt und ausgewählt.`,
-            });
-          }
-          
-          transactions = parseCSV(content, effectiveFormat);
-        }
-
-        processTransactions(transactions);
-      } catch (error) {
-        console.error('Parse error:', error);
-        setParseError('Fehler beim Lesen der Datei. Bitte überprüfen Sie das Format.');
-      }
-    }, [bankFormat, handlePdfImport, processTransactions, toast]);
+    }, [parseSingleFile, processTransactions]);
  
    const toggleSelection = (id: string) => {
      setEnhancedTransactions(prev =>
@@ -376,9 +359,9 @@
    const resetForm = () => {
      setSelectedAccountId('');
      setBankFormat('general');
-     setFile(null);
-     setEnhancedTransactions([]);
-     setParseError(null);
+    setFiles([]);
+    setEnhancedTransactions([]);
+    setParseError(null);
      setStep('upload');
      setImportStats(null);
    };
@@ -465,34 +448,37 @@
              <div>
                <Label>Datei hochladen</Label>
                <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                  <input
-                    type="file"
-                    accept=".csv,.txt,.sta,.mt940,.xml,.pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="bank-file-upload"
-                  />
-                  <label htmlFor="bank-file-upload" className="cursor-pointer">
-                    {importing ? (
-                      <>
-                        <Loader2 className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
-                        <p className="text-lg font-medium mb-1">PDF wird analysiert...</p>
-                        <p className="text-sm text-muted-foreground">
-                          KI extrahiert Transaktionen aus dem PDF
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-lg font-medium mb-1">
-                          {file ? file.name : 'Datei auswählen oder hier ablegen'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Unterstützte Formate: CSV, MT940, CAMT.053, PDF
-                        </p>
-                      </>
-                    )}
-                  </label>
+                   <input
+                     type="file"
+                     accept=".csv,.txt,.sta,.mt940,.xml,.pdf"
+                     multiple
+                     onChange={handleFileChange}
+                     className="hidden"
+                     id="bank-file-upload"
+                   />
+                   <label htmlFor="bank-file-upload" className="cursor-pointer">
+                     {importing ? (
+                       <>
+                         <Loader2 className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
+                         <p className="text-lg font-medium mb-1">Dateien werden analysiert...</p>
+                         <p className="text-sm text-muted-foreground">
+                           {files.length} {files.length === 1 ? 'Datei wird' : 'Dateien werden'} verarbeitet
+                         </p>
+                       </>
+                     ) : (
+                       <>
+                         <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                         <p className="text-lg font-medium mb-1">
+                           {files.length > 0
+                             ? `${files.length} ${files.length === 1 ? 'Datei' : 'Dateien'} ausgewählt`
+                             : 'Dateien auswählen oder hier ablegen'}
+                         </p>
+                         <p className="text-sm text-muted-foreground">
+                           Unterstützte Formate: CSV, MT940, CAMT.053, PDF – Mehrfachauswahl möglich
+                         </p>
+                       </>
+                     )}
+                   </label>
                </div>
              </div>
  
