@@ -28,6 +28,12 @@ import {
   ShoppingCart,
   User,
   Filter,
+  Home,
+  Briefcase,
+  TrendingUp,
+  Shield,
+  Car,
+  Wallet,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,7 +99,16 @@ const navItems: NavItem[] = [
       { title: 'Zuordnungsregeln', url: '/zuordnungsregeln', icon: Filter },
     ],
   },
-  { title: 'Vermögen', url: '/vermoegen', icon: Building2 },
+  {
+    title: 'Vermögen', url: '/vermoegen', icon: Wallet,
+    children: [
+      { title: 'Immobilien', url: '/vermoegen/immobilien', icon: Home },
+      { title: 'Gesellschaften', url: '/vermoegen/gesellschaften', icon: Briefcase },
+      { title: 'Assets', url: '/vermoegen/assets', icon: TrendingUp },
+      { title: 'Versicherungen', url: '/vermoegen/versicherungen', icon: Shield },
+      { title: 'Fahrzeuge', url: '/vermoegen/fahrzeuge', icon: Car },
+    ],
+  },
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   {

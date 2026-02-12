@@ -38,6 +38,11 @@ import TaxAdvisorPortal from "./pages/TaxAdvisorPortal";
 import EcommerceIntegration from "./pages/EcommerceIntegration";
 import AssignmentRules from "./pages/AssignmentRules";
 import Assets from "./pages/Assets";
+import RealEstate from "./pages/assets/RealEstate";
+import CompanySharesPage from "./pages/assets/CompanyShares";
+import InvestmentAssets from "./pages/assets/InvestmentAssets";
+import Insurance from "./pages/assets/Insurance";
+import Vehicles from "./pages/assets/Vehicles";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +105,11 @@ function AppRoutes() {
       <Route path="/zuordnungsregeln" element={<ProtectedRoute><AssignmentRules /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/vermoegen" element={<ProtectedRoute><Assets /></ProtectedRoute>} />
+      <Route path="/vermoegen/immobilien" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
+      <Route path="/vermoegen/gesellschaften" element={<ProtectedRoute><CompanySharesPage /></ProtectedRoute>} />
+      <Route path="/vermoegen/assets" element={<ProtectedRoute><InvestmentAssets /></ProtectedRoute>} />
+      <Route path="/vermoegen/versicherungen" element={<ProtectedRoute><Insurance /></ProtectedRoute>} />
+      <Route path="/vermoegen/fahrzeuge" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       
       <Route path="/kalender" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
