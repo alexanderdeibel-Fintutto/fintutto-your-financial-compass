@@ -79,7 +79,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const signupUrl = `${appUrl}${signupPath}${signupPath.includes("?") ? "&" : "?"}email=${encodeURIComponent(recipientEmail)}`;
+    // Normalize email to lowercase for consistent matching with signup trigger
+    const normalizedEmail = recipientEmail.trim().toLowerCase();
+
+    const signupUrl = `${appUrl}${signupPath}${signupPath.includes("?") ? "&" : "?"}email=${encodeURIComponent(normalizedEmail)}`;
 
     const subject = `Einladung: Nutzen Sie ${appName} für professionelles ${appSubtitle}`;
 
@@ -154,7 +157,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: recipientEmail, name: recipientName || undefined }] }],
+        personalizations: [{ to: [{ email: normalizedEmail, name: recipientName || undefined }] }],
         from: { email: "info@fintutto.cloud", name: "Fintutto" },
         subject,
         content: [{ type: "text/html", value: htmlBody }],
@@ -178,7 +181,7 @@ Deno.serve(async (req) => {
     await serviceClient.from("app_invitations").insert({
       company_id: companyId,
       sent_by: userId,
-      recipient_email: recipientEmail,
+      recipient_email: normalizedEmail,
       recipient_name: recipientName || null,
       app_id: appId,
       app_name: appName,
