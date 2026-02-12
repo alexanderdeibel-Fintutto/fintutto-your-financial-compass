@@ -249,6 +249,7 @@ export default function RealEstate() {
       <FintuttoAppsPromo
         propertyName={assets.length > 0 ? assets[0].name : undefined}
         propertyAddress={assets.length > 0 && assets[0].address ? `${assets[0].address}${assets[0].zip || assets[0].city ? `, ${assets[0].zip || ''} ${assets[0].city || ''}` : ''}` : null}
+        companyId={currentCompany?.id}
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

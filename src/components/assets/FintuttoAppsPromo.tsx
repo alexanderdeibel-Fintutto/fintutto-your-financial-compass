@@ -81,9 +81,10 @@ const FINTUTTO_APPS: AppInfo[] = [
 interface FintuttoAppsPromoProps {
   propertyName?: string;
   propertyAddress?: string | null;
+  companyId?: string;
 }
 
-export function FintuttoAppsPromo({ propertyName, propertyAddress }: FintuttoAppsPromoProps) {
+export function FintuttoAppsPromo({ propertyName, propertyAddress, companyId }: FintuttoAppsPromoProps) {
   const [inviteApp, setInviteApp] = useState<AppInfo | null>(null);
 
   return (
@@ -179,6 +180,7 @@ export function FintuttoAppsPromo({ propertyName, propertyAddress }: FintuttoApp
           app={inviteApp}
           propertyName={propertyName || ''}
           propertyAddress={propertyAddress || null}
+          companyId={companyId || ''}
         />
       )}
     </>
@@ -194,13 +196,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 function InviteAppDialog({
-  open, onOpenChange, app, propertyName, propertyAddress,
+  open, onOpenChange, app, propertyName, propertyAddress, companyId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   app: AppInfo;
   propertyName: string;
   propertyAddress: string | null;
+  companyId: string;
 }) {
   const [email, setEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -226,6 +229,7 @@ function InviteAppDialog({
           body: JSON.stringify({
             recipientEmail: email.trim(),
             recipientName: recipientName.trim() || undefined,
+            appId: app.id,
             appName: app.name,
             appUrl: app.url,
             signupPath: app.signupPath,
@@ -234,6 +238,7 @@ function InviteAppDialog({
             inviteTarget: app.inviteTarget,
             propertyName: propertyName || undefined,
             propertyAddress: propertyAddress || undefined,
+            companyId,
           }),
         }
       );
