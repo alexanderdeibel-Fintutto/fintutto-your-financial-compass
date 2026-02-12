@@ -191,6 +191,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 function InviteAppDialog({
   open, onOpenChange, app, propertyName, propertyAddress,
@@ -203,38 +204,55 @@ function InviteAppDialog({
 }) {
   const [email, setEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
+  const [sending, setSending] = useState(false);
 
   const signupUrl = `${app.url}${app.signupPath}${app.signupPath.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`;
 
-  const subject = `Einladung: Nutzen Sie ${app.name} für professionelles ${app.subtitle}`;
-
-  const body = `Sehr geehrte/r ${recipientName || app.inviteTarget},
-
-Sie wurden eingeladen, ${app.name} zu nutzen${propertyName ? ` – im Zusammenhang mit der Immobilie „${propertyName}"${propertyAddress ? ` (${propertyAddress})` : ''}` : ''}.
-
-${app.name} ist die ${app.subtitle}-Lösung aus dem Fintutto Ökosystem:
-
-${app.features.map(f => `✅ ${f}`).join('\n')}
-
-🚀 Jetzt kostenlos starten:
-${signupUrl}
-
-Ihre E-Mail-Adresse ist bereits vorausgefüllt – Sie können sofort loslegen.
-
-Bei Fragen stehen wir Ihnen jederzeit gerne zur Verfügung.
-
-Mit freundlichen Grüßen
-Ihr Fintutto-Team
-
----
-Fintutto GmbH · fintutto.cloud
-Powered by ${app.name}`;
-
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!email.trim()) { toast.error('Bitte geben Sie eine E-Mail-Adresse ein.'); return; }
-    window.open(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-    toast.success('E-Mail-Client wird geöffnet...');
-    onOpenChange(false);
+    setSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Bitte melden Sie sich an.'); setSending(false); return; }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invite-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            recipientEmail: email.trim(),
+            recipientName: recipientName.trim() || undefined,
+            appName: app.name,
+            appUrl: app.url,
+            signupPath: app.signupPath,
+            appSubtitle: app.subtitle,
+            features: app.features,
+            inviteTarget: app.inviteTarget,
+            propertyName: propertyName || undefined,
+            propertyAddress: propertyAddress || undefined,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Fehler beim Senden');
+      }
+
+      toast.success(`Einladung an ${email} wurde versendet!`);
+      onOpenChange(false);
+      setEmail('');
+      setRecipientName('');
+    } catch (err: any) {
+      console.error('Invite error:', err);
+      toast.error(err.message || 'Fehler beim Senden der Einladung.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleCopyLink = () => {
@@ -275,8 +293,8 @@ Powered by ${app.name}`;
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
-          <Button onClick={handleSend} disabled={!email.trim()}>
-            <Send className="mr-2 h-4 w-4" />Einladung senden
+          <Button onClick={handleSend} disabled={!email.trim() || sending}>
+            <Send className="mr-2 h-4 w-4" />{sending ? 'Wird gesendet...' : 'Einladung senden'}
           </Button>
         </DialogFooter>
       </DialogContent>

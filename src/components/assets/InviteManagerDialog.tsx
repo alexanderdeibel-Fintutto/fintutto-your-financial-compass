@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Send, Building2, ExternalLink, Copy } from 'lucide-react';
+import { Send, Building2, Copy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InviteManagerDialogProps {
   open: boolean;
@@ -64,15 +64,53 @@ export function InviteManagerDialog({ open, onOpenChange, propertyName, property
   const subject = `Einladung: Verwalten Sie „${propertyName}" mit VermieTify`;
   const body = buildEmailBody(managerName, propertyName, propertyAddress || '', signupUrl);
 
-  const handleSendViaMail = () => {
-    if (!email.trim()) {
-      toast.error('Bitte geben Sie eine E-Mail-Adresse ein.');
-      return;
+  const handleSendViaMail = async () => {
+    if (!email.trim()) { toast.error('Bitte geben Sie eine E-Mail-Adresse ein.'); return; }
+    setSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Bitte melden Sie sich an.'); setSending(false); return; }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invite-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            recipientEmail: email.trim(),
+            recipientName: managerName.trim() || undefined,
+            appName: 'VermieTify',
+            appUrl: VERMIETIFY_URL,
+            signupPath: '/login',
+            appSubtitle: 'Immobilienverwaltung',
+            features: [
+              'Automatische Nebenkostenabrechnung',
+              'CO₂-Kostenaufteilung nach CO2KostAufG',
+              'Bankanbindung mit Miet-Matching',
+              'ELSTER-Integration',
+              'Digitale Mieterkommunikation',
+            ],
+            inviteTarget: 'Verwalter/in',
+            propertyName,
+            propertyAddress: propertyAddress || undefined,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok || !result.success) throw new Error(result.error || 'Fehler');
+
+      toast.success(`Einladung an ${email} wurde versendet!`);
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error('Invite error:', err);
+      toast.error(err.message || 'Fehler beim Senden.');
+    } finally {
+      setSending(false);
     }
-    const mailtoUrl = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoUrl, '_blank');
-    toast.success('E-Mail-Client wird geöffnet...');
-    onOpenChange(false);
   };
 
   const handleCopyLink = () => {
@@ -159,9 +197,9 @@ export function InviteManagerDialog({ open, onOpenChange, propertyName, property
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
-          <Button onClick={handleSendViaMail} disabled={!email.trim()}>
+          <Button onClick={handleSendViaMail} disabled={!email.trim() || sending}>
             <Send className="mr-2 h-4 w-4" />
-            Einladung senden
+            {sending ? 'Wird gesendet...' : 'Einladung senden'}
           </Button>
         </DialogFooter>
       </DialogContent>
