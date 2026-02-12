@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { BulkActionsBar } from '@/components/transactions/BulkActionsBar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,6 +71,7 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Form state
@@ -204,6 +207,30 @@ export default function Transactions() {
   });
 
   const pagination = usePagination(filteredTransactions);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === pagination.paginatedItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pagination.paginatedItems.map((t) => t.id)));
+    }
+  }, [pagination.paginatedItems, selectedIds.size]);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const selectedTransactions = useMemo(
+    () => filteredTransactions.filter((t) => selectedIds.has(t.id)),
+    [filteredTransactions, selectedIds]
+  );
 
   if (!currentCompany) {
     return (
@@ -457,6 +484,14 @@ export default function Transactions() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        selectedTransactions={selectedTransactions}
+        onClearSelection={clearSelection}
+        onRefresh={fetchTransactions}
+      />
+
       {/* Transactions List */}
       <div className="glass rounded-xl overflow-hidden">
         {loading ? (
@@ -466,44 +501,66 @@ export default function Transactions() {
             Keine Buchungen gefunden
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {pagination.paginatedItems.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-secondary/30 transition-colors cursor-pointer active:bg-secondary/40"
-              >
+          <>
+            {/* Select all header */}
+            <div className="flex items-center gap-3 px-3 sm:px-4 py-2 border-b border-border bg-secondary/20">
+              <Checkbox
+                checked={pagination.paginatedItems.length > 0 && selectedIds.size === pagination.paginatedItems.length}
+                onCheckedChange={toggleSelectAll}
+                className="shrink-0"
+              />
+              <span className="text-xs text-muted-foreground">
+                {selectedIds.size > 0 ? `${selectedIds.size} ausgewählt` : 'Alle auswählen'}
+              </span>
+            </div>
+            <div className="divide-y divide-border">
+              {pagination.paginatedItems.map((transaction) => (
                 <div
-                  className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${
-                    transaction.type === 'income'
-                      ? 'bg-success/10 text-success'
-                      : 'bg-destructive/10 text-destructive'
+                  key={transaction.id}
+                  className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-secondary/30 transition-colors cursor-pointer active:bg-secondary/40 ${
+                    selectedIds.has(transaction.id) ? 'bg-primary/5' : ''
                   }`}
+                  onClick={() => toggleSelect(transaction.id)}
                 >
-                  {transaction.type === 'income' ? (
-                    <ArrowDownLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                  ) : (
-                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                  )}
+                  <Checkbox
+                    checked={selectedIds.has(transaction.id)}
+                    onCheckedChange={() => toggleSelect(transaction.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0"
+                  />
+                  <div
+                    className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${
+                      transaction.type === 'income'
+                        ? 'bg-success/10 text-success'
+                        : 'bg-destructive/10 text-destructive'
+                    }`}
+                  >
+                    {transaction.type === 'income' ? (
+                      <ArrowDownLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                    ) : (
+                      <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-medium truncate">
+                      {transaction.description || 'Ohne Beschreibung'}
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                      {transaction.category || 'Sonstiges'} • {formatDate(transaction.date)}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-sm sm:text-base font-semibold shrink-0 ${
+                      transaction.type === 'income' ? 'text-success' : 'text-destructive'
+                    }`}
+                  >
+                    {transaction.type === 'income' ? '+' : '-'}
+                    {formatCurrency(Math.abs(transaction.amount))}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base font-medium truncate">
-                    {transaction.description || 'Ohne Beschreibung'}
-                  </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                    {transaction.category || 'Sonstiges'} • {formatDate(transaction.date)}
-                  </p>
-                </div>
-                <span
-                  className={`text-sm sm:text-base font-semibold shrink-0 ${
-                    transaction.type === 'income' ? 'text-success' : 'text-destructive'
-                  }`}
-                >
-                  {transaction.type === 'income' ? '+' : '-'}
-                  {formatCurrency(Math.abs(transaction.amount))}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
         <PaginationControls
           currentPage={pagination.currentPage}
