@@ -9,7 +9,7 @@ export interface BankTransaction {
    category?: string;
  }
  
-export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'ing' | 'dkb' | 'dkb_legacy' | 'comdirect' | 'postbank' | 'volksbank' | 'consorsbank' | 'targobank' | 'hypovereinsbank' | 'general';
+export type BankFormat = 'sparkasse' | 'deutschebank' | 'commerzbank' | 'n26' | 'revolut' | 'c24' | 'outbank' | 'ing' | 'dkb' | 'dkb_legacy' | 'comdirect' | 'postbank' | 'volksbank' | 'consorsbank' | 'targobank' | 'hypovereinsbank' | 'tomorrow' | 'kontist' | 'finom' | 'general';
 
 export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'outbank', label: 'Outbank' },
@@ -28,6 +28,9 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
   { value: 'hypovereinsbank', label: 'HypoVereinsbank (HVB)' },
   { value: 'consorsbank', label: 'Consorsbank' },
   { value: 'targobank', label: 'Targobank' },
+  { value: 'tomorrow', label: 'Tomorrow Bank' },
+  { value: 'kontist', label: 'Kontist' },
+  { value: 'finom', label: 'Finom' },
   { value: 'general', label: 'Allgemein CSV' },
 ];
  
@@ -56,10 +59,22 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
        return 'revolut';
      }
      // N26: comma-separated with "Date","Payee","Account number",...
-     if (cols.some(c => c === 'payee' || c === 'account number')) {
-       return 'n26';
-     }
-   }
+      if (cols.some(c => c === 'payee' || c === 'account number')) {
+        return 'n26';
+      }
+      // Tomorrow: comma-separated with "Empfänger" or specific Tomorrow headers
+      if (cols.some(c => c === 'empfänger' || c === 'empfaenger') && cols.some(c => c === 'betrag')) {
+        return 'tomorrow';
+      }
+      // Kontist: comma-separated with "Booking Date" or "Amount (EUR)"
+      if (cols.some(c => c.includes('booking date') || c.includes('amount (eur)'))) {
+        return 'kontist';
+      }
+      // Finom: comma-separated with "Counterparty" or "Payment reference"
+      if (cols.some(c => c === 'counterparty' || c.includes('payment reference'))) {
+        return 'finom';
+      }
+    }
 
     // Semicolon-separated formats (check most specific first)
     if (firstLine.includes(';')) {
@@ -182,6 +197,55 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
             counterpartIban: c24Cols[5] || '',
             amount: parseGermanNumber(amountStr),
             category: c24Cols[11] || undefined,
+          });
+          continue;
+        }
+
+        // Tomorrow (comma-separated variant)
+        if (effectiveFormat === 'tomorrow' && line.includes(',')) {
+          const cols = parseCSVLine(line);
+          if (cols.length < 4) continue;
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[0]),
+            description: cols[4] || cols[1] || '',
+            reference: cols[4] || '',
+            counterpartName: cols[1] || '',
+            counterpartIban: cols[2] || '',
+            amount: parseGermanNumber(cols[3]),
+            category: cols[5] || undefined,
+          });
+          continue;
+        }
+
+        // Kontist (comma-separated variant)
+        if (effectiveFormat === 'kontist' && line.includes(',')) {
+          const cols = parseCSVLine(line);
+          if (cols.length < 4) continue;
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]) || parseGermanDate(cols[0]),
+            description: cols[2] || '',
+            reference: '',
+            counterpartIban: cols[4] || '',
+            amount: parseGermanNumber(cols[3]),
+            category: cols[6] || undefined,
+          });
+          continue;
+        }
+
+        // Finom (comma-separated variant)
+        if (effectiveFormat === 'finom' && line.includes(',')) {
+          const cols = parseCSVLine(line);
+          if (cols.length < 4) continue;
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[0]),
+            description: cols[2] || cols[1] || '',
+            reference: cols[2] || '',
+            counterpartName: cols[1] || '',
+            counterpartIban: cols[5] || '',
+            amount: parseGermanNumber(cols[3]),
           });
           continue;
         }
@@ -335,6 +399,40 @@ export const BANK_FORMATS: { value: BankFormat; label: string }[] = [
             counterpartName: cols[2] || '',
             counterpartIban: cols[5] || '',
             amount: parseGermanNumber(cols[7]),
+          });
+        } else if (effectiveFormat === 'tomorrow') {
+          // Tomorrow: Datum;Empfänger;IBAN;Betrag;Verwendungszweck;Kategorie
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[0]),
+            description: cols[4] || cols[1] || '',
+            reference: cols[4] || '',
+            counterpartName: cols[1] || '',
+            counterpartIban: cols[2] || '',
+            amount: parseGermanNumber(cols[3]),
+            category: cols[5] || undefined,
+          });
+        } else if (effectiveFormat === 'kontist') {
+          // Kontist: Booking Date;Value Date;Description;Amount;IBAN;BIC;Category
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[1]) || parseGermanDate(cols[0]),
+            description: cols[2] || '',
+            reference: '',
+            counterpartIban: cols[4] || '',
+            amount: parseGermanNumber(cols[3]),
+            category: cols[6] || undefined,
+          });
+        } else if (effectiveFormat === 'finom') {
+          // Finom: Date;Counterparty;Payment reference;Amount;Currency;IBAN
+          transactions.push({
+            date: parseGermanDate(cols[0]),
+            valueDate: parseGermanDate(cols[0]),
+            description: cols[2] || cols[1] || '',
+            reference: cols[2] || '',
+            counterpartName: cols[1] || '',
+            counterpartIban: cols[5] || '',
+            amount: parseGermanNumber(cols[3]),
           });
         } else {
           // Allgemein: Datum;Beschreibung;Betrag
