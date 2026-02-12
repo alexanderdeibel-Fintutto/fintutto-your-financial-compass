@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_invitations: {
+        Row: {
+          accepted_at: string | null
+          app_id: string
+          app_name: string
+          company_id: string
+          created_at: string
+          id: string
+          property_address: string | null
+          property_name: string | null
+          recipient_email: string
+          recipient_name: string | null
+          sent_at: string
+          sent_by: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          app_id: string
+          app_name: string
+          company_id: string
+          created_at?: string
+          id?: string
+          property_address?: string | null
+          property_name?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          app_id?: string
+          app_name?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          property_address?: string | null
+          property_name?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           address: string | null

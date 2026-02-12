@@ -9,6 +9,7 @@ const corsHeaders = {
 interface InviteRequest {
   recipientEmail: string;
   recipientName?: string;
+  appId: string;
   appName: string;
   appUrl: string;
   signupPath: string;
@@ -17,6 +18,7 @@ interface InviteRequest {
   inviteTarget: string;
   propertyName?: string;
   propertyAddress?: string;
+  companyId: string;
 }
 
 Deno.serve(async (req) => {
@@ -58,6 +60,7 @@ Deno.serve(async (req) => {
     const {
       recipientEmail,
       recipientName,
+      appId,
       appName,
       appUrl,
       signupPath,
@@ -66,6 +69,7 @@ Deno.serve(async (req) => {
       inviteTarget,
       propertyName,
       propertyAddress,
+      companyId,
     } = body;
 
     if (!recipientEmail || !appName || !appUrl) {
@@ -164,6 +168,24 @@ Deno.serve(async (req) => {
     }
     // Consume response body
     await sgResponse.text();
+
+    // Save invitation to database
+    const userId = claimsData.claims.sub;
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    await serviceClient.from("app_invitations").insert({
+      company_id: companyId,
+      sent_by: userId,
+      recipient_email: recipientEmail,
+      recipient_name: recipientName || null,
+      app_id: appId,
+      app_name: appName,
+      property_name: propertyName || null,
+      property_address: propertyAddress || null,
+      status: "sent",
+    });
 
     return new Response(
       JSON.stringify({ success: true, message: "Einladung gesendet" }),
