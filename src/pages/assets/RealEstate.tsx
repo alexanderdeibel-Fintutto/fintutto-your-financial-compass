@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Home, Search, Pencil, Trash2, MoreHorizontal, ChevronRight, ChevronLeft, Check, MapPin, Building2 } from 'lucide-react';
 import { InviteManagerDialog } from '@/components/assets/InviteManagerDialog';
+import { FintuttoAppsPromo } from '@/components/assets/FintuttoAppsPromo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -243,6 +244,12 @@ export default function RealEstate() {
           <PaginationControls currentPage={pagination.currentPage} totalPages={pagination.totalPages} totalItems={pagination.totalItems} startIndex={pagination.startIndex} endIndex={pagination.endIndex} hasNextPage={pagination.hasNextPage} hasPrevPage={pagination.hasPrevPage} onNextPage={pagination.nextPage} onPrevPage={pagination.prevPage} onGoToPage={pagination.goToPage} />
         </>
       )}
+
+      {/* Fintutto Ökosystem Promo */}
+      <FintuttoAppsPromo
+        propertyName={assets.length > 0 ? assets[0].name : undefined}
+        propertyAddress={assets.length > 0 && assets[0].address ? `${assets[0].address}${assets[0].zip || assets[0].city ? `, ${assets[0].zip || ''} ${assets[0].city || ''}` : ''}` : null}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
