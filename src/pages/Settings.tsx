@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DatevExportDialog } from '@/components/settings/DatevExportDialog';
 import { GdpduExportDialog } from '@/components/settings/GdpduExportDialog';
+import { BillingTab } from '@/components/settings/BillingTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -518,68 +519,8 @@ export default function Settings() {
           </TabsContent>
 
           {/* Abrechnung Tab */}
-          <TabsContent value="billing" className="mt-0 space-y-6">
-            <Card className="glass">
-              <CardHeader>
-                <CardTitle>Aktueller Plan</CardTitle>
-                <CardDescription>Ihr aktuelles Abonnement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg border border-primary/30 bg-primary/5">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10">
-                      <CreditCard className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg">Free Plan</h3>
-                        <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                          <Check className="h-3 w-3 mr-1" />
-                          Aktiv
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Grundlegende Buchhaltungsfunktionen</p>
-                    </div>
-                  </div>
-                  <Button>Upgrade</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass">
-              <CardHeader>
-                <CardTitle>Nutzungsübersicht</CardTitle>
-                <CardDescription>Ihre aktuellen Limits und Verbrauch</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="p-4 rounded-lg border bg-card/50">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Building className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Firmen</span>
-                    </div>
-                    <p className="text-2xl font-bold">{companies.length}</p>
-                    <p className="text-xs text-muted-foreground">unbegrenzt</p>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card/50">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Receipt className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Buchungen</span>
-                    </div>
-                    <p className="text-2xl font-bold">∞</p>
-                    <p className="text-xs text-muted-foreground">unbegrenzt</p>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card/50">
-                    <div className="flex items-center gap-3 mb-2">
-                      <FolderOpen className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Belege</span>
-                    </div>
-                    <p className="text-2xl font-bold">∞</p>
-                    <p className="text-xs text-muted-foreground">unbegrenzt</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="billing" className="mt-0">
+            <BillingTab />
           </TabsContent>
 
           {/* Benachrichtigungen Tab */}
