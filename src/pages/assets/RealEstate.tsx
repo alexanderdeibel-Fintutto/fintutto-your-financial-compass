@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Home, Search, Pencil, Trash2, MoreHorizontal, ChevronRight, ChevronLeft, Check, MapPin } from 'lucide-react';
+import { Plus, Home, Search, Pencil, Trash2, MoreHorizontal, ChevronRight, ChevronLeft, Check, MapPin, Building2 } from 'lucide-react';
+import { InviteManagerDialog } from '@/components/assets/InviteManagerDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +44,7 @@ export default function RealEstate() {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [saving, setSaving] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
+  const [inviteAsset, setInviteAsset] = useState<Asset | null>(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -230,6 +232,7 @@ export default function RealEstate() {
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openEdit(asset)}><Pencil className="mr-2 h-4 w-4" />Bearbeiten</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setInviteAsset(asset)}><Building2 className="mr-2 h-4 w-4" />Verwalter einladen</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(asset.id)}><Trash2 className="mr-2 h-4 w-4" />Löschen</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -269,6 +272,13 @@ export default function RealEstate() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <InviteManagerDialog
+        open={!!inviteAsset}
+        onOpenChange={open => { if (!open) setInviteAsset(null); }}
+        propertyName={inviteAsset?.name || ''}
+        propertyAddress={inviteAsset?.address ? `${inviteAsset.address}${inviteAsset.zip || inviteAsset.city ? `, ${inviteAsset.zip || ''} ${inviteAsset.city || ''}` : ''}` : null}
+      />
     </div>
   );
 }
