@@ -72,7 +72,6 @@ export default function EcommerceIntegration() {
     platform: 'shopify' as EcommercePlatform,
     store_name: '',
     store_url: '',
-    api_key: '',
   });
 
   const stats = getStats();
@@ -138,7 +137,6 @@ export default function EcommerceIntegration() {
       platform: newConnection.platform,
       store_name: newConnection.store_name,
       store_url: newConnection.store_url,
-      api_key: newConnection.api_key || undefined,
     });
 
     if (result) {
@@ -151,7 +149,6 @@ export default function EcommerceIntegration() {
         platform: 'shopify',
         store_name: '',
         store_url: '',
-        api_key: '',
       });
     }
   };
@@ -247,18 +244,9 @@ export default function EcommerceIntegration() {
                   onChange={(e) => setNewConnection({ ...newConnection, store_url: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>API-Schlüssel (optional)</Label>
-                <Input
-                  type="password"
-                  placeholder="API-Schlüssel eingeben"
-                  value={newConnection.api_key}
-                  onChange={(e) => setNewConnection({ ...newConnection, api_key: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Für Shopify/WooCommerce benötigen Sie einen API-Schlüssel aus Ihrem Shop-Admin.
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                API-Schlüssel werden nach der Verbindung sicher serverseitig gespeichert.
+              </p>
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>

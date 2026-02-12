@@ -16,6 +16,18 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const EMAIL_WEBHOOK_SECRET = Deno.env.get("EMAIL_WEBHOOK_SECRET");
+
+    // Validate webhook secret to prevent unauthorized access
+    if (EMAIL_WEBHOOK_SECRET) {
+      const providedSecret = req.headers.get("X-Webhook-Secret");
+      if (providedSecret !== EMAIL_WEBHOOK_SECRET) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -69,7 +81,12 @@ serve(async (req) => {
     let fileUrl: string | null = null;
     if (file_base64 && file_name) {
       const fileBytes = Uint8Array.from(atob(file_base64), c => c.charCodeAt(0));
-      const filePath = `${inbox.company_id}/${crypto.randomUUID()}-${file_name}`;
+      // Sanitize file name to prevent path traversal
+      const sanitizedFileName = file_name
+        .replace(/\.\.\//g, '')
+        .replace(/\.\.\\/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${inbox.company_id}/${crypto.randomUUID()}-${sanitizedFileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("email-attachments")
