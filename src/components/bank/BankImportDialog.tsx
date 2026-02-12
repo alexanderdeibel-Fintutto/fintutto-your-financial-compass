@@ -98,12 +98,12 @@
    const fetchExistingData = async () => {
      if (!currentCompany) return;
  
-     const { data: transactions } = await supabase
-       .from('transactions')
-       .select('date, amount')
-       .eq('company_id', currentCompany.id)
-       .order('date', { ascending: false })
-       .limit(1000);
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('date, amount')
+        .eq('company_id', currentCompany.id)
+        .order('date', { ascending: false })
+        .limit(10000);
  
      if (transactions) {
        setExistingTransactions(transactions.map(t => ({
