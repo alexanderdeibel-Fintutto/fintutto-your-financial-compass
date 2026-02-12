@@ -816,6 +816,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_referral_leaderboard: {
+        Args: { limit_count?: number }
+        Returns: {
+          avatar_url: string
+          converted_count: number
+          display_name: string
+          rank: number
+        }[]
+      }
       is_company_member: { Args: { company_uuid: string }; Returns: boolean }
     }
     Enums: {
