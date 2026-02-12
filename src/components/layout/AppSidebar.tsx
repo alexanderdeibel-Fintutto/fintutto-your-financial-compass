@@ -27,6 +27,7 @@ import {
   UserCheck,
   ShoppingCart,
   User,
+  Filter,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -89,6 +90,7 @@ const navItems: NavItem[] = [
       { title: 'Bankkonten', url: '/bankkonten', icon: CreditCard },
       { title: 'Bankverbindung', url: '/bankverbindung', icon: Link2 },
       { title: 'SEPA-Zahlungen', url: '/sepa', icon: Euro },
+      { title: 'Zuordnungsregeln', url: '/zuordnungsregeln', icon: Filter },
     ],
   },
   

@@ -36,6 +36,7 @@ import Automation from "./pages/Automation";
 import SepaPayments from "./pages/SepaPayments";
 import TaxAdvisorPortal from "./pages/TaxAdvisorPortal";
 import EcommerceIntegration from "./pages/EcommerceIntegration";
+import AssignmentRules from "./pages/AssignmentRules";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ function AppRoutes() {
       <Route path="/sepa" element={<ProtectedRoute><SepaPayments /></ProtectedRoute>} />
       <Route path="/steuerberater" element={<ProtectedRoute><TaxAdvisorPortal /></ProtectedRoute>} />
       <Route path="/ecommerce" element={<ProtectedRoute><EcommerceIntegration /></ProtectedRoute>} />
+      <Route path="/zuordnungsregeln" element={<ProtectedRoute><AssignmentRules /></ProtectedRoute>} />
       <Route path="/einstellungen" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/firmen" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
       
