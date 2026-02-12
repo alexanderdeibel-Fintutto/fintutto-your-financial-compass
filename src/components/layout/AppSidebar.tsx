@@ -93,7 +93,7 @@ const navItems: NavItem[] = [
       { title: 'Zuordnungsregeln', url: '/zuordnungsregeln', icon: Filter },
     ],
   },
-  
+  { title: 'Vermögen', url: '/vermoegen', icon: Building2 },
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
   {
