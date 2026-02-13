@@ -14,7 +14,9 @@ export const PLAN_CONFIG = {
   free: {
     name: 'Free',
     price: 0,
+    yearlyPrice: 0,
     priceId: null,
+    yearlyPriceId: null,
     productId: null,
     features: [
       '1 Firma',
@@ -26,7 +28,9 @@ export const PLAN_CONFIG = {
   basic: {
     name: 'Basic',
     price: 9.99,
+    yearlyPrice: 95.90, // 20% Rabatt
     priceId: 'price_1Szr9X52lqSgjCzeFZ88yFlw',
+    yearlyPriceId: null as string | null, // TODO: Replace after running create-all-stripe-products.sh
     productId: 'prod_TxmipPdak8JwmT',
     features: [
       'Unbegrenzte Firmen',
@@ -40,7 +44,9 @@ export const PLAN_CONFIG = {
   pro: {
     name: 'Pro',
     price: 19.99,
+    yearlyPrice: 191.90, // 20% Rabatt
     priceId: 'price_1Szr9Z52lqSgjCzeY83WUERb',
+    yearlyPriceId: null as string | null, // TODO: Replace after running create-all-stripe-products.sh
     productId: 'prod_Txmjs0RZOVqFzS',
     features: [
       'Alles aus Basic',
