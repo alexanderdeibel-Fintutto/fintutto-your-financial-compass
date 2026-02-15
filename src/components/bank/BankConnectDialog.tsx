@@ -13,46 +13,38 @@
  import { ExternalLink, Shield, Loader2 } from 'lucide-react';
  import { SupportedBank, connectBank } from '@/services/finapi';
  import { useToast } from '@/hooks/use-toast';
- 
+
  interface BankConnectDialogProps {
    open: boolean;
    onOpenChange: (open: boolean) => void;
    bank: SupportedBank | null;
    onSuccess: () => void;
  }
- 
+
  export function BankConnectDialog({ open, onOpenChange, bank, onSuccess }: BankConnectDialogProps) {
    const [privacyAccepted, setPrivacyAccepted] = useState(false);
    const [connecting, setConnecting] = useState(false);
    const { toast } = useToast();
- 
+
    const handleConnect = async () => {
      if (!bank || !privacyAccepted) return;
- 
+
      setConnecting(true);
      try {
        const redirectUrl = await connectBank(bank.code);
-       
-       // Simuliere erfolgreiche Verbindung (in Produktion würde hier Redirect erfolgen)
-       toast({
-         title: 'Verbindung simuliert',
-         description: `In Produktion würden Sie zu ${bank.name} weitergeleitet: ${redirectUrl}`,
-       });
-       
-       onSuccess();
-       onOpenChange(false);
+       // Redirect to finAPI WebForm for bank authorization
+       window.location.href = redirectUrl;
      } catch (error) {
        toast({
          title: 'Fehler',
-         description: 'Verbindung konnte nicht hergestellt werden',
+         description: error instanceof Error ? error.message : 'Verbindung konnte nicht hergestellt werden',
          variant: 'destructive',
        });
-     } finally {
        setConnecting(false);
        setPrivacyAccepted(false);
      }
    };
- 
+
    return (
      <Dialog open={open} onOpenChange={onOpenChange}>
        <DialogContent className="sm:max-w-md">
@@ -65,7 +57,7 @@
              Stellen Sie eine sichere Verbindung zu Ihrem Bankkonto her
            </DialogDescription>
          </DialogHeader>
- 
+
          <div className="space-y-4 py-4">
            {/* Bank Info */}
            <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
@@ -79,7 +71,7 @@
                <p className="text-sm text-muted-foreground">Sichere PSD2-Verbindung</p>
              </div>
            </div>
- 
+
            {/* Redirect Notice */}
           <div className="flex items-start gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
             <ExternalLink className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -92,7 +84,7 @@
                </p>
              </div>
            </div>
- 
+
            {/* Privacy Checkbox */}
            <div className="flex items-start space-x-3">
              <Checkbox
@@ -109,7 +101,7 @@
              </Label>
            </div>
          </div>
- 
+
          <DialogFooter>
            <Button variant="outline" onClick={() => onOpenChange(false)}>
              Abbrechen

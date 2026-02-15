@@ -31,8 +31,6 @@ export default function BankAccounts() {
   useEffect(() => {
     if (currentCompany) {
       fetchAccounts();
-      // Simulate last sync time (in real app, would come from DB/API)
-      setLastSync(new Date(Date.now() - 2 * 60 * 60 * 1000)); // 2 hours ago
     }
   }, [currentCompany]);
 
@@ -72,14 +70,31 @@ export default function BankAccounts() {
 
   const handleSync = async () => {
     setSyncing(true);
-    // Simulate sync delay
-    await new Promise(r => setTimeout(r, 2000));
-    setLastSync(new Date());
-    setSyncing(false);
-    toast({
-      title: 'Synchronisierung abgeschlossen',
-      description: 'Alle verbundenen Bankkonten wurden aktualisiert',
-    });
+    try {
+      const { error } = await supabase.functions.invoke('finapi/connections');
+      if (error) {
+        toast({
+          title: 'Synchronisierung fehlgeschlagen',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        setLastSync(new Date());
+        await fetchAccounts();
+        toast({
+          title: 'Synchronisierung abgeschlossen',
+          description: 'Alle verbundenen Bankkonten wurden aktualisiert',
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Synchronisierung fehlgeschlagen',
+        description: 'Bitte versuchen Sie es später erneut',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const formatTimeSince = (date: Date | null) => {

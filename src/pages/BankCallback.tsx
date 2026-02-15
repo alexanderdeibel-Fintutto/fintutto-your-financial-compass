@@ -3,46 +3,47 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BankCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const status = searchParams.get('status');
   const [syncing, setSyncing] = useState(status === 'success');
-  const [progress, setProgress] = useState(0);
-  const [syncStep, setSyncStep] = useState('');
+  const [syncStep, setSyncStep] = useState('Verbindung wird verarbeitet...');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'success') {
-      syncTransactions();
+      syncAfterCallback();
     }
   }, [status]);
 
-  const syncTransactions = async () => {
+  const syncAfterCallback = async () => {
     setSyncing(true);
-    
-    // Simulate sync steps
-    const steps = [
-      { label: 'Verbindung wird hergestellt...', duration: 1000 },
-      { label: 'Kontoinformationen werden abgerufen...', duration: 1500 },
-      { label: 'Transaktionen werden synchronisiert...', duration: 2000 },
-      { label: 'Kategorisierung läuft...', duration: 1000 },
-      { label: 'Abschluss...', duration: 500 },
-    ];
+    try {
+      // Fetch accounts from finAPI after successful bank connection
+      setSyncStep('Kontoinformationen werden abgerufen...');
+      const { data: accountsData, error: accountsError } = await supabase.functions.invoke('finapi/accounts');
 
-    let currentProgress = 0;
-    const progressPerStep = 100 / steps.length;
+      if (accountsError) {
+        throw new Error(`Konten konnten nicht abgerufen werden: ${accountsError.message}`);
+      }
 
-    for (const step of steps) {
-      setSyncStep(step.label);
-      await new Promise(r => setTimeout(r, step.duration));
-      currentProgress += progressPerStep;
-      setProgress(Math.min(currentProgress, 100));
+      setSyncStep('Transaktionen werden synchronisiert...');
+      const { error: txError } = await supabase.functions.invoke('finapi/transactions', {
+        body: {},
+      });
+
+      if (txError) {
+        console.warn('Transaction sync warning:', txError.message);
+      }
+
+      setSyncing(false);
+    } catch (err) {
+      setSyncing(false);
+      setError(err instanceof Error ? err.message : 'Ein unbekannter Fehler ist aufgetreten');
     }
-
-    setSyncing(false);
-    setProgress(100);
   };
 
   return (
@@ -52,10 +53,24 @@ export default function BankCallback() {
           {syncing ? (
             <>
               <Loader2 className="h-16 w-16 text-primary animate-spin mb-6" />
-              <h2 className="text-xl font-semibold mb-2">Transaktionen werden synchronisiert</h2>
+              <h2 className="text-xl font-semibold mb-2">Bankverbindung wird eingerichtet</h2>
               <p className="text-muted-foreground text-center mb-6">{syncStep}</p>
-              <Progress value={progress} className="w-full h-2" />
-              <p className="text-sm text-muted-foreground mt-2">{Math.round(progress)}%</p>
+            </>
+          ) : error ? (
+            <>
+              <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+                <XCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Fehler bei der Synchronisierung</h2>
+              <p className="text-muted-foreground text-center mb-6">{error}</p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => navigate('/bankverbindung')}>
+                  Erneut versuchen
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/bankkonten')}>
+                  Zurück
+                </Button>
+              </div>
             </>
           ) : status === 'success' ? (
             <>
@@ -64,7 +79,7 @@ export default function BankCallback() {
               </div>
               <h2 className="text-xl font-semibold mb-2">Bank erfolgreich verbunden!</h2>
               <p className="text-muted-foreground text-center mb-6">
-                Ihre Bankverbindung wurde hergestellt und die Transaktionen wurden importiert.
+                Ihre Bankverbindung wurde hergestellt und die Kontoinformationen wurden importiert.
               </p>
               <div className="flex gap-3">
                 <Button onClick={() => navigate('/bankkonten')}>

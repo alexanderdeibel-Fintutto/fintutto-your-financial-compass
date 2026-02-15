@@ -87,48 +87,54 @@ export async function getBankConnectionUrl(): Promise<string | null> {
   }
 }
 
-// Simulierte FinAPI-Integration (Fallback wenn API nicht konfiguriert)
+/**
+ * Connect a bank via finAPI WebForm redirect
+ * Throws if finAPI is not configured or URL cannot be obtained
+ */
 export async function connectBank(bankCode: string): Promise<string> {
-  // Prüfe ob echte API verfügbar
   const status = await checkFinAPIStatus();
-  
-  if (status.configured && status.connected) {
-    const url = await getBankConnectionUrl();
-    if (url) return url;
+
+  if (!status.configured) {
+    throw new Error('finAPI ist nicht konfiguriert. Bitte API-Schlüssel in den Supabase Edge Function Einstellungen hinterlegen.');
   }
-  
-  // Fallback: Simulierte URL
-  return `https://finapi.io/connect?bank=${bankCode}&redirect=${window.location.origin}/bank-callback`;
+
+  if (!status.connected) {
+    throw new Error('finAPI-Verbindung konnte nicht hergestellt werden. Bitte überprüfen Sie die API-Zugangsdaten.');
+  }
+
+  const url = await getBankConnectionUrl();
+  if (!url) {
+    throw new Error('finAPI WebForm-URL konnte nicht erstellt werden.');
+  }
+  return url;
 }
 
-export async function fetchTransactions(connectionId: string): Promise<FinAPITransaction[]> {
-  // Versuche echte API
-  try {
-    const { data, error } = await supabase.functions.invoke('finapi/transactions', {
-      body: { accountId: connectionId },
-    });
-    
-    if (!error && data?.transactions) {
-      return data.transactions;
-    }
-  } catch (err) {
-    console.log('Using simulated transactions');
+/**
+ * Fetch transactions from finAPI for a given account
+ */
+export async function fetchTransactions(accountId: string): Promise<FinAPITransaction[]> {
+  const { data, error } = await supabase.functions.invoke('finapi/transactions', {
+    body: { accountId },
+  });
+
+  if (error) {
+    throw new Error(`Transaktionen konnten nicht abgerufen werden: ${error.message}`);
   }
-  
-  // Simulierte Transaktionen als Fallback
-  await new Promise(r => setTimeout(r, 1500));
-  return [
-    { id: '1', amount: -89.99, purpose: 'Amazon Bestellung', counterpartName: 'Amazon EU', bookingDate: '2026-02-04', valueDate: '2026-02-04' },
-    { id: '2', amount: 2500, purpose: 'Gehalt Februar', counterpartName: 'Arbeitgeber GmbH', bookingDate: '2026-02-01', valueDate: '2026-02-01' },
-    { id: '3', amount: -750, purpose: 'Miete Februar', counterpartName: 'Vermieter', bookingDate: '2026-02-01', valueDate: '2026-02-01' },
-    { id: '4', amount: -45.50, purpose: 'Tankstelle', counterpartName: 'Shell Deutschland', bookingDate: '2026-02-03', valueDate: '2026-02-03' },
-    { id: '5', amount: -29.99, purpose: 'Mobilfunk', counterpartName: 'Vodafone GmbH', bookingDate: '2026-02-02', valueDate: '2026-02-02' },
-  ];
+
+  return data?.transactions ?? [];
 }
 
+/**
+ * Sync a bank account via finAPI
+ */
 export async function syncAccount(connectionId: string): Promise<void> {
-  // Sync starten
-  await new Promise(r => setTimeout(r, 2000));
+  const { error } = await supabase.functions.invoke('finapi/connections', {
+    body: { connectionId },
+  });
+
+  if (error) {
+    throw new Error(`Konto-Synchronisierung fehlgeschlagen: ${error.message}`);
+  }
 }
 
 export function getBankByCode(code: string): SupportedBank | undefined {
