@@ -26,7 +26,9 @@ export const PLAN_CONFIG = {
   basic: {
     name: 'Basic',
     price: 9.99,
+    yearlyPrice: 95.90,
     priceId: 'price_1Szr9X52lqSgjCzeFZ88yFlw',
+    yearlyPriceId: 'price_1T0nb052lqSgjCzeR8a7rmP1',
     productId: 'prod_TxmipPdak8JwmT',
     features: [
       'Unbegrenzte Firmen',
@@ -40,7 +42,9 @@ export const PLAN_CONFIG = {
   pro: {
     name: 'Pro',
     price: 19.99,
+    yearlyPrice: 191.90,
     priceId: 'price_1Szr9Z52lqSgjCzeY83WUERb',
+    yearlyPriceId: 'price_1T0nb152lqSgjCze1ae7RGdJ',
     productId: 'prod_Txmjs0RZOVqFzS',
     features: [
       'Alles aus Basic',
