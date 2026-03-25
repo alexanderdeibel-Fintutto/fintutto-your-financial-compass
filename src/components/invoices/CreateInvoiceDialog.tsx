@@ -75,6 +75,7 @@
    
    const [contacts, setContacts] = useState<Contact[]>([]);
    const [selectedContactId, setSelectedContactId] = useState<string>('');
+   const [primaryBankAccount, setPrimaryBankAccount] = useState<{ iban: string | null; bic: string | null; name: string } | null>(null);
    const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
    const [servicePeriodFrom, setServicePeriodFrom] = useState(new Date().toISOString().split('T')[0]);
    const [servicePeriodTo, setServicePeriodTo] = useState(new Date().toISOString().split('T')[0]);
@@ -91,9 +92,22 @@
    useEffect(() => {
      if (open && currentCompany) {
        fetchContacts();
+       fetchPrimaryBankAccount();
      }
    }, [open, currentCompany]);
- 
+
+   const fetchPrimaryBankAccount = async () => {
+     if (!currentCompany) return;
+     const { data } = await supabase
+       .from('bank_accounts')
+       .select('iban, bic, name')
+       .eq('company_id', currentCompany.id)
+       .order('created_at', { ascending: true })
+       .limit(1)
+       .maybeSingle();
+     if (data) setPrimaryBankAccount(data);
+   };
+
    const fetchContacts = async () => {
      if (!currentCompany) return;
      const { data } = await supabase
@@ -152,7 +166,9 @@
        name: currentCompany?.name || '',
        address: currentCompany?.address || '',
        taxId: currentCompany?.tax_id || 'DE000000000',
-       bankAccount: 'IBAN: DE00 0000 0000 0000 0000 00',
+       bankAccount: primaryBankAccount?.iban
+         ? `IBAN: ${primaryBankAccount.iban}${primaryBankAccount.bic ? ` | BIC: ${primaryBankAccount.bic}` : ''}`
+         : 'Bitte Bankkonto unter Einstellungen → Bankkonten hinterlegen',
      },
      items: items.map((item) => ({
        description: item.description || 'Beschreibung fehlt',

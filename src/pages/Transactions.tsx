@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard } from 'lucide-react';
+import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard, Wand2 } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { BulkActionsBar } from '@/components/transactions/BulkActionsBar';
+import { TransactionMatchingDialog } from '@/components/transactions/TransactionMatchingDialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +74,7 @@ export default function Transactions() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [matchingDialogOpen, setMatchingDialogOpen] = useState(false);
 
   // Form state
   const [newTransaction, setNewTransaction] = useState({
@@ -281,6 +283,11 @@ export default function Transactions() {
               : 'Verwalten Sie Ihre Transaktionen'}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setMatchingDialogOpen(true)}>
+            <Wand2 className="mr-2 h-4 w-4" />
+            Auto-Matching
+          </Button>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -378,8 +385,8 @@ export default function Transactions() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
-
       {/* Statistics Cards - 2 columns on mobile */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="glass">
@@ -575,6 +582,13 @@ export default function Transactions() {
           onGoToPage={pagination.goToPage}
         />
       </div>
+
+      {/* Auto-Matching Dialog */}
+      <TransactionMatchingDialog
+        open={matchingDialogOpen}
+        onOpenChange={setMatchingDialogOpen}
+        onSuccess={fetchTransactions}
+      />
     </div>
   );
 }
