@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles, Mail } from 'lucide-react';
+import { Search, Upload, FolderOpen, FileText, Loader2, Check, AlertCircle, Receipt, Calendar, Clock, Sparkles, Mail, CheckSquare, Square, Tag, Trash2, X } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,69 @@ export default function Receipts() {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { analyzeReceipt, isAnalyzing } = useAIAnalysis();
+
+  // Bulk-Auswahl State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState('');
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+  const CATEGORIES = [
+    'Büro & Verwaltung', 'Reise & Fahrtkosten', 'Bewirtung', 'IT & Software',
+    'Marketing & Werbung', 'Personal', 'Miete & Nebenkosten', 'Versicherungen',
+    'Telekommunikation', 'Weiterbildung', 'Waren & Material', 'Sonstiges',
+  ];
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (items: Receipt[]) => {
+    if (selectedIds.size === items.length && items.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map(r => r.id)));
+    }
+  };
+
+  const handleBulkCategorize = async () => {
+    if (!bulkCategory || selectedIds.size === 0 || !currentCompany) return;
+    setIsBulkProcessing(true);
+    try {
+      const selectedReceipts = receipts.filter(r => selectedIds.has(r.id));
+      const transactionIds = selectedReceipts.filter(r => r.transaction_id).map(r => r.transaction_id!);
+      if (transactionIds.length > 0) {
+        await supabase.from('transactions').update({ category: bulkCategory }).in('id', transactionIds);
+      }
+      const unlinked = selectedReceipts.filter(r => !r.transaction_id);
+      for (const receipt of unlinked) {
+        const { data: tx } = await supabase.from('transactions').insert({
+          company_id: currentCompany.id, type: 'expense',
+          amount: receipt.amount || 0, date: receipt.date,
+          description: receipt.description || receipt.file_name, category: bulkCategory,
+        }).select('id').single();
+        if (tx) await supabase.from('receipts').update({ transaction_id: tx.id }).eq('id', receipt.id);
+      }
+      toast.success(`${selectedIds.size} Belege als "${bulkCategory}" kategorisiert`);
+      setSelectedIds(new Set()); setBulkCategory(''); fetchReceipts();
+    } catch { toast.error('Fehler bei der Bulk-Kategorisierung'); }
+    finally { setIsBulkProcessing(false); }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`${selectedIds.size} Belege wirklich löschen?`)) return;
+    setIsBulkProcessing(true);
+    try {
+      await supabase.from('receipts').delete().in('id', Array.from(selectedIds));
+      toast.success(`${selectedIds.size} Belege gelöscht`);
+      setSelectedIds(new Set()); fetchReceipts();
+    } catch { toast.error('Fehler beim Löschen'); }
+    finally { setIsBulkProcessing(false); }
+  };
 
   useEffect(() => {
     if (currentCompany) {
@@ -354,16 +417,47 @@ export default function Receipts() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Beleg suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-secondary/50"
-        />
+      {/* Search + Bulk-Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Beleg suchen..." value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-secondary/50" />
+        </div>
+        <Button variant="outline" size="sm" className="gap-2"
+          onClick={() => toggleSelectAll(pagination.paginatedItems)}>
+          {selectedIds.size === pagination.paginatedItems.length && pagination.paginatedItems.length > 0
+            ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+          Alle auswählen
+        </Button>
       </div>
+
+      {/* Bulk-Aktionsleiste */}
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+          <span className="text-sm font-medium text-primary">{selectedIds.size} ausgewählt</span>
+          <div className="flex items-center gap-2 flex-1">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            <select value={bulkCategory} onChange={(e) => setBulkCategory(e.target.value)}
+              className="text-sm border border-border rounded-md px-2 py-1 bg-background">
+              <option value="">Kategorie wählen...</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <Button size="sm" className="gap-1" onClick={handleBulkCategorize}
+              disabled={!bulkCategory || isBulkProcessing}>
+              {isBulkProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              Zuordnen
+            </Button>
+          </div>
+          <Button size="sm" variant="destructive" className="gap-1"
+            onClick={handleBulkDelete} disabled={isBulkProcessing}>
+            <Trash2 className="h-3 w-3" /> Löschen
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
 
       {/* Receipts Grid */}
       {loading ? (
@@ -382,8 +476,17 @@ export default function Receipts() {
           {pagination.paginatedItems.map((receipt) => (
             <div
               key={receipt.id}
-              className="glass rounded-xl p-4 hover:bg-secondary/30 transition-colors cursor-pointer group"
+              onClick={() => toggleSelect(receipt.id)}
+              className={`glass rounded-xl p-4 hover:bg-secondary/30 transition-colors cursor-pointer group relative ${
+                selectedIds.has(receipt.id) ? 'ring-2 ring-primary bg-primary/5' : ''
+              }`}
             >
+              {/* Checkbox oben rechts */}
+              <div className="absolute top-3 right-3">
+                {selectedIds.has(receipt.id)
+                  ? <CheckSquare className="h-5 w-5 text-primary" />
+                  : <Square className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+              </div>
               <div className="flex items-start gap-3">
                 <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <FileText className="h-6 w-6 text-primary" />

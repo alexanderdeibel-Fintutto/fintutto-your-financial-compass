@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DatevExportDialog } from '@/components/settings/DatevExportDialog';
 import { GdpduExportDialog } from '@/components/settings/GdpduExportDialog';
 import { BillingTab } from '@/components/settings/BillingTab';
@@ -72,18 +72,56 @@ export default function Settings() {
   const { currentCompany, companies, refetchCompanies } = useCompany();
   const { toast } = useToast();
 
-  // Company form state
+  // Company form state — wird via useEffect aus currentCompany befüllt
   const [companyData, setCompanyData] = useState({
     name: currentCompany?.name || '',
-    legalForm: 'gmbh',
+    legalForm: currentCompany?.legal_form || 'einzelunternehmen',
     taxId: currentCompany?.tax_id || '',
-    vatId: '',
-    street: '',
-    postalCode: '',
-    city: '',
-    chartOfAccounts: 'skr03',
-    fiscalYearStart: '01',
+    vatId: currentCompany?.vat_id || '',
+    street: currentCompany?.street || '',
+    postalCode: currentCompany?.postal_code || currentCompany?.zip || '',
+    city: currentCompany?.city || '',
+    chartOfAccounts: currentCompany?.chart_of_accounts || 'skr03',
+    fiscalYearStart: currentCompany?.fiscal_year_start || '01',
+    registerNumber: currentCompany?.register_number || '',
+    registerCourt: currentCompany?.register_court || '',
+    managingDirector: currentCompany?.managing_director || '',
+    companyType: currentCompany?.company_type || 'freelancer',
+    primaryIban: currentCompany?.primary_iban || '',
+    primaryBic: currentCompany?.primary_bic || '',
+    primaryBankName: currentCompany?.primary_bank_name || '',
+    smallBusinessRegulation: currentCompany?.small_business_regulation || false,
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>(currentCompany?.logo_url || '');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Daten aus currentCompany nachladen wenn sich die Firma ändert
+  useEffect(() => {
+    if (!currentCompany) return;
+    setCompanyData({
+      name: currentCompany.name || '',
+      legalForm: currentCompany.legal_form || 'einzelunternehmen',
+      taxId: currentCompany.tax_id || '',
+      vatId: currentCompany.vat_id || '',
+      street: currentCompany.street || '',
+      postalCode: currentCompany.postal_code || currentCompany.zip || '',
+      city: currentCompany.city || '',
+      chartOfAccounts: currentCompany.chart_of_accounts || 'skr03',
+      fiscalYearStart: currentCompany.fiscal_year_start || '01',
+      registerNumber: currentCompany.register_number || '',
+      registerCourt: currentCompany.register_court || '',
+      managingDirector: currentCompany.managing_director || '',
+      companyType: currentCompany.company_type || 'freelancer',
+      primaryIban: currentCompany.primary_iban || '',
+      primaryBic: currentCompany.primary_bic || '',
+      primaryBankName: currentCompany.primary_bank_name || '',
+      smallBusinessRegulation: currentCompany.small_business_regulation || false,
+    });
+    setLogoPreview(currentCompany.logo_url || '');
+    setLogoFile(null);
+  }, [currentCompany?.id]);
 
   // Profile state
   const [profileData, setProfileData] = useState({
@@ -159,18 +197,64 @@ export default function Settings() {
   };
 
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadLogo = async (): Promise<string | null> => {
+    if (!logoFile || !currentCompany) return currentCompany?.logo_url || null;
+    setLogoUploading(true);
+    try {
+      const ext = logoFile.name.split('.').pop();
+      const path = `logos/${currentCompany.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-assets')
+        .upload(path, logoFile, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(path);
+      return publicUrl;
+    } catch (err) {
+      console.error('Logo upload error:', err);
+      return null;
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
   const handleSaveCompany = async () => {
     if (!currentCompany) return;
-
+    const logoUrl = await handleUploadLogo();
     const { error } = await supabase
       .from('companies')
       .update({
         name: companyData.name,
         tax_id: companyData.taxId,
-        address: `${companyData.street}, ${companyData.postalCode} ${companyData.city}`,
+        vat_id: companyData.vatId || null,
+        legal_form: companyData.legalForm,
+        street: companyData.street || null,
+        postal_code: companyData.postalCode || null,
+        city: companyData.city || null,
+        address: companyData.street ? `${companyData.street}, ${companyData.postalCode} ${companyData.city}` : null,
+        chart_of_accounts: companyData.chartOfAccounts,
+        fiscal_year_start: companyData.fiscalYearStart,
+        register_number: companyData.registerNumber || null,
+        register_court: companyData.registerCourt || null,
+        managing_director: companyData.managingDirector || null,
+        company_type: companyData.companyType,
+        primary_iban: companyData.primaryIban || null,
+        primary_bic: companyData.primaryBic || null,
+        primary_bank_name: companyData.primaryBankName || null,
+        small_business_regulation: companyData.smallBusinessRegulation,
+        ...(logoUrl ? { logo_url: logoUrl } : {}),
       })
       .eq('id', currentCompany.id);
-
     if (error) {
       toast({
         title: 'Fehler',
@@ -182,6 +266,7 @@ export default function Settings() {
         title: 'Gespeichert',
         description: 'Unternehmensdaten wurden aktualisiert.',
       });
+      setLogoFile(null);
       refetchCompanies();
     }
   };
@@ -303,6 +388,47 @@ export default function Settings() {
         <div className="flex-1 min-w-0">
           {/* Unternehmen Tab */}
           <TabsContent value="company" className="mt-0 space-y-6">
+            {/* Logo-Upload Card */}
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle>Firmenlogo</CardTitle>
+                <CardDescription>Wird auf Rechnungen und Angeboten angezeigt</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <Building2 className="h-10 w-10 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={logoUploading}
+                    >
+                      <Upload className="h-4 w-4" />
+                      {logoUploading ? 'Wird hochgeladen...' : 'Logo hochladen'}
+                    </Button>
+                    {logoFile && (
+                      <p className="text-sm text-muted-foreground">{logoFile.name} ausgewählt — wird beim Speichern hochgeladen</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">PNG, JPG oder SVG, max. 2 MB</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="glass">
               <CardHeader>
                 <CardTitle>Unternehmensdaten</CardTitle>
@@ -311,13 +437,21 @@ export default function Settings() {
               <CardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Firmenname</Label>
-                    <Input
-                      id="companyName"
-                      value={companyData.name}
-                      onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
-                      placeholder="Muster GmbH"
-                    />
+                    <Label htmlFor="companyType">Firmentyp</Label>
+                    <Select
+                      value={companyData.companyType}
+                      onValueChange={(value) => setCompanyData({ ...companyData, companyType: value })}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Typ wählen" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border border-border">
+                        <SelectItem value="freelancer">Freelancer / Selbstständig</SelectItem>
+                        <SelectItem value="gmbh">Eigene GmbH / UG</SelectItem>
+                        <SelectItem value="beteiligung">Beteiligung (Gesellschafter)</SelectItem>
+                        <SelectItem value="gf_mandat">GF-Mandat (Fremd-GmbH)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="legalForm">Rechtsform</Label>
@@ -335,9 +469,27 @@ export default function Settings() {
                         <SelectItem value="kg">KG</SelectItem>
                         <SelectItem value="ohg">OHG</SelectItem>
                         <SelectItem value="gbr">GbR</SelectItem>
-                        <SelectItem value="einzelunternehmen">Einzelunternehmen</SelectItem>
+                        <SelectItem value="einzelunternehmen">Einzelunternehmen / Freiberufler</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Firmenname</Label>
+                    <Input
+                      id="companyName"
+                      value={companyData.name}
+                      onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
+                      placeholder="Muster GmbH"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="managingDirector">Geschäftsführer / Inhaber</Label>
+                    <Input
+                      id="managingDirector"
+                      value={companyData.managingDirector}
+                      onChange={(e) => setCompanyData({ ...companyData, managingDirector: e.target.value })}
+                      placeholder="Max Mustermann"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="taxId">Steuernummer</Label>
@@ -357,6 +509,45 @@ export default function Settings() {
                       placeholder="DE123456789"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="registerNumber">Handelsregisternummer</Label>
+                    <Input
+                      id="registerNumber"
+                      value={companyData.registerNumber}
+                      onChange={(e) => setCompanyData({ ...companyData, registerNumber: e.target.value })}
+                      placeholder="HRB 12345"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="registerCourt">Registergericht</Label>
+                    <Input
+                      id="registerCourt"
+                      value={companyData.registerCourt}
+                      onChange={(e) => setCompanyData({ ...companyData, registerCourt: e.target.value })}
+                      placeholder="Amtsgericht München"
+                    />
+                  </div>
+                </div>
+
+                {/* Kleinunternehmerregelung */}
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
+                  <div>
+                    <p className="font-medium">Kleinunternehmerregelung §19 UStG</p>
+                    <p className="text-sm text-muted-foreground">Keine MwSt-Ausweis auf Rechnungen, §19-Hinweis wird automatisch eingefügt</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={companyData.smallBusinessRegulation}
+                    onClick={() => setCompanyData({ ...companyData, smallBusinessRegulation: !companyData.smallBusinessRegulation })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                      companyData.smallBusinessRegulation ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      companyData.smallBusinessRegulation ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
                 </div>
 
                 <div className="space-y-4">
@@ -388,6 +579,47 @@ export default function Settings() {
                         placeholder="Musterstadt"
                       />
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bankverbindung Card */}
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Euro className="h-5 w-5" />Bankverbindung</CardTitle>
+                <CardDescription>Wird auf Rechnungen als Zahlungsziel angezeigt</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="primaryIban">IBAN</Label>
+                    <Input
+                      id="primaryIban"
+                      value={companyData.primaryIban}
+                      onChange={(e) => setCompanyData({ ...companyData, primaryIban: e.target.value })}
+                      placeholder="DE89 3704 0044 0532 0130 00"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryBic">BIC</Label>
+                    <Input
+                      id="primaryBic"
+                      value={companyData.primaryBic}
+                      onChange={(e) => setCompanyData({ ...companyData, primaryBic: e.target.value })}
+                      placeholder="COBADEFFXXX"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="primaryBankName">Kreditinstitut</Label>
+                    <Input
+                      id="primaryBankName"
+                      value={companyData.primaryBankName}
+                      onChange={(e) => setCompanyData({ ...companyData, primaryBankName: e.target.value })}
+                      placeholder="Commerzbank AG"
+                    />
                   </div>
                 </div>
               </CardContent>
