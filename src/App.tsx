@@ -46,6 +46,7 @@ const InvestmentAssets = lazy(() => import("./pages/assets/InvestmentAssets"));
 const Insurance = lazy(() => import("./pages/assets/Insurance"));
 const Vehicles = lazy(() => import("./pages/assets/Vehicles"));
 const Invitations = lazy(() => import("./pages/Invitations"));
+const BulkUpload = lazy(() => import("./pages/BulkUpload"));
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ function AppRoutes() {
         <Route path="/vorlagen" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />
         <Route path="/benachrichtigungen" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/hilfe" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+        <Route path="/massenimport" element={<ProtectedRoute><BulkUpload /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

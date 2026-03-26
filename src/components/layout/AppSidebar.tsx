@@ -35,6 +35,7 @@ import {
   Car,
   Wallet,
   Send,
+  UploadCloud,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,7 +91,13 @@ const navItems: NavItem[] = [
       { title: 'Wiederkehrend', url: '/wiederkehrend', icon: Repeat },
     ],
   },
-  { title: 'Belege', url: '/belege', icon: FolderOpen },
+  {
+    title: 'Belege', url: '/belege', icon: FolderOpen,
+    children: [
+      { title: 'Alle Belege', url: '/belege', icon: FolderOpen },
+      { title: 'Massenimport', url: '/massenimport', icon: UploadCloud },
+    ],
+  },
   {
     title: 'Finanzen', url: '/bankkonten', icon: Landmark,
     children: [
