@@ -80,11 +80,15 @@
  
        setProgress(70);
  
-       // Generate DATEV CSV
-       const csv = generateDatevCSV(transactions, {
-         name: currentCompany.name,
-         taxId: 'DE123456789', // TODO: Get from company settings
-       });
+      // Generate DATEV CSV mit echten Firmendaten
+      const csv = generateDatevCSV(transactions, {
+        name: currentCompany.name,
+        taxId: currentCompany.tax_id || currentCompany.vat_id || '',
+        vatId: currentCompany.vat_id || '',
+        iban: currentCompany.primary_iban || '',
+        legalForm: currentCompany.legal_form || '',
+        registerNumber: currentCompany.register_number || '',
+      });
  
        setProgress(90);
  
