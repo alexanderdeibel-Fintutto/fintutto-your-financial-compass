@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TaxAdvisorDocuments } from '@/components/taxadvisor/TaxAdvisorDocuments';
 import {
   UserCheck,
   Plus,
@@ -16,6 +17,7 @@ import {
   Download,
   Settings,
   Mail,
+  FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,7 +78,7 @@ export default function TaxAdvisorPortal() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAccess, setSelectedAccess] = useState<TaxAdvisorAccess | null>(null);
-  const [activeTab, setActiveTab] = useState('advisors');
+  const [activeTab, setActiveTab] = useState('documents');
 
   const [newAdvisor, setNewAdvisor] = useState({
     advisor_name: '',
@@ -379,6 +381,11 @@ export default function TaxAdvisorPortal() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="documents" className="flex-1 sm:flex-none gap-2">
+            <FolderOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Dokumente</span>
+            <span className="sm:hidden">Docs</span>
+          </TabsTrigger>
           <TabsTrigger value="advisors" className="flex-1 sm:flex-none gap-2">
             <UserCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Steuerberater</span>
@@ -394,6 +401,10 @@ export default function TaxAdvisorPortal() {
             <span>Einstellungen</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="documents" className="mt-4">
+          <TaxAdvisorDocuments />
+        </TabsContent>
 
         <TabsContent value="advisors" className="mt-4">
           {accessList.length === 0 ? (

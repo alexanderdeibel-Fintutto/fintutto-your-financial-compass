@@ -50,6 +50,7 @@ const BulkUpload = lazy(() => import("./pages/BulkUpload"));
 const WealthDashboard = lazy(() => import("./pages/WealthDashboard"));
 const FinanceCockpit = lazy(() => import("./pages/FinanceCockpit"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
+const Budget = lazy(() => import("./pages/Budget"));
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ function AppRoutes() {
         <Route path="/kapital" element={<ProtectedRoute><WealthDashboard /></ProtectedRoute>} />
         <Route path="/cockpit" element={<ProtectedRoute><FinanceCockpit /></ProtectedRoute>} />
         <Route path="/ki-assistent" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+        <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
