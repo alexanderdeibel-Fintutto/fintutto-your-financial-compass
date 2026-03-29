@@ -23,6 +23,9 @@ import { TaxDeadlineWidget } from '@/components/dashboard/TaxDeadlineWidget';
 import { ContractExpiryWidget } from '@/components/dashboard/ContractExpiryWidget';
 import { InventoryAlertWidget } from '@/components/dashboard/InventoryAlertWidget';
 import { OpenItemsWidget } from '@/components/dashboard/OpenItemsWidget';
+import { ActivityFeedWidget } from '@/components/dashboard/ActivityFeedWidget';
+import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
+import { QuickCapture } from '@/components/dashboard/QuickCapture';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -567,6 +570,16 @@ export default function Dashboard() {
         <RecentTransactions transactions={transactions} />
         <DueInvoicesList invoices={dueInvoices} />
         <PendingReceiptsList receipts={pendingReceipts} />
+      </div>
+      {/* Activity Feed + Onboarding */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ActivityFeedWidget />
+        </div>
+        <div className="space-y-4">
+          <OnboardingChecklist />
+          <QuickCapture />
+        </div>
       </div>
     </div>
   );

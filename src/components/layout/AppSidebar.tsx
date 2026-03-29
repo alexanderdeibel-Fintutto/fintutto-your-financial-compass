@@ -181,6 +181,8 @@ const navItems: NavItem[] = [
       { title: 'Steuerberater', url: '/steuerberater', icon: UserCheck, businessOnly: true },
       { title: 'ELSTER', url: '/elster', icon: Landmark, businessOnly: true },
       { title: 'Einladungen', url: '/einladungen', icon: Send },
+      { title: 'Benachrichtigungen', url: '/benachrichtigungen', icon: Mail },
+      { title: 'E-Commerce', url: '/ecommerce', icon: ShoppingCart, businessOnly: true },
     ],
   },
   { title: 'Hilfe', url: '/hilfe', icon: HelpCircle },
