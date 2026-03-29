@@ -47,6 +47,9 @@ const Insurance = lazy(() => import("./pages/assets/Insurance"));
 const Vehicles = lazy(() => import("./pages/assets/Vehicles"));
 const Invitations = lazy(() => import("./pages/Invitations"));
 const BulkUpload = lazy(() => import("./pages/BulkUpload"));
+const WealthDashboard = lazy(() => import("./pages/WealthDashboard"));
+const FinanceCockpit = lazy(() => import("./pages/FinanceCockpit"));
+const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 
 const queryClient = new QueryClient();
 
@@ -113,6 +116,9 @@ function AppRoutes() {
         <Route path="/benachrichtigungen" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/hilfe" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
         <Route path="/massenimport" element={<ProtectedRoute><BulkUpload /></ProtectedRoute>} />
+        <Route path="/kapital" element={<ProtectedRoute><WealthDashboard /></ProtectedRoute>} />
+        <Route path="/cockpit" element={<ProtectedRoute><FinanceCockpit /></ProtectedRoute>} />
+        <Route path="/ki-assistent" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

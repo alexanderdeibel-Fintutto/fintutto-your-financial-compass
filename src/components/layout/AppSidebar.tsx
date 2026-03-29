@@ -36,6 +36,9 @@ import {
   Wallet,
   Send,
   UploadCloud,
+  Bot,
+  Gauge,
+  Sparkles,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -119,6 +122,9 @@ const navItems: NavItem[] = [
   },
   { title: 'Kalender', url: '/kalender', icon: Calendar },
   { title: 'Berichte', url: '/berichte', icon: BarChart3 },
+  { title: 'Finanz-Cockpit', url: '/cockpit', icon: Gauge },
+  { title: 'Kapitalverwaltung', url: '/kapital', icon: Wallet },
+  { title: 'KI-Assistent', url: '/ki-assistent', icon: Bot },
   {
     title: 'Einstellungen', url: '/einstellungen', icon: Settings,
     children: [
