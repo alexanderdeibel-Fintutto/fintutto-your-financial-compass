@@ -51,6 +51,8 @@ import {
   LayoutGrid,
   FileSignature,
   Boxes,
+  LineChart,
+  ListChecks,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -137,6 +139,8 @@ const navItems: NavItem[] = [
   { title: 'Finanz-Cockpit', url: '/cockpit', icon: Gauge },
   { title: 'Kapitalverwaltung', url: '/kapital', icon: Wallet },
   { title: 'Budgetverwaltung', url: '/budget', icon: PiggyBank },
+  { title: 'Liquiditätsplanung', url: '/liquiditaet', icon: LineChart, businessOnly: true },
+  { title: 'Offene Posten', url: '/offene-posten', icon: ListChecks, businessOnly: true },
   { title: 'KI-Assistent', url: '/ki-assistent', icon: Bot },
   {
     title: 'Buchhaltung', url: '/kassenbuch', icon: BookOpen,

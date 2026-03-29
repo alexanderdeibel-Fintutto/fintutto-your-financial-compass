@@ -19,6 +19,10 @@ import { TopCategoriesWidget } from '@/components/dashboard/TopCategoriesWidget'
 import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
 import { SubscriptionWidget } from '@/components/dashboard/SubscriptionWidget';
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget';
+import { TaxDeadlineWidget } from '@/components/dashboard/TaxDeadlineWidget';
+import { ContractExpiryWidget } from '@/components/dashboard/ContractExpiryWidget';
+import { InventoryAlertWidget } from '@/components/dashboard/InventoryAlertWidget';
+import { OpenItemsWidget } from '@/components/dashboard/OpenItemsWidget';
 import { PeriodSelector, PeriodKey, DateRange, getDateRange } from '@/components/dashboard/PeriodSelector';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -545,6 +549,16 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           <CashflowForecastWidget />
           <TopCategoriesWidget />
+        </div>
+      )}
+
+      {/* Smart Widgets Row – Steuerfristen, Vertragsablauf, Inventar, Offene Posten */}
+      {!currentCompany?.is_personal && (
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-4">
+          <TaxDeadlineWidget />
+          <ContractExpiryWidget />
+          <InventoryAlertWidget />
+          <OpenItemsWidget />
         </div>
       )}
 

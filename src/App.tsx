@@ -62,6 +62,8 @@ const Jahresabschluss = lazy(() => import("./pages/Jahresabschluss"));
 const MultiFirmaOverview = lazy(() => import("./pages/MultiFirmaOverview"));
 const Vertragsmanagement = lazy(() => import("./pages/Vertragsmanagement"));
 const Inventar = lazy(() => import("./pages/Inventar"));
+const Liquiditaetsplanung = lazy(() => import("./pages/Liquiditaetsplanung"));
+const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 
 const queryClient = new QueryClient();
 
@@ -143,6 +145,8 @@ function AppRoutes() {
         <Route path="/multi-firma" element={<ProtectedRoute><MultiFirmaOverview /></ProtectedRoute>} />
         <Route path="/vertraege" element={<ProtectedRoute><Vertragsmanagement /></ProtectedRoute>} />
         <Route path="/inventar" element={<ProtectedRoute><Inventar /></ProtectedRoute>} />
+        <Route path="/liquiditaet" element={<ProtectedRoute><Liquiditaetsplanung /></ProtectedRoute>} />
+        <Route path="/offene-posten" element={<ProtectedRoute><OffenePosten /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
