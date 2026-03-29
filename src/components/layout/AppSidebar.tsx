@@ -46,6 +46,9 @@ import {
   Layers,
   UsersRound,
   ShieldCheck,
+  FileArchive,
+  ClipboardCheck,
+  LayoutGrid,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -149,6 +152,9 @@ const navItems: NavItem[] = [
     ],
   },
   { title: 'Steuer-Assistent', url: '/steuer-assistent', icon: ShieldCheck },
+  { title: 'Jahresabschluss', url: '/jahresabschluss', icon: ClipboardCheck },
+  { title: 'Dokumente', url: '/dokumente', icon: FileArchive },
+  { title: 'Multi-Firma', url: '/multi-firma', icon: LayoutGrid },
   {
     title: 'Einstellungen', url: '/einstellungen', icon: Settings,
     children: [

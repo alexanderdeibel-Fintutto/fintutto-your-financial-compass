@@ -1,0 +1,56 @@
+{
+  "name": "Financial Compass – Fintutto",
+  "short_name": "Financial Compass",
+  "description": "Die professionelle Finanzverwaltung für Unternehmen und Selbstständige",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "lang": "de",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Zur Übersicht",
+      "url": "/",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Neue Buchung",
+      "short_name": "Buchung",
+      "description": "Neue Buchung erfassen",
+      "url": "/buchungen",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Rechnungen",
+      "short_name": "Rechnungen",
+      "description": "Rechnungen verwalten",
+      "url": "/rechnungen",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "KI-Assistent",
+      "short_name": "KI",
+      "description": "KI-Finanzassistent öffnen",
+      "url": "/ki-assistent",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}
