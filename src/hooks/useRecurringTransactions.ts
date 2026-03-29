@@ -11,8 +11,8 @@ export interface RecurringTransaction {
   type: 'income' | 'expense';
   category: string;
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-  day_of_month?: number; // For monthly/yearly
-  day_of_week?: number; // For weekly (0-6)
+  day_of_month?: number;
+  day_of_week?: number;
   start_date: string;
   end_date?: string;
   next_execution: string;
@@ -21,61 +21,45 @@ export interface RecurringTransaction {
   updated_at: string;
 }
 
-const STORAGE_KEY = 'fintutto_recurring_transactions';
-
-function getStoredRecurringTransactions(): RecurringTransaction[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveRecurringTransactions(transactions: RecurringTransaction[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-}
-
 function calculateNextExecution(
   frequency: RecurringTransaction['frequency'],
-  startDate: string,
+  fromDate: string,
   dayOfMonth?: number,
   dayOfWeek?: number
 ): string {
   const now = new Date();
-  const start = new Date(startDate);
+  const start = new Date(fromDate);
   let next = new Date(Math.max(now.getTime(), start.getTime()));
 
   switch (frequency) {
     case 'daily':
-      if (next <= now) {
-        next.setDate(next.getDate() + 1);
-      }
+      if (next <= now) next.setDate(next.getDate() + 1);
       break;
-    case 'weekly':
+    case 'weekly': {
       const targetDay = dayOfWeek ?? next.getDay();
-      const daysUntilTarget = (targetDay - next.getDay() + 7) % 7 || 7;
-      next.setDate(next.getDate() + daysUntilTarget);
+      const daysUntil = (targetDay - next.getDay() + 7) % 7 || 7;
+      next.setDate(next.getDate() + daysUntil);
       break;
-    case 'monthly':
-      const targetDayOfMonth = dayOfMonth ?? next.getDate();
-      if (next.getDate() >= targetDayOfMonth) {
-        next.setMonth(next.getMonth() + 1);
-      }
-      next.setDate(Math.min(targetDayOfMonth, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+    }
+    case 'monthly': {
+      const targetDom = dayOfMonth ?? next.getDate();
+      if (next.getDate() >= targetDom) next.setMonth(next.getMonth() + 1);
+      next.setDate(Math.min(targetDom, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
       break;
+    }
     case 'quarterly':
-      const quarterMonth = Math.floor(next.getMonth() / 3) * 3;
-      next.setMonth(quarterMonth + 3);
+      next.setMonth(Math.floor(next.getMonth() / 3) * 3 + 3);
       next.setDate(dayOfMonth ?? 1);
       break;
     case 'yearly':
       if (next.getMonth() > start.getMonth() ||
-          (next.getMonth() === start.getMonth() && next.getDate() >= (dayOfMonth ?? start.getDate()))) {
+        (next.getMonth() === start.getMonth() && next.getDate() >= (dayOfMonth ?? start.getDate()))) {
         next.setFullYear(next.getFullYear() + 1);
       }
       next.setMonth(start.getMonth());
       next.setDate(dayOfMonth ?? start.getDate());
       break;
   }
-
   return next.toISOString().split('T')[0];
 }
 
@@ -85,119 +69,102 @@ export function useRecurringTransactions() {
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load recurring transactions for current company
-  useEffect(() => {
-    if (currentCompany) {
-      const allTransactions = getStoredRecurringTransactions();
-      const companyTransactions = allTransactions.filter(
-        (t) => t.company_id === currentCompany.id
-      );
-      setRecurringTransactions(companyTransactions);
+  const loadTransactions = useCallback(async () => {
+    if (!currentCompany) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('recurring_transactions')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('next_execution', { ascending: true });
+    if (!error && data) {
+      // Map snake_case DB fields to camelCase interface
+      setRecurringTransactions(data.map((r: any) => ({
+        ...r,
+        next_execution: r.next_date ?? r.next_execution,
+        day_of_month: r.day_of_month,
+        day_of_week: r.day_of_week,
+      })));
     }
     setLoading(false);
   }, [currentCompany]);
 
-  // Create a new recurring transaction
+  useEffect(() => { loadTransactions(); }, [loadTransactions]);
+
   const createRecurringTransaction = useCallback(
     async (data: Omit<RecurringTransaction, 'id' | 'company_id' | 'created_at' | 'updated_at' | 'next_execution'>) => {
       if (!currentCompany) return null;
-
-      const nextExecution = calculateNextExecution(
-        data.frequency,
-        data.start_date,
-        data.day_of_month,
-        data.day_of_week
-      );
-
-      const newTransaction: RecurringTransaction = {
-        ...data,
-        id: crypto.randomUUID(),
+      const nextExecution = calculateNextExecution(data.frequency, data.start_date, data.day_of_month, data.day_of_week);
+      const { data: inserted, error } = await supabase.from('recurring_transactions').insert({
         company_id: currentCompany.id,
-        next_execution: nextExecution,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const allTransactions = getStoredRecurringTransactions();
-      allTransactions.push(newTransaction);
-      saveRecurringTransactions(allTransactions);
-
-      setRecurringTransactions((prev) => [...prev, newTransaction]);
-
-      toast({
-        title: 'Erfolg',
-        description: 'Wiederkehrende Buchung wurde erstellt.',
-      });
-
-      return newTransaction;
+        description: data.description,
+        amount: data.amount,
+        type: data.type,
+        category: data.category,
+        frequency: data.frequency,
+        start_date: data.start_date,
+        end_date: data.end_date || null,
+        next_date: nextExecution,
+        is_active: data.is_active ?? true,
+      }).select().single();
+      if (error) {
+        toast({ title: 'Fehler', description: 'Buchung konnte nicht erstellt werden.', variant: 'destructive' });
+        return null;
+      }
+      toast({ title: 'Erfolg', description: 'Wiederkehrende Buchung wurde erstellt.' });
+      await loadTransactions();
+      return { ...inserted, next_execution: inserted.next_date } as RecurringTransaction;
     },
-    [currentCompany, toast]
+    [currentCompany, toast, loadTransactions]
   );
 
-  // Update a recurring transaction
   const updateRecurringTransaction = useCallback(
     async (id: string, data: Partial<RecurringTransaction>) => {
-      const allTransactions = getStoredRecurringTransactions();
-      const index = allTransactions.findIndex((t) => t.id === id);
-
-      if (index === -1) return null;
-
-      const updated = {
-        ...allTransactions[index],
-        ...data,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Recalculate next execution if frequency or dates changed
+      const existing = recurringTransactions.find(t => t.id === id);
+      if (!existing) return null;
+      const merged = { ...existing, ...data };
+      let nextDate = merged.next_execution;
       if (data.frequency || data.start_date || data.day_of_month || data.day_of_week) {
-        updated.next_execution = calculateNextExecution(
-          updated.frequency,
-          updated.start_date,
-          updated.day_of_month,
-          updated.day_of_week
-        );
+        nextDate = calculateNextExecution(merged.frequency, merged.start_date, merged.day_of_month, merged.day_of_week);
       }
-
-      allTransactions[index] = updated;
-      saveRecurringTransactions(allTransactions);
-
-      setRecurringTransactions((prev) =>
-        prev.map((t) => (t.id === id ? updated : t))
-      );
-
-      toast({
-        title: 'Erfolg',
-        description: 'Wiederkehrende Buchung wurde aktualisiert.',
-      });
-
-      return updated;
+      const { error } = await supabase.from('recurring_transactions').update({
+        description: merged.description,
+        amount: merged.amount,
+        type: merged.type,
+        category: merged.category,
+        frequency: merged.frequency,
+        start_date: merged.start_date,
+        end_date: merged.end_date || null,
+        next_date: nextDate,
+        is_active: merged.is_active,
+      }).eq('id', id);
+      if (error) {
+        toast({ title: 'Fehler', description: 'Buchung konnte nicht aktualisiert werden.', variant: 'destructive' });
+        return null;
+      }
+      toast({ title: 'Erfolg', description: 'Wiederkehrende Buchung wurde aktualisiert.' });
+      await loadTransactions();
+      return { ...merged, next_execution: nextDate };
     },
-    [toast]
+    [recurringTransactions, toast, loadTransactions]
   );
 
-  // Delete a recurring transaction
   const deleteRecurringTransaction = useCallback(
     async (id: string) => {
-      const allTransactions = getStoredRecurringTransactions();
-      const filtered = allTransactions.filter((t) => t.id !== id);
-      saveRecurringTransactions(filtered);
-
-      setRecurringTransactions((prev) => prev.filter((t) => t.id !== id));
-
-      toast({
-        title: 'Erfolg',
-        description: 'Wiederkehrende Buchung wurde gelöscht.',
-      });
+      const { error } = await supabase.from('recurring_transactions').delete().eq('id', id);
+      if (error) {
+        toast({ title: 'Fehler', description: 'Buchung konnte nicht gelöscht werden.', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Erfolg', description: 'Wiederkehrende Buchung wurde gelöscht.' });
+      await loadTransactions();
     },
-    [toast]
+    [toast, loadTransactions]
   );
 
-  // Execute a recurring transaction (create actual transaction)
   const executeRecurringTransaction = useCallback(
     async (recurring: RecurringTransaction) => {
       if (!currentCompany) return null;
-
-      // Create the actual transaction
       const { error, data } = await supabase.from('transactions').insert({
         company_id: currentCompany.id,
         type: recurring.type,
@@ -206,57 +173,33 @@ export function useRecurringTransactions() {
         category: recurring.category,
         date: new Date().toISOString().split('T')[0],
       }).select().single();
-
       if (error) {
-        toast({
-          title: 'Fehler',
-          description: 'Buchung konnte nicht ausgeführt werden.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Fehler', description: 'Buchung konnte nicht ausgeführt werden.', variant: 'destructive' });
         return null;
       }
-
-      // Update next execution date
       const nextExecution = calculateNextExecution(
-        recurring.frequency,
-        recurring.next_execution,
-        recurring.day_of_month,
-        recurring.day_of_week
+        recurring.frequency, recurring.next_execution, recurring.day_of_month, recurring.day_of_week
       );
-
       await updateRecurringTransaction(recurring.id, { next_execution: nextExecution });
-
-      toast({
-        title: 'Erfolg',
-        description: `Buchung "${recurring.description}" wurde ausgeführt.`,
-      });
-
+      toast({ title: 'Erfolg', description: `Buchung "${recurring.description}" wurde ausgeführt.` });
       return data;
     },
     [currentCompany, toast, updateRecurringTransaction]
   );
 
-  // Check and execute due recurring transactions
   const checkAndExecuteDueTransactions = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];
-    const dueTransactions = recurringTransactions.filter(
-      (t) => t.is_active && t.next_execution <= today && (!t.end_date || t.end_date >= today)
+    const due = recurringTransactions.filter(
+      t => t.is_active && t.next_execution <= today && (!t.end_date || t.end_date >= today)
     );
-
-    for (const transaction of dueTransactions) {
-      await executeRecurringTransaction(transaction);
-    }
-
-    return dueTransactions.length;
+    for (const t of due) await executeRecurringTransaction(t);
+    return due.length;
   }, [recurringTransactions, executeRecurringTransaction]);
 
   return {
-    recurringTransactions,
-    loading,
-    createRecurringTransaction,
-    updateRecurringTransaction,
-    deleteRecurringTransaction,
-    executeRecurringTransaction,
+    recurringTransactions, loading,
+    createRecurringTransaction, updateRecurringTransaction,
+    deleteRecurringTransaction, executeRecurringTransaction,
     checkAndExecuteDueTransactions,
   };
 }

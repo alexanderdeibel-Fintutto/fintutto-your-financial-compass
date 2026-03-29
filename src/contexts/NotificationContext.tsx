@@ -3,6 +3,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useSmartNotifications } from '@/hooks/useSmartNotifications';
 
 interface NotificationContextType {
   showOnboarding: boolean;
@@ -37,38 +38,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [user, businessCompanies, companiesLoading]);
 
-  // Send welcome notifications on first login
+  // Smart notifications engine – checks real data for actionable alerts
+  useSmartNotifications();
+
+  // Send welcome notification on very first login
   useEffect(() => {
     if (user && !welcomeSent && notifications.length === 0) {
       const hasSeenWelcome = localStorage.getItem(`welcome_sent_${user.id}`);
       if (!hasSeenWelcome) {
-        // Add demo notifications
         setTimeout(() => {
           addNotification({
             type: 'success',
-            title: 'Willkommen zurück!',
-            message: 'Schön, dass Sie wieder da sind.',
+            title: 'Willkommen bei Financial Compass!',
+            message: 'Ihr intelligentes Finanzcockpit ist bereit. Alle Daten werden in Echtzeit analysiert.',
           });
-        }, 1000);
-
-        setTimeout(() => {
-          addNotification({
-            type: 'warning',
-            title: '3 Rechnungen überfällig',
-            message: 'Sie haben offene Rechnungen, die das Fälligkeitsdatum überschritten haben.',
-            link: '/rechnungen',
-          });
-        }, 2000);
-
-        setTimeout(() => {
-          addNotification({
-            type: 'info',
-            title: 'Neue Buchung importiert',
-            message: 'Eine neue Transaktion wurde von FinAPI importiert.',
-            link: '/buchungen',
-          });
-        }, 3000);
-
+        }, 1500);
         localStorage.setItem(`welcome_sent_${user.id}`, 'true');
         setWelcomeSent(true);
       }
