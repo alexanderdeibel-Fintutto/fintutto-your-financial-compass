@@ -141,6 +141,8 @@ const navItems: NavItem[] = [
   { title: 'Budgetverwaltung', url: '/budget', icon: PiggyBank },
   { title: 'Liquiditätsplanung', url: '/liquiditaet', icon: LineChart, businessOnly: true },
   { title: 'Offene Posten', url: '/offene-posten', icon: ListChecks, businessOnly: true },
+  { title: 'Bankabgleich', url: '/bankabgleich', icon: Link2, businessOnly: true },
+  { title: 'Budgetanalyse', url: '/budget-analyse', icon: BarChart3, businessOnly: true },
   { title: 'KI-Assistent', url: '/ki-assistent', icon: Bot },
   {
     title: 'Buchhaltung', url: '/kassenbuch', icon: BookOpen,
