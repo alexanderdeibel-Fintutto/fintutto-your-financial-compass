@@ -51,6 +51,12 @@ const WealthDashboard = lazy(() => import("./pages/WealthDashboard"));
 const FinanceCockpit = lazy(() => import("./pages/FinanceCockpit"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 const Budget = lazy(() => import("./pages/Budget"));
+const Kassenbuch = lazy(() => import("./pages/Kassenbuch"));
+const Anlagenverwaltung = lazy(() => import("./pages/Anlagenverwaltung"));
+const Projektverwaltung = lazy(() => import("./pages/Projektverwaltung"));
+const Kostenstellen = lazy(() => import("./pages/Kostenstellen"));
+const Lohnabrechnung = lazy(() => import("./pages/Lohnabrechnung"));
+const SteuerAssistent = lazy(() => import("./pages/SteuerAssistent"));
 
 const queryClient = new QueryClient();
 
@@ -121,6 +127,12 @@ function AppRoutes() {
         <Route path="/cockpit" element={<ProtectedRoute><FinanceCockpit /></ProtectedRoute>} />
         <Route path="/ki-assistent" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
         <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
+        <Route path="/kassenbuch" element={<ProtectedRoute><Kassenbuch /></ProtectedRoute>} />
+        <Route path="/anlagenverwaltung" element={<ProtectedRoute><Anlagenverwaltung /></ProtectedRoute>} />
+        <Route path="/projekte" element={<ProtectedRoute><Projektverwaltung /></ProtectedRoute>} />
+        <Route path="/kostenstellen" element={<ProtectedRoute><Kostenstellen /></ProtectedRoute>} />
+        <Route path="/lohnabrechnung" element={<ProtectedRoute><Lohnabrechnung /></ProtectedRoute>} />
+        <Route path="/steuer-assistent" element={<ProtectedRoute><SteuerAssistent /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

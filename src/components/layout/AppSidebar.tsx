@@ -40,6 +40,12 @@ import {
   Gauge,
   Sparkles,
   PiggyBank,
+  BookOpen,
+  Package,
+  FolderKanban,
+  Layers,
+  UsersRound,
+  ShieldCheck,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -127,6 +133,22 @@ const navItems: NavItem[] = [
   { title: 'Kapitalverwaltung', url: '/kapital', icon: Wallet },
   { title: 'Budgetverwaltung', url: '/budget', icon: PiggyBank },
   { title: 'KI-Assistent', url: '/ki-assistent', icon: Bot },
+  {
+    title: 'Buchhaltung', url: '/kassenbuch', icon: BookOpen,
+    children: [
+      { title: 'Kassenbuch', url: '/kassenbuch', icon: BookOpen },
+      { title: 'Anlagenverwaltung', url: '/anlagenverwaltung', icon: Package },
+      { title: 'Kostenstellen', url: '/kostenstellen', icon: Layers },
+    ],
+  },
+  {
+    title: 'Personal', url: '/lohnabrechnung', icon: UsersRound,
+    children: [
+      { title: 'Lohnabrechnung', url: '/lohnabrechnung', icon: UsersRound },
+      { title: 'Projektverwaltung', url: '/projekte', icon: FolderKanban },
+    ],
+  },
+  { title: 'Steuer-Assistent', url: '/steuer-assistent', icon: ShieldCheck },
   {
     title: 'Einstellungen', url: '/einstellungen', icon: Settings,
     children: [
