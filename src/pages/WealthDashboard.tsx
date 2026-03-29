@@ -352,7 +352,11 @@ function BankAccountsOverview({ companyId }: { companyId: string }) {
 
   const total = accounts.reduce((s, a) => s + Number(a.balance || 0), 0);
 
-  if (loading) return <div className="text-sm text-muted-foreground py-2">Lade Konten...</div>;
+  if (loading) return (
+    <div className="space-y-2">
+      {[1,2].map(i => <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />)}
+    </div>
+  );
   if (accounts.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground text-sm">

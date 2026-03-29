@@ -353,7 +353,21 @@ export default function Budget() {
 
       {/* Budget-Liste */}
       {loading ? (
-        <div className="glass rounded-xl p-8 text-center text-muted-foreground">Laden...</div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="glass rounded-xl p-4 animate-pulse">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-3 h-3 rounded-full bg-muted" />
+                <div className="h-4 bg-muted rounded w-1/3" />
+              </div>
+              <div className="h-2 bg-muted rounded w-full mb-2" />
+              <div className="flex justify-between">
+                <div className="h-3 bg-muted rounded w-1/4" />
+                <div className="h-3 bg-muted rounded w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : budgets.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center">
           <Target className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />

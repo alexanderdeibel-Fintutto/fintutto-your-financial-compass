@@ -284,7 +284,18 @@ export default function Contacts() {
 
       {/* Contact List */}
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Lade Kontakte...</div>
+        <div className="grid gap-3">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="border rounded-lg p-4 animate-pulse flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-1/3" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
+              <div className="h-6 w-16 bg-muted rounded-full" />
+            </div>
+          ))}
+        </div>
       ) : filteredContacts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-4">

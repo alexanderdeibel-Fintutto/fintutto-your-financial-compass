@@ -452,7 +452,18 @@ export default function OrderConfirmations() {
       <Card className="glass">
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">Laden...</div>
+            <div className="p-4 space-y-3">
+              {[1,2,3].map(i => (
+                <div key={i} className="flex items-center gap-4 p-3 border rounded-lg animate-pulse">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/3" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                  <div className="h-6 w-20 bg-muted rounded-full" />
+                  <div className="h-6 w-24 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
           ) : filteredOrders.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
