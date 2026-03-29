@@ -81,8 +81,6 @@ interface MatchedTransaction {
 
 // ---------- Constants ----------
 
-const STORAGE_KEY = 'fintutto_assignment_rules';
-
 const fieldLabels: Record<string, string> = {
   description: 'Beschreibung',
   amount: 'Betrag',
@@ -113,17 +111,7 @@ const categories = [
   'Privateinlage',
 ];
 
-// ---------- Local-storage helpers ----------
-
-function getStoredRules(): AssignmentRule[] {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveStoredRules(rules: AssignmentRule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-}
-
+//
 // ---------- Page component ----------
 
 export default function AssignmentRules() {
@@ -149,12 +137,18 @@ export default function AssignmentRules() {
   const [formActive, setFormActive] = useState(true);
   const [applyHistorical, setApplyHistorical] = useState(true);
 
-  // Load rules
+  // Load rules from Supabase
   useEffect(() => {
     if (!currentCompany) return;
-    const all = getStoredRules();
-    setRules(all.filter((r) => r.company_id === currentCompany.id));
-    setLoading(false);
+    (supabase as any)
+      .from('assignment_rules')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('priority', { ascending: false })
+      .then(({ data }: { data: AssignmentRule[] | null }) => {
+        setRules(data || []);
+        setLoading(false);
+      });
   }, [currentCompany]);
 
   const resetForm = () => {
@@ -261,48 +255,38 @@ export default function AssignmentRules() {
   };
 
   // Persist rule + optionally apply to selected transactions
-  const persistRule = (applyIds?: string[]) => {
+  const persistRule = async (applyIds?: string[]) => {
     if (!currentCompany) return;
-
-    const allRules = getStoredRules();
-    const now = new Date().toISOString();
-
+    const rulePayload = {
+      company_id: currentCompany.id,
+      name: formName,
+      field: formField,
+      operator: formOperator,
+      value: formValue,
+      target_category: formCategory,
+      is_active: formActive,
+      conditions: [{ field: formField, operator: formOperator, value: formValue }],
+      actions: [{ type: 'set_category', value: formCategory }],
+    };
+    let err;
     if (selectedRule) {
-      // Update
-      const idx = allRules.findIndex((r) => r.id === selectedRule.id);
-      if (idx >= 0) {
-        allRules[idx] = {
-          ...allRules[idx],
-          name: formName,
-          field: formField,
-          operator: formOperator,
-          value: formValue,
-          target_category: formCategory,
-          is_active: formActive,
-        };
-      }
+      ({ error: err } = await (supabase as any).from('assignment_rules').update(rulePayload).eq('id', selectedRule.id));
     } else {
-      // Create
-      const newRule: AssignmentRule = {
-        id: crypto.randomUUID(),
-        company_id: currentCompany.id,
-        name: formName,
-        field: formField,
-        operator: formOperator,
-        value: formValue,
-        target_category: formCategory,
-        is_active: formActive,
-        created_at: now,
-      };
-      allRules.push(newRule);
+      ({ error: err } = await (supabase as any).from('assignment_rules').insert(rulePayload));
     }
-
-    saveStoredRules(allRules);
-    setRules(allRules.filter((r) => r.company_id === currentCompany.id));
+    if (err) {
+      toast({ title: 'Fehler', description: (err as any).message, variant: 'destructive' });
+      return;
+    }
+    // Refresh rules
+    const { data } = await (supabase as any)
+      .from('assignment_rules')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('priority', { ascending: false });
+    setRules(data || []);
     toast({ title: 'Erfolg', description: 'Zuordnungsregel gespeichert.' });
     resetForm();
-
-    // Apply to historical transactions
     if (applyIds && applyIds.length > 0) {
       applyToTransactions(applyIds);
     }
@@ -340,24 +324,23 @@ export default function AssignmentRules() {
     setPreviewOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedRule || !currentCompany) return;
-    const allRules = getStoredRules().filter((r) => r.id !== selectedRule.id);
-    saveStoredRules(allRules);
-    setRules(allRules.filter((r) => r.company_id === currentCompany.id));
+    const { error } = await (supabase as any).from('assignment_rules').delete().eq('id', selectedRule.id);
+    if (error) {
+      toast({ title: 'Fehler', description: (error as any).message, variant: 'destructive' });
+      return;
+    }
+    setRules((prev) => prev.filter((r) => r.id !== selectedRule.id));
     toast({ title: 'Erfolg', description: 'Zuordnungsregel gelöscht.' });
     setDeleteDialogOpen(false);
     setSelectedRule(null);
   };
 
-  const toggleRuleActive = (rule: AssignmentRule) => {
-    const allRules = getStoredRules();
-    const idx = allRules.findIndex((r) => r.id === rule.id);
-    if (idx >= 0) {
-      allRules[idx].is_active = !allRules[idx].is_active;
-      saveStoredRules(allRules);
-      setRules(allRules.filter((r) => r.company_id === currentCompany!.id));
-    }
+  const toggleRuleActive = async (rule: AssignmentRule) => {
+    const newActive = !rule.is_active;
+    await (supabase as any).from('assignment_rules').update({ is_active: newActive }).eq('id', rule.id);
+    setRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, is_active: newActive } : r));
   };
 
   const toggleTransactionSelection = (id: string) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AutomationRule {
   id: string;
@@ -27,17 +28,6 @@ export interface RuleAction {
   template_id?: string;
 }
 
-const STORAGE_KEY = 'fintutto_automation_rules';
-
-function getStoredRules(): AutomationRule[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveRules(rules: AutomationRule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-}
 
 const defaultRules: Omit<AutomationRule, 'id' | 'company_id' | 'created_at' | 'updated_at'>[] = [
   {
@@ -94,24 +84,26 @@ export function useAutomationRules() {
     }
   }, [currentCompany]);
 
-  const loadRules = () => {
+  const loadRules = async () => {
     if (!currentCompany) return;
+    setLoading(true);
 
-    const allRules = getStoredRules();
-    let companyRules = allRules.filter((r) => r.company_id === currentCompany.id);
+    const { data, error } = await (supabase as any)
+      .from('automation_rules')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('created_at', { ascending: true });
 
-    // Initialize with default rules if none exist
+    if (error) { setLoading(false); return; }
+
+    let companyRules: AutomationRule[] = data || [];
+
+    // Seed default rules for new companies
     if (companyRules.length === 0) {
-      const now = new Date().toISOString();
-      companyRules = defaultRules.map((rule) => ({
-        ...rule,
-        id: crypto.randomUUID(),
-        company_id: currentCompany.id,
-        created_at: now,
-        updated_at: now,
-      }));
-      const updatedRules = [...allRules, ...companyRules];
-      saveRules(updatedRules);
+      const seeds = defaultRules.map((rule) => ({ ...rule, company_id: currentCompany.id }));
+      const { data: seeded } = await (supabase as any)
+        .from('automation_rules').insert(seeds).select();
+      companyRules = seeded || [];
     }
 
     setRules(companyRules);
@@ -121,72 +113,36 @@ export function useAutomationRules() {
   const createRule = useCallback(
     async (data: Omit<AutomationRule, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
       if (!currentCompany) return null;
-
-      const now = new Date().toISOString();
-      const newRule: AutomationRule = {
-        ...data,
-        id: crypto.randomUUID(),
-        company_id: currentCompany.id,
-        created_at: now,
-        updated_at: now,
-      };
-
-      const allRules = getStoredRules();
-      allRules.push(newRule);
-      saveRules(allRules);
-
-      setRules((prev) => [...prev, newRule]);
-
-      toast({
-        title: 'Erfolg',
-        description: 'Automatisierungsregel wurde erstellt.',
-      });
-
-      return newRule;
+      const { data: created, error } = await (supabase as any)
+        .from('automation_rules')
+        .insert({ ...data, company_id: currentCompany.id })
+        .select().single();
+      if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return null; }
+      setRules((prev) => [...prev, created]);
+      toast({ title: 'Erfolg', description: 'Automatisierungsregel wurde erstellt.' });
+      return created as AutomationRule;
     },
     [currentCompany, toast]
   );
 
   const updateRule = useCallback(
     async (id: string, data: Partial<AutomationRule>) => {
-      const allRules = getStoredRules();
-      const index = allRules.findIndex((r) => r.id === id);
-
-      if (index === -1) return null;
-
-      const updated: AutomationRule = {
-        ...allRules[index],
-        ...data,
-        updated_at: new Date().toISOString(),
-      };
-
-      allRules[index] = updated;
-      saveRules(allRules);
-
+      const { data: updated, error } = await (supabase as any)
+        .from('automation_rules').update(data).eq('id', id).select().single();
+      if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return null; }
       setRules((prev) => prev.map((r) => (r.id === id ? updated : r)));
-
-      toast({
-        title: 'Erfolg',
-        description: 'Automatisierungsregel wurde aktualisiert.',
-      });
-
-      return updated;
+      toast({ title: 'Erfolg', description: 'Automatisierungsregel wurde aktualisiert.' });
+      return updated as AutomationRule;
     },
     [toast]
   );
 
   const deleteRule = useCallback(
     async (id: string) => {
-      const allRules = getStoredRules();
-      const filtered = allRules.filter((r) => r.id !== id);
-      saveRules(filtered);
-
+      const { error } = await (supabase as any).from('automation_rules').delete().eq('id', id);
+      if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
       setRules((prev) => prev.filter((r) => r.id !== id));
-
-      toast({
-        title: 'Erfolg',
-        description: 'Automatisierungsregel wurde gelöscht.',
-      });
+      toast({ title: 'Erfolg', description: 'Automatisierungsregel wurde gelöscht.' });
     },
     [toast]
   );

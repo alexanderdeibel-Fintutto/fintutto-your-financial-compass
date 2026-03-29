@@ -84,8 +84,6 @@ interface OrderItem {
   tax_rate: number;
 }
 
-const STORAGE_KEY = 'fintutto_order_confirmations';
-
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   confirmed: 'bg-info/20 text-info',
@@ -113,15 +111,6 @@ const statusIcons: Record<string, React.ComponentType<{ className?: string }>> =
   cancelled: XCircle,
 };
 
-function getStoredOrders(): OrderConfirmation[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveOrders(orders: OrderConfirmation[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-}
 
 export default function OrderConfirmations() {
   const { currentCompany } = useCompany();
@@ -161,16 +150,16 @@ export default function OrderConfirmations() {
       setContacts(contactsData);
     }
 
-    // Load orders from localStorage
-    const allOrders = getStoredOrders();
-    const companyOrders = allOrders.filter((o) => (o as any).company_id === currentCompany.id);
-
-    // Enrich with contact names
-    const enrichedOrders = companyOrders.map((order) => {
+    // Load orders from Supabase
+    const { data: ordersData } = await (supabase as any)
+      .from('order_confirmations')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('created_at', { ascending: false });
+    const enrichedOrders = (ordersData || []).map((order: any) => {
       const contact = contactsData?.find((c) => c.id === order.contact_id);
       return { ...order, contact_name: contact?.name };
     });
-
     setOrders(enrichedOrders);
     setLoading(false);
   };
@@ -246,56 +235,47 @@ export default function OrderConfirmations() {
 
     const { netAmount, taxAmount, grossAmount } = calculateTotals(formData.items);
 
-    const orderData: OrderConfirmation = {
-      id: selectedOrder?.id || crypto.randomUUID(),
+    const orderPayload = {
+      company_id: currentCompany.id,
       order_number: selectedOrder?.order_number || generateOrderNumber(),
       contact_id: formData.contact_id || null,
-      status: selectedOrder?.status || 'draft',
+      status: (selectedOrder?.status || 'draft') as OrderConfirmation['status'],
       amount: grossAmount,
       tax_amount: taxAmount,
       delivery_date: deliveryDate.toISOString().split('T')[0],
       issue_date: selectedOrder?.issue_date || new Date().toISOString().split('T')[0],
       description: formData.description || null,
       items: formData.items,
-      created_at: selectedOrder?.created_at || new Date().toISOString(),
     };
-
-    const allOrders = getStoredOrders();
-
+    let saveError;
     if (selectedOrder) {
-      const index = allOrders.findIndex((o) => o.id === selectedOrder.id);
-      if (index !== -1) {
-        allOrders[index] = { ...orderData, company_id: currentCompany.id } as any;
-      }
+      ({ error: saveError } = await (supabase as any).from('order_confirmations').update(orderPayload).eq('id', selectedOrder.id));
     } else {
-      allOrders.push({ ...orderData, company_id: currentCompany.id } as any);
+      ({ error: saveError } = await (supabase as any).from('order_confirmations').insert(orderPayload));
     }
-
-    saveOrders(allOrders);
-
+    if (saveError) {
+      toast({ title: 'Fehler', description: (saveError as any).message, variant: 'destructive' });
+      return;
+    }
     toast({
       title: 'Erfolg',
       description: selectedOrder ? 'Auftragsbestätigung wurde aktualisiert.' : 'Auftragsbestätigung wurde erstellt.',
     });
-
     setDialogOpen(false);
     resetForm();
     fetchData();
   };
 
   const handleStatusChange = async (order: OrderConfirmation, newStatus: OrderConfirmation['status']) => {
-    const allOrders = getStoredOrders();
-    const index = allOrders.findIndex((o) => o.id === order.id);
-
-    if (index !== -1) {
-      allOrders[index] = { ...allOrders[index], status: newStatus };
-      saveOrders(allOrders);
-
+    const { error } = await (supabase as any)
+      .from('order_confirmations')
+      .update({ status: newStatus })
+      .eq('id', order.id);
+    if (!error) {
       toast({
         title: 'Status aktualisiert',
         description: `Auftrag ${order.order_number} ist jetzt "${statusLabels[newStatus]}".`,
       });
-
       fetchData();
     }
   };
@@ -338,15 +318,12 @@ export default function OrderConfirmations() {
   const handleDelete = async () => {
     if (!selectedOrder) return;
 
-    const allOrders = getStoredOrders();
-    const filtered = allOrders.filter((o) => o.id !== selectedOrder.id);
-    saveOrders(filtered);
-
-    toast({
-      title: 'Erfolg',
-      description: 'Auftragsbestätigung wurde gelöscht.',
-    });
-
+    const { error } = await (supabase as any).from('order_confirmations').delete().eq('id', selectedOrder.id);
+    if (error) {
+      toast({ title: 'Fehler', description: (error as any).message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Erfolg', description: 'Auftragsbestätigung wurde gelöscht.' });
     setDeleteDialogOpen(false);
     setSelectedOrder(null);
     fetchData();

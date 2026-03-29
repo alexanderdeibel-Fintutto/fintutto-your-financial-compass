@@ -83,8 +83,6 @@ interface QuoteItem {
   tax_rate: number;
 }
 
-const STORAGE_KEY = 'fintutto_quotes';
-
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   sent: 'bg-info/20 text-info',
@@ -109,15 +107,6 @@ const statusIcons: Record<string, React.ComponentType<{ className?: string }>> =
   expired: Clock,
 };
 
-function getStoredQuotes(): Quote[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveQuotes(quotes: Quote[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
-}
 
 export default function Quotes() {
   const { currentCompany } = useCompany();
@@ -157,16 +146,16 @@ export default function Quotes() {
       setContacts(contactsData);
     }
 
-    // Load quotes from localStorage
-    const allQuotes = getStoredQuotes();
-    const companyQuotes = allQuotes.filter((q) => (q as any).company_id === currentCompany.id);
-
-    // Enrich with contact names
-    const enrichedQuotes = companyQuotes.map((quote) => {
+    // Load quotes from Supabase
+    const { data: quotesData } = await (supabase as any)
+      .from('quotes')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('created_at', { ascending: false });
+    const enrichedQuotes = (quotesData || []).map((quote: any) => {
       const contact = contactsData?.find((c) => c.id === quote.contact_id);
       return { ...quote, contact_name: contact?.name };
     });
-
     setQuotes(enrichedQuotes);
     setLoading(false);
   };
@@ -242,56 +231,47 @@ export default function Quotes() {
 
     const { netAmount, taxAmount, grossAmount } = calculateTotals(formData.items);
 
-    const quoteData: Quote = {
-      id: selectedQuote?.id || crypto.randomUUID(),
+    const quotePayload = {
+      company_id: currentCompany.id,
       quote_number: selectedQuote?.quote_number || generateQuoteNumber(),
       contact_id: formData.contact_id || null,
-      status: selectedQuote?.status || 'draft',
+      status: (selectedQuote?.status || 'draft') as Quote['status'],
       amount: grossAmount,
       tax_amount: taxAmount,
       valid_until: validUntil.toISOString().split('T')[0],
       issue_date: selectedQuote?.issue_date || new Date().toISOString().split('T')[0],
       description: formData.description || null,
       items: formData.items,
-      created_at: selectedQuote?.created_at || new Date().toISOString(),
     };
-
-    const allQuotes = getStoredQuotes();
-
+    let saveError;
     if (selectedQuote) {
-      const index = allQuotes.findIndex((q) => q.id === selectedQuote.id);
-      if (index !== -1) {
-        allQuotes[index] = { ...quoteData, company_id: currentCompany.id } as any;
-      }
+      ({ error: saveError } = await (supabase as any).from('quotes').update(quotePayload).eq('id', selectedQuote.id));
     } else {
-      allQuotes.push({ ...quoteData, company_id: currentCompany.id } as any);
+      ({ error: saveError } = await (supabase as any).from('quotes').insert(quotePayload));
     }
-
-    saveQuotes(allQuotes);
-
+    if (saveError) {
+      toast({ title: 'Fehler', description: (saveError as any).message, variant: 'destructive' });
+      return;
+    }
     toast({
       title: 'Erfolg',
       description: selectedQuote ? 'Angebot wurde aktualisiert.' : 'Angebot wurde erstellt.',
     });
-
     setDialogOpen(false);
     resetForm();
     fetchData();
   };
 
   const handleStatusChange = async (quote: Quote, newStatus: Quote['status']) => {
-    const allQuotes = getStoredQuotes();
-    const index = allQuotes.findIndex((q) => q.id === quote.id);
-
-    if (index !== -1) {
-      allQuotes[index] = { ...allQuotes[index], status: newStatus };
-      saveQuotes(allQuotes);
-
+    const { error } = await (supabase as any)
+      .from('quotes')
+      .update({ status: newStatus })
+      .eq('id', quote.id);
+    if (!error) {
       toast({
         title: 'Status aktualisiert',
         description: `Angebot ${quote.quote_number} ist jetzt "${statusLabels[newStatus]}".`,
       });
-
       fetchData();
     }
   };
@@ -337,18 +317,15 @@ export default function Quotes() {
   const handleDelete = async () => {
     if (!selectedQuote) return;
 
-    const allQuotes = getStoredQuotes();
-    const filtered = allQuotes.filter((q) => q.id !== selectedQuote.id);
-    saveQuotes(filtered);
-
-    toast({
-      title: 'Erfolg',
-      description: 'Angebot wurde gelöscht.',
-    });
-
+    const { error } = await (supabase as any).from('quotes').delete().eq('id', selectedQuote.id);
+    if (error) {
+      toast({ title: 'Fehler', description: (error as any).message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Erfolg', description: 'Angebot wurde gelöscht.' });
     setDeleteDialogOpen(false);
     setSelectedQuote(null);
-    fetchData();
+    fetchData();;
   };
 
   const formatCurrency = (amount: number) => {
