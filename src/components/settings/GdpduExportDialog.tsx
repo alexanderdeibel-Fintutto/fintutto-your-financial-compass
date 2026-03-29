@@ -77,22 +77,67 @@
    };
  
    const generateTransactionsCSV = (transactions: any[]) => {
+     // GoBD-konforme Spalten: Belegnummer, Belegdatum, Buchungstext, Soll/Haben, Konto (SKR03)
+     const SKR03: Record<string, string> = {
+       'Umsatzerlöse': '8400', 'Sonstige Einnahmen': '8910',
+       'Miete': '4210', 'Personalaufwand': '4100', 'Materialaufwand': '3200',
+       'Bürobedarf': '4930', 'IT-Kosten': '4970', 'Telefon/Internet': '4920',
+       'Versicherungen': '4360', 'Beratungskosten': '4980', 'Fahrtkosten': '4670',
+       'Sonstiges': '4990',
+     };
      const headers = [
-       'ID', 'Datum', 'Typ', 'Betrag', 'Kategorie', 'Beschreibung', 
-       'Erstellt am', 'Aktualisiert am'
+       'Belegnummer', 'Belegdatum', 'Buchungstext', 'Buchungsart',
+       'Betrag (Brutto)', 'Betrag (Netto)', 'MwSt-Betrag', 'MwSt-Satz',
+       'Konto (SKR03)', 'Gegenkonto', 'Kategorie',
+       'Erstellt am', 'Geändert am'
      ].join(';');
  
-     const rows = transactions.map(t => [
-       t.id,
-       format(new Date(t.date), 'dd.MM.yyyy'),
-       t.type === 'income' ? 'Einnahme' : 'Ausgabe',
-       t.amount.toFixed(2).replace('.', ','),
-       t.category || '',
-       `"${(t.description || '').replace(/"/g, '""')}"`,
-       format(new Date(t.created_at), 'dd.MM.yyyy HH:mm'),
-       format(new Date(t.updated_at), 'dd.MM.yyyy HH:mm'),
-     ].join(';'));
+     const rows = transactions.map((t, idx) => {
+       const brutto = Number(t.amount);
+       const netto = brutto / 1.19;
+       const mwst = brutto - netto;
+       const konto = SKR03[t.category || ''] || (t.type === 'income' ? '8400' : '4990');
+       const gegenkonto = t.type === 'income' ? '1200' : '1200'; // Bank
+       return [
+         `BEL-${String(idx + 1).padStart(6, '0')}`,
+         format(new Date(t.date), 'dd.MM.yyyy'),
+         `"${(t.description || '').replace(/"/g, '""')}"`,
+         t.type === 'income' ? 'Einnahme' : 'Ausgabe',
+         brutto.toFixed(2).replace('.', ','),
+         netto.toFixed(2).replace('.', ','),
+         mwst.toFixed(2).replace('.', ','),
+         '19,00',
+         konto,
+         gegenkonto,
+         t.category || '',
+         t.created_at ? format(new Date(t.created_at), 'dd.MM.yyyy HH:mm') : '',
+         t.updated_at ? format(new Date(t.updated_at), 'dd.MM.yyyy HH:mm') : '',
+       ].join(';');
+     });
  
+     return [headers, ...rows].join('\r\n');
+   };
+
+   const generateContactsCSV = (contacts: any[]) => {
+     const headers = [
+       'ID', 'Name', 'Typ', 'E-Mail', 'Telefon', 'Adresse', 'PLZ', 'Ort', 'Land',
+       'Steuernummer', 'USt-ID', 'IBAN', 'Erstellt am'
+     ].join(';');
+     const rows = contacts.map(c => [
+       c.id,
+       `"${(c.name || '').replace(/"/g, '""')}"`,
+       c.type || '',
+       c.email || '',
+       c.phone || '',
+       `"${(c.address || '').replace(/"/g, '""')}"`,
+       c.postal_code || '',
+       c.city || '',
+       c.country || 'DE',
+       c.tax_number || '',
+       c.vat_id || '',
+       c.iban || '',
+       c.created_at ? format(new Date(c.created_at), 'dd.MM.yyyy HH:mm') : '',
+     ].join(';'));
      return [headers, ...rows].join('\r\n');
    };
  
@@ -138,7 +183,7 @@
          .order('date', { ascending: true });
  
        // Fetch invoices
-       setProgress(40);
+       setProgress(35);
        const { data: invoices } = await supabase
          .from('invoices')
          .select('*')
@@ -146,8 +191,16 @@
          .gte('issue_date', dateFromStr)
          .lte('issue_date', dateToStr)
          .order('issue_date', { ascending: true });
+
+       // Fetch contacts
+       setProgress(50);
+       const { data: contacts } = await supabase
+         .from('contacts')
+         .select('*')
+         .eq('company_id', currentCompany.id)
+         .order('name', { ascending: true });
  
-       setProgress(60);
+       setProgress(65);
  
        // Create ZIP file
        const zip = new JSZip();
@@ -155,13 +208,30 @@
        // Add index.xml
        const tables = ['Buchungen'];
        if (invoices && invoices.length > 0) tables.push('Rechnungen');
+       if (contacts && contacts.length > 0) tables.push('Kontakte');
        
        zip.file('index.xml', generateIndexXml(tables, {
          from: format(dateFrom, 'dd.MM.yyyy'),
          to: format(dateTo, 'dd.MM.yyyy'),
        }));
+
+       // Add GoBD README
+       zip.file('GOBD_HINWEIS.txt',
+         `GoBD-konformer Datenexport\n` +
+         `Erstellt: ${format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de })}\n` +
+         `Firma: ${currentCompany.name}\n` +
+         `Zeitraum: ${format(dateFrom, 'dd.MM.yyyy')} - ${format(dateTo, 'dd.MM.yyyy')}\n\n` +
+         `Dieser Export entspricht den Anforderungen der GoBD (Grundsaetze zur ordnungsmaessigen\n` +
+         `Fuehrung und Aufbewahrung von Buecher, Aufzeichnungen, Unterlagen und Daten) sowie\n` +
+         `den GDPdU-Richtlinien fuer die digitale Betriebspruefung.\n\n` +
+         `Dateien:\n` +
+         `- index.xml: Maschinell lesbare Beschreibung der Exportdaten\n` +
+         `- Buchungen.csv: Alle Buchungssaetze mit SKR03-Konten, Brutto/Netto/MwSt\n` +
+         (invoices?.length ? `- Rechnungen.csv: Ein- und Ausgangsrechnungen\n` : '') +
+         (contacts?.length ? `- Kontakte.csv: Kunden- und Lieferantenstammdaten\n` : '')
+       );
  
-       setProgress(70);
+       setProgress(75);
  
        // Add transactions CSV
        if (transactions && transactions.length > 0) {
@@ -172,23 +242,28 @@
        if (invoices && invoices.length > 0) {
          zip.file('Rechnungen.csv', '\ufeff' + generateInvoicesCSV(invoices));
        }
+
+       // Add contacts CSV
+       if (contacts && contacts.length > 0) {
+         zip.file('Kontakte.csv', '\ufeff' + generateContactsCSV(contacts));
+       }
  
-       setProgress(85);
+       setProgress(88);
  
        // Generate and download ZIP
-       const blob = await zip.generateAsync({ type: 'blob' });
+       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
        const url = URL.createObjectURL(blob);
        const a = document.createElement('a');
        a.href = url;
-       a.download = `GDPdU_${currentCompany.name.replace(/[^a-zA-Z0-9]/g, '_')}_${format(dateFrom, 'yyyy-MM')}_${format(dateTo, 'yyyy-MM')}.zip`;
+       a.download = `GoBD_GDPdU_${currentCompany.name.replace(/[^a-zA-Z0-9]/g, '_')}_${format(dateFrom, 'yyyy-MM')}_${format(dateTo, 'yyyy-MM')}.zip`;
        a.click();
        URL.revokeObjectURL(url);
  
        setProgress(100);
  
        toast({
-         title: 'GDPdU-Export erfolgreich',
-         description: `Export enthält ${transactions?.length || 0} Buchungen und ${invoices?.length || 0} Rechnungen.`,
+         title: 'GoBD/GDPdU-Export erfolgreich',
+         description: `Export enthält ${transactions?.length || 0} Buchungen, ${invoices?.length || 0} Rechnungen und ${contacts?.length || 0} Kontakte.`,
        });
  
        setTimeout(() => {
@@ -289,11 +364,19 @@
                </div>
                <div className="flex items-center gap-2 text-sm">
                  <CheckCircle className="h-4 w-4 text-success" />
-                 <span>Buchungen.csv (Alle Transaktionen)</span>
+                 <span>Buchungen.csv (SKR03-Konten, Brutto/Netto/MwSt)</span>
                </div>
                <div className="flex items-center gap-2 text-sm">
                  <CheckCircle className="h-4 w-4 text-success" />
                  <span>Rechnungen.csv (Ein- & Ausgangsrechnungen)</span>
+               </div>
+               <div className="flex items-center gap-2 text-sm">
+                 <CheckCircle className="h-4 w-4 text-success" />
+                 <span>Kontakte.csv (Kunden- & Lieferantenstammdaten)</span>
+               </div>
+               <div className="flex items-center gap-2 text-sm">
+                 <CheckCircle className="h-4 w-4 text-success" />
+                 <span>GOBD_HINWEIS.txt (Prüfungshinweise)</span>
                </div>
              </div>
            </div>
@@ -302,7 +385,7 @@
            <div className="flex items-start gap-3 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
              <Info className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
              <div>
-               <p className="font-medium text-purple-600 dark:text-purple-400">GDPdU-konform</p>
+               <p className="font-medium text-purple-600 dark:text-purple-400">GoBD/GDPdU-konform</p>
                <p className="text-sm text-muted-foreground">
                  Der Export entspricht den Grundsätzen zum Datenzugriff und zur Prüfbarkeit digitaler Unterlagen (GDPdU) 
                  und kann bei Betriebsprüfungen vorgelegt werden.

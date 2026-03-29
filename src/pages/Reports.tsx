@@ -1,8 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
-import {
-  BarChart3, TrendingUp, PieChart, Building2, FileText, FileSpreadsheet,
-  Download, Printer, ArrowUp, ArrowDown, LineChart, Wallet
-} from 'lucide-react';
+ import { useState, useEffect } from 'react';
+ import {
+   BarChart3, TrendingUp, PieChart, Building2, FileText, FileSpreadsheet,
+   Download, Printer, ArrowUp, ArrowDown, LineChart, Wallet, Search
+ } from 'lucide-react';
+ import { Input } from '@/components/ui/input';
+ import { Badge } from '@/components/ui/badge';
+ import {
+   exportBWApdf, exportGuVpdf, exportJournalPdf, exportSuSaPdf, exportUStVApdf
+ } from '@/lib/reportPdf';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -46,9 +51,20 @@ interface ReportData {
   expenses: number;
   profit: number;
   expensesByCategory: Record<string, number>;
+  incomeByCategory: Record<string, number>;
   prevMonthIncome: number;
   prevMonthExpenses: number;
   prevMonthProfit: number;
+}
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string | null;
+  amount: number;
+  type: string;
+  category: string | null;
+  contact_id: string | null;
 }
 
 const reportOptions: ReportOption[] = [
@@ -76,11 +92,13 @@ export default function Reports() {
   const [selectedReport, setSelectedReport] = useState<ReportType>('bwa');
   const [selectedPeriod, setSelectedPeriod] = useState('current-month');
   const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [reportData, setReportData] = useState<ReportData>({
     income: 0,
     expenses: 0,
     profit: 0,
     expensesByCategory: {},
+    incomeByCategory: {},
     prevMonthIncome: 0,
     prevMonthExpenses: 0,
     prevMonthProfit: 0,
@@ -158,28 +176,42 @@ export default function Reports() {
       .gte('date', prevMonthStart.toISOString().split('T')[0])
       .lte('date', prevMonthEnd.toISOString().split('T')[0]);
 
-    const income = transactions?.filter(t => t.type === 'income')
+      const income = transactions?.filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
     const expenses = transactions?.filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-
     const prevMonthIncome = prevTransactions?.filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
     const prevMonthExpenses = prevTransactions?.filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-
     const expensesByCategory = transactions?.filter(t => t.type === 'expense')
       .reduce((acc, t) => {
         const category = t.category || 'Sonstiges';
         acc[category] = (acc[category] || 0) + Number(t.amount);
         return acc;
       }, {} as Record<string, number>) || {};
-
+    const incomeByCategory = transactions?.filter(t => t.type === 'income')
+      .reduce((acc, t) => {
+        const category = t.category || 'Umsatzerlöse';
+        acc[category] = (acc[category] || 0) + Number(t.amount);
+        return acc;
+      }, {} as Record<string, number>) || {};
+    // Store raw transactions for Journal/SuSa
+    setTransactions((transactions || []).map(t => ({
+      id: t.id,
+      date: t.date,
+      description: t.description,
+      amount: Number(t.amount),
+      type: t.type,
+      category: t.category,
+      contact_id: t.contact_id,
+    })));
     setReportData({
       income,
       expenses,
       profit: income - expenses,
       expensesByCategory,
+      incomeByCategory,
       prevMonthIncome,
       prevMonthExpenses,
       prevMonthProfit: prevMonthIncome - prevMonthExpenses,
@@ -209,23 +241,49 @@ export default function Reports() {
     window.print();
   };
 
+  const getPeriodLabel = () => {
+    return periods.find(p => p.value === selectedPeriod)?.label || selectedPeriod;
+  };
+
   const handleExport = () => {
-    const profitChange = calculateChange(reportData.profit, reportData.prevMonthProfit);
-    const rows = [
-      ['Position', 'Aktuell', 'Vormonat', 'Abweichung'],
-      ['Umsatzerlöse', reportData.income, reportData.prevMonthIncome, calculateChange(reportData.income, reportData.prevMonthIncome).toFixed(1) + '%'],
-      ...Object.entries(reportData.expensesByCategory).map(([cat, val]) => [cat, val, '', '']),
-      ['Summe Aufwand', reportData.expenses, reportData.prevMonthExpenses, calculateChange(reportData.expenses, reportData.prevMonthExpenses).toFixed(1) + '%'],
-      ['Betriebsergebnis', reportData.profit, reportData.prevMonthProfit, profitChange.toFixed(1) + '%'],
-    ];
-    
-    const csv = rows.map(row => row.join(';')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `bwa-${selectedPeriod}.csv`;
-    link.click();
+    const pdfOpts = {
+      companyName: currentCompany?.name || 'Unbekannte Firma',
+      period: getPeriodLabel(),
+      reportType: selectedReport,
+    };
+    switch (selectedReport) {
+      case 'bwa':
+        exportBWApdf(reportData, pdfOpts);
+        break;
+      case 'guv':
+        exportGuVpdf(reportData, pdfOpts);
+        break;
+      case 'journal':
+        exportJournalPdf(transactions, pdfOpts);
+        break;
+      case 'susa':
+        exportSuSaPdf(reportData, transactions, pdfOpts);
+        break;
+      case 'ustva':
+        exportUStVApdf(reportData, pdfOpts);
+        break;
+      default: {
+        // CSV-Fallback für Bilanz
+        const rows = [
+          ['Position', 'Aktuell', 'Vormonat'],
+          ['Umsatzerlöse', reportData.income, reportData.prevMonthIncome],
+          ...Object.entries(reportData.expensesByCategory).map(([cat, val]) => [cat, val, '']),
+          ['Betriebsergebnis', reportData.profit, reportData.prevMonthProfit],
+        ];
+        const csv = rows.map(row => row.join(';')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${selectedReport}-${selectedPeriod}.csv`;
+        link.click();
+      }
+    }
   };
 
   if (!currentCompany) {
@@ -331,16 +389,14 @@ export default function Reports() {
               {selectedReport === 'bilanz' && (
                 <BilanzReport data={reportData} formatCurrency={formatCurrency} />
               )}
-              {(selectedReport === 'ustva' || selectedReport === 'journal' || selectedReport === 'susa') && (
-                <div className="glass rounded-xl p-12 text-center">
-                  <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-lg font-medium mb-2">
-                    {reportOptions.find(r => r.id === selectedReport)?.label}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Dieser Bericht wird in einer zukünftigen Version verfügbar sein.
-                  </p>
-                </div>
+              {selectedReport === 'ustva' && (
+                <UStVAReport data={reportData} formatCurrency={formatCurrency} />
+              )}
+              {selectedReport === 'journal' && (
+                <JournalReport transactions={transactions} formatCurrency={formatCurrency} />
+              )}
+              {selectedReport === 'susa' && (
+                <SuSaReport data={reportData} transactions={transactions} formatCurrency={formatCurrency} />
               )}
             </>
           )}
@@ -713,6 +769,379 @@ function BilanzReport({
             </TableBody>
           </Table>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UStVA Report Component
+// ─────────────────────────────────────────────────────────────────────────────
+function UStVAReport({
+  data,
+  formatCurrency,
+}: {
+  data: ReportData;
+  formatCurrency: (n: number) => string;
+}) {
+  // Netto-Umsätze (Brutto / 1.19)
+  const netto19 = data.income / 1.19;
+  const ust19 = netto19 * 0.19;
+  // Vorsteuer aus Ausgaben
+  const vorsteuer = (data.expenses / 1.19) * 0.19;
+  // Vorauszahlung
+  const vorauszahlung = ust19 - vorsteuer;
+
+  const rows: { label: string; kz: string; value: number; highlight?: boolean }[] = [
+    { label: 'Steuerpflichtige Umsätze 19 %', kz: '81', value: netto19 },
+    { label: 'Steuerpflichtige Umsätze 7 %', kz: '86', value: 0 },
+    { label: 'Steuer auf KZ 81 (19 %)', kz: '83', value: ust19 },
+    { label: 'Steuer auf KZ 86 (7 %)', kz: '93', value: 0 },
+    { label: 'Abziehbare Vorsteuerbeträge', kz: '66', value: vorsteuer },
+    { label: 'Verbleibende USt-Vorauszahlung', kz: '69', value: vorauszahlung, highlight: true },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="glass rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-border/50 bg-orange-500/10">
+          <h2 className="text-lg font-bold text-orange-500">Umsatzsteuer-Voranmeldung (UStVA)</h2>
+          <p className="text-sm text-muted-foreground">Automatisch berechnet aus Transaktionen</p>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/50">
+              <TableHead>Bezeichnung</TableHead>
+              <TableHead className="text-center w-20">KZ</TableHead>
+              <TableHead className="text-right">Betrag</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow
+                key={row.kz}
+                className={cn(
+                  'border-border/30',
+                  row.highlight && (vorauszahlung >= 0 ? 'bg-red-500/10 border-t-2 border-red-500/40' : 'bg-green-500/10 border-t-2 border-green-500/40')
+                )}
+              >
+                <TableCell className={row.highlight ? 'font-bold' : ''}>{row.label}</TableCell>
+                <TableCell className="text-center font-mono text-muted-foreground">{row.kz}</TableCell>
+                <TableCell
+                  className={cn(
+                    'text-right font-medium',
+                    row.highlight && (vorauszahlung >= 0 ? 'text-red-500 font-bold' : 'text-green-500 font-bold')
+                  )}
+                >
+                  {formatCurrency(row.value)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="glass rounded-xl p-4 text-sm text-muted-foreground">
+        <p className="font-medium mb-1">Hinweis</p>
+        <p>
+          Diese Berechnung basiert auf Ihren erfassten Transaktionen und geht von einem einheitlichen
+          MwSt-Satz von 19 % aus. Für eine rechtssichere UStVA nutzen Sie bitte die{' '}
+          <a href="/elster" className="text-primary underline">ELSTER-Seite</a>.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Journal Report Component
+// ─────────────────────────────────────────────────────────────────────────────
+function JournalReport({
+  transactions,
+  formatCurrency,
+}: {
+  transactions: Transaction[];
+  formatCurrency: (n: number) => string;
+}) {
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+
+  const sorted = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
+
+  const filtered = sorted.filter((t) => {
+    const matchesType = typeFilter === 'all' || t.type === typeFilter;
+    const matchesSearch =
+      !search ||
+      (t.description || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.category || '').toLowerCase().includes(search.toLowerCase());
+    return matchesType && matchesSearch;
+  });
+
+  const runningBalance = filtered.reduce<{ t: Transaction; balance: number }[]>((acc, t) => {
+    const prev = acc.length > 0 ? acc[acc.length - 1].balance : 0;
+    const delta = t.type === 'income' ? t.amount : -t.amount;
+    acc.push({ t, balance: prev + delta });
+    return acc;
+  }, []);
+
+  if (transactions.length === 0) {
+    return (
+      <div className="glass rounded-xl p-12 text-center text-muted-foreground">
+        <FileText className="h-12 w-12 mx-auto mb-3 opacity-40" />
+        <p>Keine Buchungen im gewählten Zeitraum</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buchung suchen..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2">
+          {(['all', 'income', 'expense'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setTypeFilter(f)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-sm font-medium border transition-all',
+                typeFilter === f
+                  ? f === 'income'
+                    ? 'bg-green-500/20 border-green-500/50 text-green-500'
+                    : f === 'expense'
+                    ? 'bg-red-500/20 border-red-500/50 text-red-500'
+                    : 'bg-primary/20 border-primary/50 text-primary'
+                  : 'glass border-border/50 text-muted-foreground hover:bg-secondary/50'
+              )}
+            >
+              {f === 'all' ? 'Alle' : f === 'income' ? 'Einnahmen' : 'Ausgaben'}
+            </button>
+          ))}
+        </div>
+        <Badge variant="outline" className="self-center">
+          {filtered.length} Buchungen
+        </Badge>
+      </div>
+
+      {/* Journal Table */}
+      <div className="glass rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/50">
+              <TableHead className="w-28">Datum</TableHead>
+              <TableHead>Buchungstext</TableHead>
+              <TableHead>Kategorie</TableHead>
+              <TableHead className="text-right">Soll</TableHead>
+              <TableHead className="text-right">Haben</TableHead>
+              <TableHead className="text-right">Saldo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {runningBalance.map(({ t, balance }) => (
+              <TableRow key={t.id} className="border-border/30 hover:bg-secondary/30">
+                <TableCell className="font-mono text-sm text-muted-foreground">
+                  {new Date(t.date).toLocaleDateString('de-DE')}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {t.description || '—'}
+                </TableCell>
+                <TableCell>
+                  {t.category ? (
+                    <Badge variant="outline" className="text-xs">
+                      {t.category}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right font-mono">
+                  {t.type === 'expense' ? (
+                    <span className="text-red-500">{formatCurrency(t.amount)}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right font-mono">
+                  {t.type === 'income' ? (
+                    <span className="text-green-500">{formatCurrency(t.amount)}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    'text-right font-mono font-medium',
+                    balance >= 0 ? 'text-green-500' : 'text-red-500'
+                  )}
+                >
+                  {formatCurrency(balance)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Summen & Salden Report Component
+// ─────────────────────────────────────────────────────────────────────────────
+function SuSaReport({
+  data,
+  transactions,
+  formatCurrency,
+}: {
+  data: ReportData;
+  transactions: Transaction[];
+  formatCurrency: (n: number) => string;
+}) {
+  // SKR03-Konten-Mapping
+  const SKR03_KONTEN: Record<string, { konto: string; bezeichnung: string; klasse: string }> = {
+    'Umsatzerlöse': { konto: '8400', bezeichnung: 'Erlöse 19 % USt', klasse: 'Klasse 8' },
+    'Sonstige Einnahmen': { konto: '8910', bezeichnung: 'Sonstige betriebliche Erträge', klasse: 'Klasse 8' },
+    'Miete': { konto: '4210', bezeichnung: 'Miete', klasse: 'Klasse 4' },
+    'Personalaufwand': { konto: '4100', bezeichnung: 'Löhne und Gehälter', klasse: 'Klasse 4' },
+    'Materialaufwand': { konto: '3200', bezeichnung: 'Wareneinkauf', klasse: 'Klasse 3' },
+    'Bürobedarf': { konto: '4930', bezeichnung: 'Bürobedarf', klasse: 'Klasse 4' },
+    'IT-Kosten': { konto: '4970', bezeichnung: 'EDV-Kosten', klasse: 'Klasse 4' },
+    'Telefon/Internet': { konto: '4920', bezeichnung: 'Telefon', klasse: 'Klasse 4' },
+    'Versicherungen': { konto: '4360', bezeichnung: 'Versicherungen', klasse: 'Klasse 4' },
+    'Beratungskosten': { konto: '4980', bezeichnung: 'Beratungskosten', klasse: 'Klasse 4' },
+    'Fahrtkosten': { konto: '4670', bezeichnung: 'Reisekosten', klasse: 'Klasse 4' },
+    'Sonstiges': { konto: '4990', bezeichnung: 'Sonstige Aufwendungen', klasse: 'Klasse 4' },
+  };
+
+  // Alle Kategorien aus Transaktionen sammeln
+  const allCategories = new Set<string>();
+  transactions.forEach((t) => allCategories.add(t.category || (t.type === 'income' ? 'Umsatzerlöse' : 'Sonstiges')));
+
+  // Summen pro Kategorie berechnen
+  const rows = Array.from(allCategories).map((cat) => {
+    const catTransactions = transactions.filter(
+      (t) => (t.category || (t.type === 'income' ? 'Umsatzerlöse' : 'Sonstiges')) === cat
+    );
+    const soll = catTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const haben = catTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const saldo = haben - soll;
+    const kontoInfo = SKR03_KONTEN[cat] || { konto: '9999', bezeichnung: cat, klasse: 'Sonstige' };
+    return { cat, kontoInfo, soll, haben, saldo, count: catTransactions.length };
+  }).sort((a, b) => a.kontoInfo.konto.localeCompare(b.kontoInfo.konto));
+
+  const totalSoll = rows.reduce((s, r) => s + r.soll, 0);
+  const totalHaben = rows.reduce((s, r) => s + r.haben, 0);
+  const totalSaldo = totalHaben - totalSoll;
+
+  if (transactions.length === 0) {
+    return (
+      <div className="glass rounded-xl p-12 text-center text-muted-foreground">
+        <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 opacity-40" />
+        <p>Keine Buchungen im gewählten Zeitraum</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* KPI Summary */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="glass rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Summe Soll (Aufwand)</p>
+          <p className="text-xl font-bold text-red-500">{formatCurrency(totalSoll)}</p>
+        </div>
+        <div className="glass rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Summe Haben (Ertrag)</p>
+          <p className="text-xl font-bold text-green-500">{formatCurrency(totalHaben)}</p>
+        </div>
+        <div className="glass rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Saldo</p>
+          <p className={cn('text-xl font-bold', totalSaldo >= 0 ? 'text-green-500' : 'text-red-500')}>
+            {formatCurrency(totalSaldo)}
+          </p>
+        </div>
+      </div>
+
+      {/* SuSa Table */}
+      <div className="glass rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-border/50 bg-cyan-500/10">
+          <h2 className="text-lg font-bold text-cyan-500">Summen- und Saldenliste (SKR03)</h2>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/50">
+              <TableHead className="w-20">Konto</TableHead>
+              <TableHead>Bezeichnung</TableHead>
+              <TableHead className="text-center w-20">Buchungen</TableHead>
+              <TableHead className="text-right">Soll</TableHead>
+              <TableHead className="text-right">Haben</TableHead>
+              <TableHead className="text-right">Saldo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.cat} className="border-border/30 hover:bg-secondary/30">
+                <TableCell className="font-mono text-sm">{row.kontoInfo.konto}</TableCell>
+                <TableCell>
+                  <div>
+                    <p className="font-medium text-sm">{row.kontoInfo.bezeichnung}</p>
+                    <p className="text-xs text-muted-foreground">{row.kontoInfo.klasse}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="text-center text-sm text-muted-foreground">{row.count}</TableCell>
+                <TableCell className="text-right font-mono text-sm">
+                  {row.soll > 0 ? (
+                    <span className="text-red-500">{formatCurrency(row.soll)}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right font-mono text-sm">
+                  {row.haben > 0 ? (
+                    <span className="text-green-500">{formatCurrency(row.haben)}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    'text-right font-mono font-medium text-sm',
+                    row.saldo >= 0 ? 'text-green-500' : 'text-red-500'
+                  )}
+                >
+                  {formatCurrency(Math.abs(row.saldo))}
+                  <span className="text-xs ml-1">{row.saldo >= 0 ? 'H' : 'S'}</span>
+                </TableCell>
+              </TableRow>
+            ))}
+            {/* Totals */}
+            <TableRow className="border-t-2 border-primary/50 bg-primary/5">
+              <TableCell colSpan={3} className="font-bold">Summe</TableCell>
+              <TableCell className="text-right font-bold text-red-500 font-mono">
+                {formatCurrency(totalSoll)}
+              </TableCell>
+              <TableCell className="text-right font-bold text-green-500 font-mono">
+                {formatCurrency(totalHaben)}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  'text-right font-bold font-mono',
+                  totalSaldo >= 0 ? 'text-green-500' : 'text-red-500'
+                )}
+              >
+                {formatCurrency(Math.abs(totalSaldo))}
+                <span className="text-xs ml-1">{totalSaldo >= 0 ? 'H' : 'S'}</span>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

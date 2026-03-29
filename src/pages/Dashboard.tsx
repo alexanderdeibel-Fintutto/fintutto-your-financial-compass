@@ -14,6 +14,7 @@ import { TaskFeed } from '@/components/dashboard/TaskFeed';
 import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { SepaWidget } from '@/components/dashboard/SepaWidget';
 import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
+import { CashflowForecastWidget } from '@/components/dashboard/CashflowForecastWidget';
 import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
 import { SubscriptionWidget } from '@/components/dashboard/SubscriptionWidget';
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget';
@@ -535,6 +536,13 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           <SepaWidget />
           <RecurringWidget />
+        </div>
+      )}
+
+      {/* Cashflow Forecast */}
+      {!currentCompany?.is_personal && (
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <CashflowForecastWidget />
         </div>
       )}
 
