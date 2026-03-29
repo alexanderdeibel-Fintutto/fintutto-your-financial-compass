@@ -438,7 +438,7 @@ export default function AssignmentRules() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Laden...</div>
+            <div className="space-y-2 p-4">{[1,2,3].map(i=><div key={i} className="h-12 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
           ) : rules.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Filter className="h-10 w-10 mx-auto mb-3 opacity-50" />

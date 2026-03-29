@@ -15,6 +15,7 @@ import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { SepaWidget } from '@/components/dashboard/SepaWidget';
 import { RecurringWidget } from '@/components/dashboard/RecurringWidget';
 import { CashflowForecastWidget } from '@/components/dashboard/CashflowForecastWidget';
+import { TopCategoriesWidget } from '@/components/dashboard/TopCategoriesWidget';
 import { AssetsWidget } from '@/components/dashboard/AssetsWidget';
 import { SubscriptionWidget } from '@/components/dashboard/SubscriptionWidget';
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget';
@@ -539,10 +540,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Cashflow Forecast */}
+      {/* Cashflow Forecast + Top Categories */}
       {!currentCompany?.is_personal && (
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           <CashflowForecastWidget />
+          <TopCategoriesWidget />
         </div>
       )}
 

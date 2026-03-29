@@ -67,6 +67,93 @@ const getCO2Category = (consumption: number) => {
   return { category: 10, ...CO2_CATEGORIES[9] };
 };
 
+// ─── Helper: API Key Field with show/hide and save to localStorage ───
+function ApiKeyField({ label, storageKey, placeholder, hint }: { label: string; storageKey: string; placeholder?: string; hint?: string }) {
+  const [value, setValue] = useState(() => localStorage.getItem(storageKey) || '');
+  const [show, setShow] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const handleSave = () => {
+    if (value.trim()) localStorage.setItem(storageKey, value.trim());
+    else localStorage.removeItem(storageKey);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            type={show ? 'text' : 'password'}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            className="bg-secondary/50 pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShow(!show)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {show ? '🙈' : '👁'}
+          </button>
+        </div>
+        <Button size="sm" variant={saved ? 'default' : 'outline'} onClick={handleSave}>
+          {saved ? '✓ Gespeichert' : 'Speichern'}
+        </Button>
+      </div>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+// ─── Helper: API Token Generator ───
+function ApiTokenGenerator() {
+  const [tokens, setTokens] = useState<{ id: string; name: string; token: string; created: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem('api_tokens') || '[]'); } catch { return []; }
+  });
+  const [newName, setNewName] = useState('');
+  const generateToken = () => {
+    if (!newName.trim()) return;
+    const token = 'fc_' + Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2, '0')).join('');
+    const newToken = { id: crypto.randomUUID(), name: newName.trim(), token, created: new Date().toLocaleDateString('de-DE') };
+    const updated = [...tokens, newToken];
+    setTokens(updated);
+    localStorage.setItem('api_tokens', JSON.stringify(updated));
+    setNewName('');
+  };
+  const deleteToken = (id: string) => {
+    const updated = tokens.filter(t => t.id !== id);
+    setTokens(updated);
+    localStorage.setItem('api_tokens', JSON.stringify(updated));
+  };
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Token-Name (z.B. Zapier Integration)" className="bg-secondary/50" />
+        <Button size="sm" onClick={generateToken} disabled={!newName.trim()}>Erstellen</Button>
+      </div>
+      {tokens.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">Noch keine API-Tokens erstellt.</p>
+      ) : (
+        <div className="space-y-2">
+          {tokens.map((t) => (
+            <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg border">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{t.name}</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">{t.token}</p>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">{t.created}</span>
+              <button onClick={() => { navigator.clipboard.writeText(t.token); }} className="text-xs text-primary hover:underline shrink-0">Kopieren</button>
+              <button onClick={() => deleteToken(t.id)} className="text-xs text-destructive hover:underline shrink-0">Löschen</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { currentCompany, companies, refetchCompanies } = useCompany();
@@ -1256,79 +1343,100 @@ export default function Settings() {
 
            {/* API Keys Tab */}
            <TabsContent value="api" className="mt-0 space-y-6">
+             {/* OpenAI API Key */}
              <Card className="glass">
                <CardHeader>
                  <CardTitle className="flex items-center gap-2">
                    <Key className="h-5 w-5" />
-                   API-Konfiguration
+                   KI-Konfiguration (OpenAI)
                  </CardTitle>
-                 <CardDescription>
-                   Verwalten Sie Ihre API-Schlüssel für externe Dienste
-                 </CardDescription>
+                 <CardDescription>API-Schlüssel für KI-Assistent, Beleganalyse und Buchungsvorschläge</CardDescription>
                </CardHeader>
-               <CardContent className="space-y-6">
-                 {/* FinAPI Configuration */}
-                 <div className="space-y-4">
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-lg bg-primary/10">
-                         <CreditCard className="h-5 w-5 text-primary" />
-                       </div>
-                       <div>
-                         <h4 className="font-medium">FinAPI</h4>
-                         <p className="text-sm text-muted-foreground">Bankanbindung für automatischen Transaktionsimport</p>
-                       </div>
-                     </div>
-                     <Badge variant="outline">Sandbox</Badge>
-                   </div>
-                   <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                     Die FinAPI-Konfiguration wird über sichere Server-Secrets verwaltet. 
-                     Kontaktieren Sie den Administrator, um die Bankanbindung zu aktivieren.
-                   </p>
-                 </div>
-
-                 <div className="border-t pt-6">
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-lg bg-primary/10">
-                         <Receipt className="h-5 w-5 text-primary" />
-                       </div>
-                       <div>
-                         <h4 className="font-medium">KI-Belegeerkennung</h4>
-                         <p className="text-sm text-muted-foreground">Automatische Analyse von Belegen und Rechnungen</p>
-                       </div>
-                     </div>
-                     <Badge className="bg-primary/20 text-primary">Aktiviert</Badge>
-                   </div>
-                   <p className="text-sm text-muted-foreground bg-primary/5 p-3 rounded-lg mt-4">
-                     ✓ Die KI-Belegeerkennung ist bereits aktiviert und nutzt das integrierte Lovable AI Gateway.
-                     Keine zusätzliche Konfiguration erforderlich.
-                   </p>
+               <CardContent className="space-y-4">
+                 <ApiKeyField label="OpenAI API-Schlüssel" storageKey="openai_api_key" placeholder="sk-proj-..." hint="Wird lokal im Browser gespeichert. Niemals an Dritte weitergeben." />
+                 <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                   <p className="font-medium text-primary mb-1">Unterstützte Modelle</p>
+                   <p className="text-muted-foreground">GPT-4o (Beleganalyse), GPT-4o-mini (KI-Assistent), GPT-4.1-nano (Buchungsvorschläge)</p>
                  </div>
                </CardContent>
              </Card>
 
+             {/* FinAPI */}
              <Card className="glass">
                <CardHeader>
-                 <CardTitle>API-Status</CardTitle>
-                 <CardDescription>Übersicht der verbundenen Dienste</CardDescription>
+                 <CardTitle className="flex items-center gap-2">
+                   <CreditCard className="h-5 w-5" />
+                   Bankanbindung (FinAPI)
+                 </CardTitle>
+                 <CardDescription>Automatischer Transaktionsimport aus Ihrem Bankkonto</CardDescription>
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 <ApiKeyField label="FinAPI Client ID" storageKey="finapi_client_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                 <ApiKeyField label="FinAPI Client Secret" storageKey="finapi_client_secret" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                 <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                   <AlertTriangle className="h-4 w-4 shrink-0" />
+                   <span>FinAPI-Zugangsdaten erhalten Sie unter finapi.io nach Registrierung.</span>
+                 </div>
+               </CardContent>
+             </Card>
+
+             {/* Webhook */}
+             <Card className="glass">
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Key className="h-5 w-5" />
+                   Webhook-Konfiguration
+                 </CardTitle>
+                 <CardDescription>Echtzeit-Benachrichtigungen bei neuen Buchungen oder Rechnungen</CardDescription>
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 <ApiKeyField label="Webhook-URL" storageKey="webhook_url" placeholder="https://ihre-app.de/webhook/financial-compass" hint="POST-Request mit JSON-Payload bei jedem Ereignis" />
+                 <div className="space-y-2">
+                   <label className="text-sm font-medium">Ereignisse</label>
+                   {['Neue Transaktion', 'Rechnung erstellt', 'Rechnung bezahlt', 'Neuer Beleg', 'Budget überschritten'].map((event) => (
+                     <div key={event} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/30">
+                       <input type="checkbox" defaultChecked className="rounded" id={`webhook-${event}`} />
+                       <label htmlFor={`webhook-${event}`} className="text-sm cursor-pointer">{event}</label>
+                     </div>
+                   ))}
+                 </div>
+               </CardContent>
+             </Card>
+
+             {/* API Token Generator */}
+             <Card className="glass">
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Key className="h-5 w-5" />
+                   Persönliche API-Tokens
+                 </CardTitle>
+                 <CardDescription>Tokens für externe Integrationen (Zapier, Make, eigene Apps)</CardDescription>
                </CardHeader>
                <CardContent>
-                 <div className="space-y-4">
-                   <div className="flex items-center justify-between p-3 rounded-lg border">
-                     <div className="flex items-center gap-3">
-                       <Check className="h-5 w-5 text-primary" />
-                       <span>Lovable AI Gateway</span>
+                 <ApiTokenGenerator />
+               </CardContent>
+             </Card>
+
+             {/* API-Status */}
+             <Card className="glass">
+               <CardHeader>
+                 <CardTitle>Verbindungsstatus</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <div className="space-y-3">
+                   {[
+                     { name: 'Supabase Datenbank', connected: true },
+                     { name: 'OpenAI KI-Gateway', connected: !!localStorage.getItem('openai_api_key') },
+                     { name: 'FinAPI Bankanbindung', connected: !!localStorage.getItem('finapi_client_id') },
+                     { name: 'DATEV Export', connected: true },
+                   ].map(({ name, connected }) => (
+                     <div key={name} className="flex items-center justify-between p-3 rounded-lg border">
+                       <span className="text-sm">{name}</span>
+                       <Badge className={connected ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'}>
+                         {connected ? 'Verbunden' : 'Nicht konfiguriert'}
+                       </Badge>
                      </div>
-                     <Badge className="bg-primary/20 text-primary">Verbunden</Badge>
-                   </div>
-                   <div className="flex items-center justify-between p-3 rounded-lg border">
-                     <div className="flex items-center gap-3">
-                       <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                       <span>FinAPI Bankanbindung</span>
-                     </div>
-                     <Badge variant="outline">Nicht konfiguriert</Badge>
-                   </div>
+                   ))}
                  </div>
                </CardContent>
              </Card>

@@ -267,7 +267,7 @@ export default function InvestmentAssets() {
 
       {/* Positions List */}
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Lade Positionen...</div>
+        <div className="p-6 space-y-3">{[1,2,3].map(i=><div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
       ) : filtered.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center py-16 gap-4">

@@ -344,6 +344,10 @@ export default function Reports() {
             <Wallet className="h-4 w-4" />
             Cashflow-Prognose
           </TabsTrigger>
+          <TabsTrigger value="jahresvergleich" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Jahresvergleich
+          </TabsTrigger>
         </TabsList>
 
         {/* Standard Reports Tab */}
@@ -376,7 +380,7 @@ export default function Reports() {
           {/* Report Content */}
           {loading ? (
             <div className="glass rounded-xl p-12 text-center text-muted-foreground">
-              Lade Berichtsdaten...
+              <div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
             </div>
           ) : (
             <>
@@ -418,6 +422,11 @@ export default function Reports() {
             <ComparisonChart />
             <ExpenseBreakdownChart />
           </div>
+        </TabsContent>
+
+        {/* Jahresvergleich Tab */}
+        <TabsContent value="jahresvergleich" className="space-y-6 mt-6">
+          <JahresvergleichReport data={reportData} formatCurrency={formatCurrency} />
         </TabsContent>
       </Tabs>
     </div>
@@ -1142,6 +1151,142 @@ function SuSaReport({
             </TableRow>
           </TableBody>
         </Table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Jahresvergleich Report ───────────────────────────────────────────────────
+function JahresvergleichReport({ data, formatCurrency }: { data: ReportData; formatCurrency: (n: number) => string }) {
+  const currentYear = new Date().getFullYear();
+  const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+  // Build monthly breakdown from data
+  const monthlyData = months.map((month, i) => {
+    const einnahmen = data.monthlyRevenue?.[i] ?? 0;
+    const ausgaben = data.monthlyExpenses?.[i] ?? 0;
+    const ergebnis = einnahmen - ausgaben;
+    return { month, einnahmen, ausgaben, ergebnis };
+  });
+
+  const totalEinnahmen = monthlyData.reduce((s, m) => s + m.einnahmen, 0);
+  const totalAusgaben = monthlyData.reduce((s, m) => s + m.ausgaben, 0);
+  const totalErgebnis = totalEinnahmen - totalAusgaben;
+  const bestMonth = [...monthlyData].sort((a, b) => b.ergebnis - a.ergebnis)[0];
+  const worstMonth = [...monthlyData].sort((a, b) => a.ergebnis - b.ergebnis)[0];
+
+  return (
+    <div className="space-y-6">
+      {/* KPI Summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Gesamteinnahmen', value: totalEinnahmen, color: 'text-green-500' },
+          { label: 'Gesamtausgaben', value: totalAusgaben, color: 'text-red-500' },
+          { label: 'Jahresergebnis', value: totalErgebnis, color: totalErgebnis >= 0 ? 'text-green-500' : 'text-red-500' },
+          { label: 'Ø Monatsergebnis', value: totalErgebnis / 12, color: totalErgebnis >= 0 ? 'text-green-500' : 'text-red-500' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="glass rounded-xl p-4">
+            <p className="text-xs text-muted-foreground mb-1">{label}</p>
+            <p className={`text-xl font-bold ${color}`}>{formatCurrency(value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Best / Worst Month */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="glass rounded-xl p-4 border border-green-500/20">
+          <p className="text-xs text-muted-foreground mb-1">Bester Monat</p>
+          <p className="text-lg font-bold text-green-500">{bestMonth.month}</p>
+          <p className="text-sm text-muted-foreground">{formatCurrency(bestMonth.ergebnis)}</p>
+        </div>
+        <div className="glass rounded-xl p-4 border border-red-500/20">
+          <p className="text-xs text-muted-foreground mb-1">Schwächster Monat</p>
+          <p className="text-lg font-bold text-red-500">{worstMonth.month}</p>
+          <p className="text-sm text-muted-foreground">{formatCurrency(worstMonth.ergebnis)}</p>
+        </div>
+      </div>
+
+      {/* Monthly Table */}
+      <div className="glass rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-border/50">
+          <h3 className="font-semibold">Monatliche Übersicht {currentYear}</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-secondary/30">
+                <th className="text-left p-3 font-medium">Monat</th>
+                <th className="text-right p-3 font-medium text-green-500">Einnahmen</th>
+                <th className="text-right p-3 font-medium text-red-500">Ausgaben</th>
+                <th className="text-right p-3 font-medium">Ergebnis</th>
+                <th className="text-right p-3 font-medium text-muted-foreground">Marge</th>
+                <th className="p-3 font-medium">Verlauf</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map(({ month, einnahmen, ausgaben, ergebnis }) => {
+                const marge = einnahmen > 0 ? (ergebnis / einnahmen) * 100 : 0;
+                const barWidth = Math.min(100, Math.abs(ergebnis) / Math.max(1, Math.max(...monthlyData.map(m => Math.abs(m.ergebnis)))) * 100);
+                return (
+                  <tr key={month} className="border-b border-border/30 hover:bg-secondary/20 transition-colors">
+                    <td className="p-3 font-medium">{month}</td>
+                    <td className="p-3 text-right font-mono text-green-500">{formatCurrency(einnahmen)}</td>
+                    <td className="p-3 text-right font-mono text-red-500">{formatCurrency(ausgaben)}</td>
+                    <td className={`p-3 text-right font-mono font-bold ${ergebnis >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatCurrency(ergebnis)}
+                    </td>
+                    <td className="p-3 text-right text-muted-foreground">{marge.toFixed(1)}%</td>
+                    <td className="p-3">
+                      <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${ergebnis >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-primary/50 bg-primary/5 font-bold">
+                <td className="p-3">Gesamt</td>
+                <td className="p-3 text-right font-mono text-green-500">{formatCurrency(totalEinnahmen)}</td>
+                <td className="p-3 text-right font-mono text-red-500">{formatCurrency(totalAusgaben)}</td>
+                <td className={`p-3 text-right font-mono ${totalErgebnis >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatCurrency(totalErgebnis)}
+                </td>
+                <td className="p-3 text-right text-muted-foreground">
+                  {totalEinnahmen > 0 ? ((totalErgebnis / totalEinnahmen) * 100).toFixed(1) : '0.0'}%
+                </td>
+                <td className="p-3" />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      {/* Steuerzusammenfassung */}
+      <div className="glass rounded-xl p-6">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <span className="text-primary">§</span> Steuerliche Zusammenfassung {currentYear}
+        </h3>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { label: 'Umsatz brutto (19% MwSt)', value: data.totalRevenue * 1.19, hint: 'inkl. MwSt' },
+            { label: 'Umsatz netto', value: data.totalRevenue, hint: 'Bemessungsgrundlage' },
+            { label: 'Umsatzsteuer (KZ 81)', value: data.totalRevenue * 0.19, hint: 'abzuführen' },
+            { label: 'Vorsteuer (KZ 66)', value: data.totalExpenses * 0.19, hint: 'abzugsfähig' },
+            { label: 'Zahllast (KZ 69)', value: Math.max(0, data.totalRevenue * 0.19 - data.totalExpenses * 0.19), hint: 'an Finanzamt' },
+            { label: 'Gewinn vor Steuer', value: totalErgebnis, hint: 'EStG / KStG' },
+          ].map(({ label, value, hint }) => (
+            <div key={label} className="p-3 rounded-lg bg-secondary/30">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="text-base font-bold font-mono mt-1">{formatCurrency(value)}</p>
+              <p className="text-xs text-muted-foreground">{hint}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

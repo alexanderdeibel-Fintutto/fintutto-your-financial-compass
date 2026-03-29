@@ -573,7 +573,7 @@ export default function Transactions() {
       {/* Transactions List */}
       <div className="glass rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground">Laden...</div>
+          <div className="p-6 space-y-3">{[1,2,3,4,5].map(i=><div key={i} className="h-12 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
         ) : filteredTransactions.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             Keine Buchungen gefunden

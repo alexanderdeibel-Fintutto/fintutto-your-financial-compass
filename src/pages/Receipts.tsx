@@ -461,7 +461,7 @@ export default function Receipts() {
 
       {/* Receipts Grid */}
       {loading ? (
-        <div className="p-8 text-center text-muted-foreground">Laden...</div>
+        <div className="p-6 space-y-3">{[1,2,3,4].map(i=><div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
       ) : filteredReceipts.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center">
           <FolderOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />

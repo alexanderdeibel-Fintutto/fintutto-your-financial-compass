@@ -188,7 +188,7 @@ export default function Vehicles() {
         <Input placeholder="Fahrzeug suchen..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 bg-secondary/50" />
       </div>
 
-      {loading ? <div className="p-8 text-center text-muted-foreground">Laden...</div>
+      {loading ? <div className="p-6 space-y-3">{[1,2,3].map(i=><div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse"/>)}</div>
       : filteredAssets.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center">
           <Car className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />

@@ -200,7 +200,7 @@ export default function BankAccounts() {
 
       {/* Konten */}
       {loading ? (
-        <div className="glass rounded-xl p-8 text-center text-muted-foreground">Laden...</div>
+        <div className="glass rounded-xl p-6 space-y-3">{[1,2,3].map(i=><div key={i} className="h-24 bg-secondary/50 rounded-xl animate-pulse"/>)}</div>
       ) : accounts.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center">
           <CreditCard className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
