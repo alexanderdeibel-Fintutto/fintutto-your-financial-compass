@@ -53,6 +53,8 @@ import {
   Boxes,
   LineChart,
   ListChecks,
+  Brain,
+  Calculator,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -143,11 +145,15 @@ const navItems: NavItem[] = [
   { title: 'Offene Posten', url: '/offene-posten', icon: ListChecks, businessOnly: true },
   { title: 'Bankabgleich', url: '/bankabgleich', icon: Link2, businessOnly: true },
   { title: 'Budgetanalyse', url: '/budget-analyse', icon: BarChart3, businessOnly: true },
+  { title: 'Mahnwesen', url: '/mahnwesen', icon: Mail, businessOnly: true },
+  { title: 'Finanzprognose', url: '/finanzprognose', icon: Brain, businessOnly: true },
+  { title: 'Steueroptimierung', url: '/steueroptimierung', icon: Calculator },
   { title: 'KI-Assistent', url: '/ki-assistent', icon: Bot },
   {
     title: 'Buchhaltung', url: '/kassenbuch', icon: BookOpen,
     children: [
       { title: 'Kassenbuch', url: '/kassenbuch', icon: BookOpen },
+      { title: 'Kontenrahmen SKR03', url: '/kontenrahmen', icon: BookOpen },
       { title: 'Anlagenverwaltung', url: '/anlagenverwaltung', icon: Package },
       { title: 'Vertragsmanagement', url: '/vertraege', icon: FileSignature },
       { title: 'Inventar', url: '/inventar', icon: Boxes },

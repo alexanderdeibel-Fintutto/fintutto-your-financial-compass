@@ -66,6 +66,10 @@ const Liquiditaetsplanung = lazy(() => import("./pages/Liquiditaetsplanung"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 const BankAbgleich = lazy(() => import("./pages/BankAbgleich"));
 const BudgetAnalyse = lazy(() => import("./pages/BudgetAnalyse"));
+const Mahnwesen = lazy(() => import("./pages/Mahnwesen"));
+const Kontenrahmen = lazy(() => import("./pages/Kontenrahmen"));
+const Finanzprognose = lazy(() => import("./pages/Finanzprognose"));
+const Steueroptimierung = lazy(() => import("./pages/Steueroptimierung"));
 
 const queryClient = new QueryClient();
 
@@ -151,6 +155,10 @@ function AppRoutes() {
         <Route path="/offene-posten" element={<ProtectedRoute><OffenePosten /></ProtectedRoute>} />
         <Route path="/bankabgleich" element={<ProtectedRoute><BankAbgleich /></ProtectedRoute>} />
         <Route path="/budget-analyse" element={<ProtectedRoute><BudgetAnalyse /></ProtectedRoute>} />
+        <Route path="/mahnwesen" element={<ProtectedRoute><Mahnwesen /></ProtectedRoute>} />
+        <Route path="/kontenrahmen" element={<ProtectedRoute><Kontenrahmen /></ProtectedRoute>} />
+        <Route path="/finanzprognose" element={<ProtectedRoute><Finanzprognose /></ProtectedRoute>} />
+        <Route path="/steueroptimierung" element={<ProtectedRoute><Steueroptimierung /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
