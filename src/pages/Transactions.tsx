@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard, Wand2 } from 'lucide-react';
+import { Plus, Search, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Receipt, Wallet, X, CreditCard, Wand2, SlidersHorizontal } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { BulkActionsBar } from '@/components/transactions/BulkActionsBar';
@@ -73,6 +73,12 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [amountMin, setAmountMin] = useState('');
+  const [amountMax, setAmountMax] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [matchingDialogOpen, setMatchingDialogOpen] = useState(false);
 
@@ -205,8 +211,14 @@ export default function Transactions() {
       t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.category?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === 'all' || t.type === filter;
-    return matchesSearch && matchesFilter;
+    const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
+    const matchesDateFrom = !dateFrom || t.date >= dateFrom;
+    const matchesDateTo = !dateTo || t.date <= dateTo;
+    const matchesAmountMin = !amountMin || t.amount >= parseFloat(amountMin);
+    const matchesAmountMax = !amountMax || t.amount <= parseFloat(amountMax);
+    return matchesSearch && matchesFilter && matchesCategory && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax;
   });
+  const activeFilterCount = [categoryFilter !== 'all', dateFrom, dateTo, amountMin, amountMax].filter(Boolean).length;
 
   const pagination = usePagination(filteredTransactions);
 
@@ -450,15 +462,69 @@ export default function Transactions() {
 
       {/* Search & Filter */}
       <div className="flex flex-col gap-3 sm:gap-4">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Suchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-secondary/50"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1 sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-secondary/50"
+            />
+          </div>
+          <Button
+            variant={showAdvancedFilters ? 'default' : 'outline'}
+            size="icon"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            title="Erweiterte Filter"
+            className="relative shrink-0"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
         </div>
+        {/* Advanced Filter Panel */}
+        {showAdvancedFilters && (
+          <div className="glass rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Kategorie</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle</SelectItem>
+                  {categories.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Von Datum</Label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Bis Datum</Label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Betrag min. (€)</Label>
+              <Input type="number" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} placeholder="0" className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Betrag max. (€)</Label>
+              <Input type="number" value={amountMax} onChange={(e) => setAmountMax(e.target.value)} placeholder="∞" className="h-8 text-xs" />
+            </div>
+            {activeFilterCount > 0 && (
+              <div className="col-span-2 sm:col-span-3 flex items-end">
+                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setCategoryFilter('all'); setDateFrom(''); setDateTo(''); setAmountMin(''); setAmountMax(''); }}>
+                  <X className="mr-1 h-3 w-3" />Filter zurücksetzen
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
@@ -466,7 +532,7 @@ export default function Transactions() {
             size="sm"
             className="shrink-0"
           >
-            Alle
+            Alle ({transactions.length})
           </Button>
           <Button
             variant={filter === 'income' ? 'default' : 'outline'}
@@ -488,6 +554,11 @@ export default function Transactions() {
             <span className="hidden xs:inline">Ausgaben</span>
             <span className="xs:hidden">Aus.</span>
           </Button>
+          {filteredTransactions.length !== transactions.length && (
+            <span className="shrink-0 text-xs text-muted-foreground self-center ml-1">
+              {filteredTransactions.length} von {transactions.length} Buchungen
+            </span>
+          )}
         </div>
       </div>
 

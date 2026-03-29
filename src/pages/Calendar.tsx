@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCompany } from '@/contexts/CompanyContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,66 +72,43 @@ export default function Calendar() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Nebenkostenabrechnung 2025',
-      description: 'Frist für die Erstellung der Nebenkostenabrechnung',
-      startDate: '2026-12-31',
-      type: 'deadline',
-      reminder: '1week',
-      recurring: 'yearly',
-      color: 'bg-red-500',
-    },
-    {
-      id: '2',
-      title: 'Besichtigung Musterstraße 12',
-      description: 'Interessent: Herr Müller',
-      startDate: '2026-02-10',
-      startTime: '14:00',
-      endTime: '14:30',
-      type: 'viewing',
-      propertyName: 'Musterstraße 12, Whg 3',
-      reminder: '1day',
-      recurring: 'none',
-      color: 'bg-blue-500',
-    },
-    {
-      id: '3',
-      title: 'Mietzahlung Familie Schmidt',
-      description: 'Monatliche Kaltmiete: 850€',
-      startDate: '2026-02-01',
-      type: 'payment',
-      contactName: 'Familie Schmidt',
-      reminder: 'none',
-      recurring: 'monthly',
-      color: 'bg-green-500',
-    },
-    {
-      id: '4',
-      title: 'Rauchmelder-Prüfung',
-      description: 'Jährliche Wartung aller Rauchmelder',
-      startDate: '2026-03-15',
-      type: 'maintenance',
-      propertyName: 'Alle Objekte',
-      reminder: '1week',
-      recurring: 'yearly',
-      color: 'bg-orange-500',
-    },
-    {
-      id: '5',
-      title: 'Heizungswartung',
-      description: 'Jährliche Heizungswartung',
-      startDate: '2026-02-20',
-      startTime: '09:00',
-      endTime: '12:00',
-      type: 'maintenance',
-      propertyName: 'Beispielweg 5',
-      reminder: '1day',
-      recurring: 'none',
-      color: 'bg-orange-500',
-    },
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  useEffect(() => {
+    if (currentCompany) loadEvents();
+  }, [currentCompany?.id]);
+
+  const loadEvents = async () => {
+    if (!currentCompany) return;
+    setLoadingEvents(true);
+    const { data } = await (supabase as any)
+      .from('calendar_events')
+      .select('*')
+      .eq('company_id', currentCompany.id)
+      .order('start_date', { ascending: true });
+    if (data) {
+      // Map DB snake_case to camelCase
+      setEvents(data.map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        startDate: e.start_date,
+        endDate: e.end_date,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        type: e.type,
+        propertyId: e.property_id,
+        propertyName: e.property_name,
+        contactId: e.contact_id,
+        contactName: e.contact_name,
+        reminder: e.reminder,
+        recurring: e.recurring,
+        color: e.color,
+      })));
+    }
+    setLoadingEvents(false);
+  };
   
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({
     title: '',
@@ -217,38 +195,35 @@ export default function Calendar() {
     setDialogOpen(true);
   };
 
-  const handleSaveEvent = () => {
-    if (!formData.title || !formData.startDate) {
-      toast({
-        title: 'Fehler',
-        description: 'Bitte geben Sie einen Titel und ein Datum ein.',
-        variant: 'destructive',
-      });
+  const handleSaveEvent = async () => {
+    if (!currentCompany || !formData.title || !formData.startDate) {
+      toast({ title: 'Fehler', description: 'Bitte Titel und Datum eingeben.', variant: 'destructive' });
       return;
     }
-
     const typeConfig = getEventTypeConfig(formData.type || 'other');
-    const newEvent: CalendarEvent = {
-      id: crypto.randomUUID(),
+    const payload = {
+      company_id: currentCompany.id,
       title: formData.title,
-      description: formData.description,
-      startDate: formData.startDate,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      type: formData.type as CalendarEvent['type'],
-      propertyName: formData.propertyName,
-      contactName: formData.contactName,
-      reminder: formData.reminder as CalendarEvent['reminder'],
-      recurring: formData.recurring as CalendarEvent['recurring'],
+      description: formData.description || null,
+      start_date: formData.startDate,
+      end_date: formData.endDate || null,
+      start_time: formData.startTime || null,
+      end_time: formData.endTime || null,
+      type: formData.type || 'other',
+      property_name: formData.propertyName || null,
+      contact_name: formData.contactName || null,
+      reminder: formData.reminder || 'none',
+      recurring: formData.recurring || 'none',
       color: typeConfig.color,
     };
-
-    setEvents([...events, newEvent]);
+    const { error } = await (supabase as any).from('calendar_events').insert(payload);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    await loadEvents();
     setDialogOpen(false);
-    toast({
-      title: 'Termin erstellt',
-      description: `"${formData.title}" wurde zum Kalender hinzugefügt.`,
-    });
+    toast({ title: 'Termin erstellt', description: `"${formData.title}" wurde zum Kalender hinzugefügt.` });
   };
 
   // Get upcoming events for next 7 days
