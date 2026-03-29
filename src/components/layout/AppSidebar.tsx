@@ -49,6 +49,8 @@ import {
   FileArchive,
   ClipboardCheck,
   LayoutGrid,
+  FileSignature,
+  Boxes,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -141,6 +143,8 @@ const navItems: NavItem[] = [
     children: [
       { title: 'Kassenbuch', url: '/kassenbuch', icon: BookOpen },
       { title: 'Anlagenverwaltung', url: '/anlagenverwaltung', icon: Package },
+      { title: 'Vertragsmanagement', url: '/vertraege', icon: FileSignature },
+      { title: 'Inventar', url: '/inventar', icon: Boxes },
       { title: 'Kostenstellen', url: '/kostenstellen', icon: Layers },
     ],
   },

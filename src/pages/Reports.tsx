@@ -36,7 +36,7 @@ import {
 } from '@/components/reports/AdvancedReportCharts';
 
 type ReportType = 'bwa' | 'guv' | 'bilanz' | 'ustva' | 'journal' | 'susa';
-type ViewMode = 'standard' | 'charts' | 'forecast';
+type ViewMode = 'standard' | 'charts' | 'forecast' | 'jahresvergleich';
 
 interface ReportOption {
   id: ReportType;

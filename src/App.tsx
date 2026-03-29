@@ -60,6 +60,8 @@ const SteuerAssistent = lazy(() => import("./pages/SteuerAssistent"));
 const Dokumente = lazy(() => import("./pages/Dokumente"));
 const Jahresabschluss = lazy(() => import("./pages/Jahresabschluss"));
 const MultiFirmaOverview = lazy(() => import("./pages/MultiFirmaOverview"));
+const Vertragsmanagement = lazy(() => import("./pages/Vertragsmanagement"));
+const Inventar = lazy(() => import("./pages/Inventar"));
 
 const queryClient = new QueryClient();
 
@@ -139,6 +141,8 @@ function AppRoutes() {
         <Route path="/dokumente" element={<ProtectedRoute><Dokumente /></ProtectedRoute>} />
         <Route path="/jahresabschluss" element={<ProtectedRoute><Jahresabschluss /></ProtectedRoute>} />
         <Route path="/multi-firma" element={<ProtectedRoute><MultiFirmaOverview /></ProtectedRoute>} />
+        <Route path="/vertraege" element={<ProtectedRoute><Vertragsmanagement /></ProtectedRoute>} />
+        <Route path="/inventar" element={<ProtectedRoute><Inventar /></ProtectedRoute>} />
         <Route path="/bank-callback" element={<BankCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

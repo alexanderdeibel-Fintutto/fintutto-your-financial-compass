@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Zap,
   Plus,
@@ -16,6 +16,11 @@ import {
   Euro,
   Calendar,
   Filter,
+  Globe,
+  Timer,
+  Copy,
+  CheckCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,6 +251,14 @@ export default function Automation() {
             <Zap className="h-4 w-4" />
             Automatisierungsregeln
           </TabsTrigger>
+          <TabsTrigger value="webhooks" className="gap-2">
+            <Globe className="h-4 w-4" />
+            Webhooks
+          </TabsTrigger>
+          <TabsTrigger value="zeitgesteuert" className="gap-2">
+            <Timer className="h-4 w-4" />
+            Zeitgesteuert
+          </TabsTrigger>
           <TabsTrigger value="reminders" className="gap-2">
             <Bell className="h-4 w-4" />
             Zahlungserinnerungen
@@ -330,6 +343,14 @@ export default function Automation() {
           </Card>
         </TabsContent>
 
+        {/* Webhooks Tab */}
+        <TabsContent value="webhooks" className="space-y-6 mt-6">
+          <WebhooksTab />
+        </TabsContent>
+        {/* Zeitgesteuert Tab */}
+        <TabsContent value="zeitgesteuert" className="space-y-6 mt-6">
+          <ZeitgesteuertTab />
+        </TabsContent>
         {/* Payment Reminders Tab */}
         <TabsContent value="reminders" className="space-y-6 mt-6">
           <Card className="glass">
@@ -483,6 +504,193 @@ function RuleItem({
       <Button variant="ghost" size="icon" onClick={onDelete}>
         <Trash2 className="h-4 w-4" />
       </Button>
+    </div>
+  );
+}
+
+// ─── Webhooks Tab ────────────────────────────────────────────────────────────
+const WEBHOOK_EVENTS = [
+  { id: 'invoice.created', label: 'Rechnung erstellt', icon: '📄' },
+  { id: 'invoice.paid', label: 'Rechnung bezahlt', icon: '✅' },
+  { id: 'invoice.overdue', label: 'Rechnung überfällig', icon: '⚠️' },
+  { id: 'transaction.created', label: 'Buchung erstellt', icon: '💳' },
+  { id: 'budget.exceeded', label: 'Budget überschritten', icon: '🔴' },
+  { id: 'reminder.sent', label: 'Mahnung gesendet', icon: '📬' },
+];
+
+function WebhooksTab() {
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(['invoice.paid', 'invoice.overdue']);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const samplePayload = JSON.stringify({
+    event: 'invoice.paid',
+    timestamp: new Date().toISOString(),
+    data: { invoice_id: 'INV-2026-0042', amount: 1190.00, contact: 'Mustermann GmbH' }
+  }, null, 2);
+
+  const toggleEvent = (id: string) => {
+    setSelectedEvents(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
+  };
+
+  const copyPayload = () => {
+    navigator.clipboard.writeText(samplePayload);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const testWebhook = async () => {
+    if (!webhookUrl) return;
+    setTestResult('Sende Test-Request...');
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: samplePayload,
+      });
+      setTestResult('✅ Test-Request gesendet (no-cors – prüfe dein Endpoint-Log)');
+    } catch (e) {
+      setTestResult('❌ Fehler: ' + String(e));
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" /> Webhook-Konfiguration
+          </CardTitle>
+          <CardDescription>Sende Ereignisse an externe Systeme (Zapier, Make.com, eigene API)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Webhook-URL</Label>
+            <div className="flex gap-2 mt-1">
+              <Input value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)}
+                placeholder="https://hooks.zapier.com/hooks/catch/..." className="flex-1" />
+              <Button variant="outline" onClick={testWebhook} disabled={!webhookUrl} className="gap-1">
+                <RefreshCw className="h-4 w-4" /> Test
+              </Button>
+            </div>
+            {testResult && <p className="text-xs mt-1 text-muted-foreground">{testResult}</p>}
+          </div>
+          <div>
+            <Label className="mb-2 block">Ereignisse auswählen</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {WEBHOOK_EVENTS.map(ev => (
+                <div key={ev.id}
+                  onClick={() => toggleEvent(ev.id)}
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all text-sm ${
+                    selectedEvents.includes(ev.id)
+                      ? 'bg-primary/10 border-primary/50 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/30'
+                  }`}>
+                  <span>{ev.icon}</span>
+                  <span>{ev.label}</span>
+                  {selectedEvents.includes(ev.id) && <CheckCheck className="h-3 w-3 ml-auto" />}
+                </div>
+              ))}
+            </div>
+          </div>
+          <Button className="w-full" disabled={!webhookUrl || selectedEvents.length === 0}>
+            <Globe className="h-4 w-4 mr-2" /> Webhook speichern
+          </Button>
+        </CardContent>
+      </Card>
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-base">Beispiel-Payload</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <pre className="text-xs bg-black/30 rounded-lg p-3 overflow-x-auto text-green-400">{samplePayload}</pre>
+            <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-6 w-6" onClick={copyPayload}>
+              {copied ? <CheckCheck className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Zeitgesteuert Tab ────────────────────────────────────────────────────────
+const SCHEDULED_TEMPLATES = [
+  { id: 'monthly_report', label: 'Monatsbericht', icon: '📊', schedule: 'Jeden 1. des Monats', desc: 'BWA und GuV automatisch per E-Mail' },
+  { id: 'weekly_summary', label: 'Wochenzusammenfassung', icon: '📋', schedule: 'Jeden Montag 08:00', desc: 'Offene Rechnungen und Buchungsübersicht' },
+  { id: 'ustva_reminder', label: 'UStVA-Erinnerung', icon: '🏛️', schedule: 'Jeden 8. des Monats', desc: 'Erinnerung zur Abgabe der Voranmeldung' },
+  { id: 'budget_check', label: 'Budget-Check', icon: '💰', schedule: 'Jeden Freitag 17:00', desc: 'Budgetauslastung und Warnungen' },
+  { id: 'invoice_followup', label: 'Rechnungs-Follow-up', icon: '📬', schedule: 'Täglich 09:00', desc: 'Automatische Mahnung für überfällige Rechnungen' },
+  { id: 'datev_export', label: 'DATEV-Export', icon: '📁', schedule: 'Jeden 1. des Monats', desc: 'Automatischer DATEV-Export für Steuerberater' },
+];
+
+function ZeitgesteuertTab() {
+  const [activeJobs, setActiveJobs] = useState<string[]>(['ustva_reminder', 'invoice_followup']);
+
+  const toggleJob = (id: string) => {
+    setActiveJobs(prev => prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Timer className="h-5 w-5 text-primary" /> Zeitgesteuerte Aufgaben
+          </CardTitle>
+          <CardDescription>Automatische Berichte, Exporte und Erinnerungen nach Zeitplan</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {SCHEDULED_TEMPLATES.map(job => (
+              <div key={job.id} className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${
+                activeJobs.includes(job.id) ? 'bg-primary/5 border-primary/30' : 'border-border'
+              }`}>
+                <span className="text-2xl">{job.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm">{job.label}</p>
+                    {activeJobs.includes(job.id) && (
+                      <Badge variant="outline" className="text-xs text-primary border-primary/50">Aktiv</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{job.desc}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Clock className="h-3 w-3" /> {job.schedule}
+                  </p>
+                </div>
+                <Switch
+                  checked={activeJobs.includes(job.id)}
+                  onCheckedChange={() => toggleJob(job.id)}
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-base">Nächste geplante Ausführungen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {activeJobs.map(id => {
+              const job = SCHEDULED_TEMPLATES.find(j => j.id === id);
+              if (!job) return null;
+              return (
+                <div key={id} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{job.icon} {job.label}</span>
+                  <Badge variant="secondary" className="text-xs">{job.schedule}</Badge>
+                </div>
+              );
+            })}
+            {activeJobs.length === 0 && (
+              <p className="text-muted-foreground text-sm text-center py-4">Keine aktiven Aufgaben</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
