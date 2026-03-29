@@ -80,21 +80,19 @@
  
        setProgress(70);
  
-      // Generate DATEV CSV mit echten Firmendaten
+      // Generate DATEV CSV (EXTF Format 7.0 / SKR03)
       const csv = generateDatevCSV(transactions, {
-        name: currentCompany.name,
+        companyName: currentCompany.name,
         taxId: currentCompany.tax_id || currentCompany.vat_id || '',
-        vatId: currentCompany.vat_id || '',
-        iban: currentCompany.primary_iban || '',
-        legalForm: currentCompany.legal_form || '',
-        registerNumber: currentCompany.register_number || '',
+        skr: '03',
       });
  
        setProgress(90);
  
        // Download file
-       const periodStr = `${format(dateFrom, 'yyyy-MM')}_${format(dateTo, 'yyyy-MM')}`;
-       const filename = `DATEV_${currentCompany.name.replace(/[^a-zA-Z0-9]/g, '_')}_${periodStr}.csv`;
+       const periodStr = `${format(dateFrom, 'yyyyMM')}_${format(dateTo, 'yyyyMM')}`;
+       const safeName = currentCompany.name.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20);
+       const filename = `EXTF_${safeName}_${periodStr}.csv`;
        downloadDatevFile(csv, filename);
  
        setProgress(100);

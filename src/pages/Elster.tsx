@@ -16,7 +16,7 @@
  import { useToast } from '@/hooks/use-toast';
  import { useCompany } from '@/contexts/CompanyContext';
  import { supabase } from '@/integrations/supabase/client';
- import { generateUStVAXML, calculateUStVA, downloadXML, submitToElster, FINANZAEMTER, type UStVAData } from '@/services/elster';
+ import { generateUStVAXML, calculateUStVA, downloadXML, submitToElster, openElsterPortal, FINANZAEMTER, type UStVAData } from '@/services/elster';
  
  const MONTHS = [
    { value: '1', label: 'Januar' },
@@ -107,11 +107,10 @@
          .lte('date', endDate);
        
        if (transactions) {
-         const calculated = calculateUStVA(transactions);
-         calculated.zeitraum = {
+         const calculated = calculateUStVA(transactions, {
            jahr: year,
            ...(periodType === 'monthly' ? { monat: period } : { quartal: period })
-         };
+         });
          setUStVAData(calculated);
        }
      } catch (error) {
@@ -326,20 +325,20 @@
                              <p className="text-sm text-muted-foreground">Zeile 83</p>
                              <p className="font-medium">Verbleibende USt-Vorauszahlung</p>
                            </div>
-                           <Badge className={`text-lg font-mono ${uStVAData.kz83 >= 0 ? 'bg-destructive' : 'bg-green-600'}`}>
-                             {formatCurrency(uStVAData.kz83)}
+                           <Badge className={`text-lg font-mono ${uStVAData.kz69 >= 0 ? 'bg-destructive' : 'bg-green-600'}`}>
+                             {formatCurrency(uStVAData.kz69)}
                            </Badge>
                          </div>
                        </CardContent>
                      </Card>
                    </div>
                    
-                   {uStVAData.kz83 < 0 && (
+                   {uStVAData.kz69 < 0 && (
                      <Alert>
                        <CheckCircle className="h-4 w-4" />
                        <AlertTitle>Erstattungsanspruch</AlertTitle>
                        <AlertDescription>
-                         Sie haben einen Vorsteuerüberhang von {formatCurrency(Math.abs(uStVAData.kz83))}
+                         Sie haben einen Vorsteuerüberhang von {formatCurrency(Math.abs(uStVAData.kz69))}
                        </AlertDescription>
                      </Alert>
                    )}
@@ -565,7 +564,7 @@
                      <Separator />
                      <div className="flex justify-between font-bold">
                        <span>Vorauszahlung:</span>
-                       <span>{formatCurrency(uStVAData.kz83)}</span>
+                       <span>{formatCurrency(uStVAData.kz69)}</span>
                      </div>
                    </div>
                  )}
@@ -605,6 +604,14 @@
                    Abbrechen
                  </Button>
                  <Button
+                   variant="outline"
+                   onClick={openElsterPortal}
+                   className="gap-2"
+                 >
+                   <Globe className="h-4 w-4" />
+                   Mein ELSTER
+                 </Button>
+                 <Button
                    onClick={handleSubmit}
                    disabled={!confirmCorrectness || submitting}
                    className="gap-2"
@@ -614,7 +621,7 @@
                    ) : (
                      <Send className="h-4 w-4" />
                    )}
-                   Übermitteln
+                   {testMode ? 'Testen' : 'XML + ELSTER'}
                  </Button>
                </DialogFooter>
              </>

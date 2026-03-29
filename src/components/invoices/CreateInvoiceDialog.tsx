@@ -1,7 +1,9 @@
  import { useState, useEffect, useRef } from 'react';
- import { Plus, Trash2, Eye, Save, Download, Mail, FileText } from 'lucide-react';
+ import { Plus, Trash2, Eye, Save, Download, Mail, FileText, Code2 } from 'lucide-react';
  import html2canvas from 'html2canvas';
  import jsPDF from 'jspdf';
+ import { generateZUGFeRDXML } from '@/lib/eRechnung';
+ import { Badge } from '@/components/ui/badge';
  import {
    Dialog,
    DialogContent,
@@ -87,6 +89,7 @@
    const [activeTab, setActiveTab] = useState('details');
    const [exporting, setExporting] = useState(false);
    const [generatedInvoiceNumber] = useState(generateInvoiceNumber());
+   const [eRechnungFormat, setERechnungFormat] = useState<'standard' | 'zugferd'>('standard');
    const invoiceRef = useRef<HTMLDivElement>(null);
  
    useEffect(() => {
@@ -179,6 +182,22 @@
      })),
    });
  
+   const exportERechnung = () => {
+     const previewData = getPreviewData();
+     const xml = generateZUGFeRDXML(previewData);
+     const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+     const url = URL.createObjectURL(blob);
+     const a = document.createElement('a');
+     a.href = url;
+     a.download = `${generatedInvoiceNumber}_eRechnung.xml`;
+     a.click();
+     URL.revokeObjectURL(url);
+     toast({
+       title: 'E-Rechnung exportiert',
+       description: `${generatedInvoiceNumber}_eRechnung.xml (ZUGFeRD 2.1.1 / EN 16931) wurde heruntergeladen.`,
+     });
+   };
+
    const exportPDF = async () => {
      const element = document.getElementById('invoice-pdf');
      if (!element) {
@@ -525,19 +544,54 @@
            <TabsContent value="preview" className="mt-4">
              <div className="space-y-4">
                {/* Action buttons for preview */}
-               <div className="flex gap-2 justify-end">
-                 <Button
-                   variant="outline"
-                   onClick={exportPDF}
-                   disabled={exporting}
-                 >
-                   <Download className="h-4 w-4 mr-2" />
-                   {exporting ? 'Exportiert...' : 'Als PDF speichern'}
-                 </Button>
-                 <Button variant="outline" onClick={handleSendEmail}>
-                   <Mail className="h-4 w-4 mr-2" />
-                   Per E-Mail senden
-                 </Button>
+               <div className="flex flex-wrap gap-2 justify-between items-center">
+                 <div className="flex items-center gap-2">
+                   <span className="text-sm text-muted-foreground">Format:</span>
+                   <button
+                     onClick={() => setERechnungFormat('standard')}
+                     className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                       eRechnungFormat === 'standard'
+                         ? 'bg-primary text-primary-foreground border-primary'
+                         : 'border-border hover:bg-muted'
+                     }`}
+                   >
+                     Standard PDF
+                   </button>
+                   <button
+                     onClick={() => setERechnungFormat('zugferd')}
+                     className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                       eRechnungFormat === 'zugferd'
+                         ? 'bg-green-600 text-white border-green-600'
+                         : 'border-border hover:bg-muted'
+                     }`}
+                   >
+                     ZUGFeRD 2.1.1 ✓
+                   </button>
+                 </div>
+                 <div className="flex gap-2">
+                   <Button
+                     variant="outline"
+                     onClick={exportPDF}
+                     disabled={exporting}
+                   >
+                     <Download className="h-4 w-4 mr-2" />
+                     {exporting ? 'Exportiert...' : 'Als PDF speichern'}
+                   </Button>
+                   {eRechnungFormat === 'zugferd' && (
+                     <Button
+                       variant="outline"
+                       onClick={exportERechnung}
+                       className="border-green-500 text-green-600 hover:bg-green-50"
+                     >
+                       <Code2 className="h-4 w-4 mr-2" />
+                       E-Rechnung XML
+                     </Button>
+                   )}
+                   <Button variant="outline" onClick={handleSendEmail}>
+                     <Mail className="h-4 w-4 mr-2" />
+                     Per E-Mail senden
+                   </Button>
+                 </div>
                </div>
                
                <div className="bg-muted/50 p-4 rounded-lg overflow-auto max-h-[55vh]">
